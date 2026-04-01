@@ -2,8 +2,8 @@
 
 > Red-team and harden multi-agent LLM systems against OWASP Agentic Top 10
 
-[![PyPI](https://img.shields.io/pypi/v/agentsec)](https://pypi.org/project/agentsec/)
-[![Tests](https://img.shields.io/github/actions/workflow/status/yourusername/agentsec/ci.yml?label=tests)](https://github.com/yourusername/agentsec/actions)
+[![PyPI](https://img.shields.io/pypi/v/agentsec-framework)](https://pypi.org/project/agentsec/)
+[![Tests](https://img.shields.io/github/actions/workflow/status/n3pt7un/agentsec/ci.yml?label=tests)](https://github.com/n3pt7un/agentsec/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 agentsec probes your multi-agent LLM system for vulnerabilities, scores findings against the [OWASP Top 10 for Agentic Applications (2026)](https://genai.owasp.org/resource/owasp-top-10-for-agentic-applications-for-2026/), and generates actionable remediation reports with copy-pasteable fixes.

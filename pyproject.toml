@@ -1,3 +1,10 @@
+authors = [{name = "Taras Ivaniv"}]
+readme = "README.md"
+
+[project.urls]
+Homepage = "https://github.com/n3pt7un/agentsec"
+Issues = "https://github.com/n3pt7un/agentsec/issues"
+
 [project]
 name = "agentsec"
 version = "0.1.0"

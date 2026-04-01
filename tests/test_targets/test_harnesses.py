@@ -13,7 +13,6 @@ from agentsec.core.config import ScanConfig
 from agentsec.core.finding import FindingStatus
 from agentsec.core.scanner import Scanner
 
-
 # ---------------------------------------------------------------------------
 # Supervisor harness
 # ---------------------------------------------------------------------------
@@ -44,8 +43,7 @@ async def test_supervisor_discovery():
     agents = await adapter.discover()
     names = {a.name for a in agents}
     # supervisor, researcher, math_worker must be present
-    assert "supervisor" in names
-    assert len(names) >= 2
+    assert {"supervisor", "researcher", "math_worker"} <= names
 
 
 @pytest.mark.asyncio

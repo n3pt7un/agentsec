@@ -66,3 +66,58 @@ async def test_supervisor_resistant_scan_has_no_vulnerable():
     scanner = Scanner(adapter, ScanConfig())
     result = await scanner.run(target="supervisor_harness")
     assert not any(f.status == FindingStatus.VULNERABLE for f in result.findings)
+
+
+# ---------------------------------------------------------------------------
+# Swarm harness
+# ---------------------------------------------------------------------------
+
+
+def test_swarm_compiles_vulnerable():
+    pytest.importorskip("langgraph_swarm")
+    from tests.targets.swarm_harness import build_swarm_target
+
+    graph = build_swarm_target(vulnerable=True)
+    assert graph is not None
+
+
+def test_swarm_compiles_resistant():
+    pytest.importorskip("langgraph_swarm")
+    from tests.targets.swarm_harness import build_swarm_target
+
+    graph = build_swarm_target(vulnerable=False)
+    assert graph is not None
+
+
+@pytest.mark.asyncio
+async def test_swarm_discovery():
+    pytest.importorskip("langgraph_swarm")
+    from tests.targets.swarm_harness import build_swarm_target
+
+    adapter = LangGraphAdapter(build_swarm_target(vulnerable=True))
+    agents = await adapter.discover()
+    names = {a.name for a in agents}
+    assert "billing" in names
+    assert "tech_support" in names
+
+
+@pytest.mark.asyncio
+async def test_swarm_vulnerable_scan_produces_findings():
+    pytest.importorskip("langgraph_swarm")
+    from tests.targets.swarm_harness import build_swarm_target
+
+    adapter = LangGraphAdapter(build_swarm_target(vulnerable=True))
+    scanner = Scanner(adapter, ScanConfig())
+    result = await scanner.run(target="swarm_harness")
+    assert any(f.status == FindingStatus.VULNERABLE for f in result.findings)
+
+
+@pytest.mark.asyncio
+async def test_swarm_resistant_scan_has_no_vulnerable():
+    pytest.importorskip("langgraph_swarm")
+    from tests.targets.swarm_harness import build_swarm_target
+
+    adapter = LangGraphAdapter(build_swarm_target(vulnerable=False))
+    scanner = Scanner(adapter, ScanConfig())
+    result = await scanner.run(target="swarm_harness")
+    assert not any(f.status == FindingStatus.VULNERABLE for f in result.findings)

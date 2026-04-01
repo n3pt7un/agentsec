@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from unittest.mock import AsyncMock, MagicMock
 
-from agentsec.core.finding import Finding, FindingStatus, OWASPCategory, Remediation, Severity
+from agentsec.core.finding import Finding, OWASPCategory, Remediation, Severity
 from agentsec.core.probe_base import BaseProbe, ProbeMetadata
 from agentsec.llm.detection import DetectionType
 from agentsec.llm.provider import ClassificationResult

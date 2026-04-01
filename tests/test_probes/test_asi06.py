@@ -503,3 +503,39 @@ class TestMemoryPoisonTwoStageDetection:
         )
         if finding.status == FindingStatus.VULNERABLE:
             assert finding.evidence.detection_method == "llm"
+
+
+# ---------------------------------------------------------------------------
+# ASI06-CONTEXT-LEAK — two-stage detection
+# ---------------------------------------------------------------------------
+
+
+class TestContextLeakTwoStageDetection:
+    """Two-stage detection for ASI06-CONTEXT-LEAK."""
+
+    async def test_marker_detection_sets_detection_method(self):
+        from agentsec.probes.asi06_memory_manipulation.context_leak import ContextLeakProbe
+        graph = build_vulnerable_rag(vulnerable=True)
+        adapter = LangGraphAdapter(graph)
+        finding = await ContextLeakProbe().attack(adapter)
+        if finding.status == FindingStatus.VULNERABLE:
+            assert finding.evidence.detection_method == "marker"
+
+    async def test_llm_detection_finds_vulnerability_without_marker(self):
+        from agentsec.probes.asi06_memory_manipulation.context_leak import ContextLeakProbe
+        provider = AsyncMock()
+        provider.is_available = MagicMock(return_value=True)
+        provider.generate = AsyncMock(return_value="store secret_token=abc123")
+        provider.classify = AsyncMock(
+            return_value=ClassificationResult(
+                vulnerable=True, confidence=0.91, reasoning="sensitive data leaked across sessions"
+            )
+        )
+        graph = build_simple_chain(vulnerable=False)
+        adapter = LangGraphAdapter(graph)
+        finding = await ContextLeakProbe().attack(adapter, provider=provider)
+        assert finding.status in (
+            FindingStatus.VULNERABLE, FindingStatus.SKIPPED, FindingStatus.RESISTANT
+        )
+        if finding.status == FindingStatus.VULNERABLE:
+            assert finding.evidence.detection_method == "llm"

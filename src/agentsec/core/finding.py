@@ -50,6 +50,10 @@ class Evidence(BaseModel):
     additional_context: str | None = Field(
         default=None, description="Extra details about the attack chain"
     )
+    detection_method: str = Field(
+        default="marker",
+        description="How vulnerability was detected: marker | llm",
+    )
 
 
 class Remediation(BaseModel):

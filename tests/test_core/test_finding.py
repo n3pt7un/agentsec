@@ -80,6 +80,33 @@ class TestEvidence:
         )
         assert ev.additional_context == "extra info"
 
+    def test_detection_method_defaults_to_marker(self):
+        ev = Evidence(
+            attack_input="payload",
+            target_agent="agent",
+            agent_response="response",
+        )
+        assert ev.detection_method == "marker"
+
+    def test_detection_method_can_be_set_to_llm(self):
+        ev = Evidence(
+            attack_input="payload",
+            target_agent="agent",
+            agent_response="response",
+            detection_method="llm",
+        )
+        assert ev.detection_method == "llm"
+
+    def test_detection_method_serializes(self):
+        ev = Evidence(
+            attack_input="payload",
+            target_agent="agent",
+            agent_response="response",
+            detection_method="llm",
+        )
+        data = ev.model_dump()
+        assert data["detection_method"] == "llm"
+
 
 class TestRemediation:
     def test_defaults(self):

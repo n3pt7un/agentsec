@@ -119,7 +119,7 @@ def scan(
     verbose: bool = typer.Option(False, help="Verbose output — print each finding as it completes"),
     vulnerable: bool = typer.Option(True, help="Pass vulnerable flag to fixture builders"),
     smart: bool = typer.Option(False, help="Use LLM-powered smart payloads via OpenRouter"),
-    model: str = typer.Option("anthropic/claude-sonnet-4", help="OpenRouter model identifier"),
+    model: str = typer.Option("anthropic/claude-sonnet-4.6", help="OpenRouter model identifier"),
 ) -> None:
     """Scan a multi-agent system for OWASP Agentic vulnerabilities."""
     cat_list = [c.strip() for c in categories.split(",")] if categories else None
@@ -212,7 +212,7 @@ def probe(
     target: str = typer.Option(..., help="Path to target agent system"),
     vulnerable: bool = typer.Option(True, help="Pass vulnerable flag to fixture builders"),
     smart: bool = typer.Option(False, help="Use LLM-powered smart payloads via OpenRouter"),
-    model: str = typer.Option("anthropic/claude-sonnet-4", help="OpenRouter model identifier"),
+    model: str = typer.Option("anthropic/claude-sonnet-4.6", help="OpenRouter model identifier"),
 ) -> None:
     """Run a single probe for debugging."""
     try:

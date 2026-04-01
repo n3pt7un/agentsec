@@ -34,7 +34,7 @@ class OpenRouterProvider(LLMProvider):
         """Initialise the OpenRouter provider.
 
         Args:
-            model: OpenRouter model identifier (e.g. "anthropic/claude-sonnet-4").
+            model: OpenRouter model identifier (e.g. "anthropic/claude-sonnet-4.6").
             api_key: OpenRouter API key.
         """
         self._model = model

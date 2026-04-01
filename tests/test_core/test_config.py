@@ -11,7 +11,7 @@ class TestScanConfig:
         assert config.verbose is False
         assert config.timeout_per_probe == 120
         assert config.smart is False
-        assert config.llm_model == "anthropic/claude-sonnet-4"
+        assert config.llm_model == "anthropic/claude-sonnet-4.6"
         assert config.openrouter_api_key is None
         assert config.output_file is None
         assert config.output_format == "markdown"

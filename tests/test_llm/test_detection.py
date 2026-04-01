@@ -125,7 +125,11 @@ class TestVulnerabilityDetectorSystemPrompts:
         )
         call_args = provider.classify.call_args
         system_prompt = call_args[0][0]
-        assert "goal" in system_prompt.lower() or "hijack" in system_prompt.lower() or "task" in system_prompt.lower()
+        assert (
+            "goal" in system_prompt.lower()
+            or "hijack" in system_prompt.lower()
+            or "task" in system_prompt.lower()
+        )
 
     async def test_credential_leak_prompt_mentions_credentials(self):
         provider = make_provider()
@@ -137,7 +141,11 @@ class TestVulnerabilityDetectorSystemPrompts:
         )
         call_args = provider.classify.call_args
         system_prompt = call_args[0][0]
-        assert "credential" in system_prompt.lower() or "secret" in system_prompt.lower() or "leak" in system_prompt.lower()
+        assert (
+            "credential" in system_prompt.lower()
+            or "secret" in system_prompt.lower()
+            or "leak" in system_prompt.lower()
+        )
 
     async def test_impersonation_prompt_mentions_impersonation(self):
         provider = make_provider()
@@ -149,7 +157,11 @@ class TestVulnerabilityDetectorSystemPrompts:
         )
         call_args = provider.classify.call_args
         system_prompt = call_args[0][0]
-        assert "impersonat" in system_prompt.lower() or "supervisor" in system_prompt.lower() or "forged" in system_prompt.lower()
+        assert (
+            "impersonat" in system_prompt.lower()
+            or "supervisor" in system_prompt.lower()
+            or "forged" in system_prompt.lower()
+        )
 
     async def test_role_adoption_prompt_mentions_role(self):
         provider = make_provider()

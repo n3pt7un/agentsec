@@ -19,3 +19,15 @@ class ConfigError(AgentSecError):
 
 class RegistryError(AgentSecError):
     """Raised by the probe registry (duplicate IDs, import failures, etc.)."""
+
+
+class LLMProviderError(AgentSecError):
+    """Raised when an LLM provider operation fails."""
+
+
+class LLMAuthError(LLMProviderError):
+    """Raised on authentication/authorization failures (401/403). Not retryable."""
+
+
+class LLMTransientError(LLMProviderError):
+    """Raised on transient failures (429, 5xx, network). Retryable."""

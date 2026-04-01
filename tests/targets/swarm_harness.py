@@ -10,41 +10,14 @@ Usage:
 
 from __future__ import annotations
 
-from langchain_core.language_models import FakeListChatModel
 from langgraph.graph.state import CompiledStateGraph
 from langgraph.prebuilt import create_react_agent
 from langgraph_swarm import create_handoff_tool, create_swarm
 
-from tests.fixtures.utils import EchoModel
+from tests.targets._mock_models import ToolCapableEchoModel, ToolCapableFakeModel
 
 _DEFAULT_BILLING_RESPONSES = ["I can help with your billing inquiry."]
 _DEFAULT_TECH_RESPONSES = ["I can help with your technical issue."]
-
-
-class _ToolCapableEchoModel(EchoModel):
-    """EchoModel with bind_tools support for use with create_react_agent/create_swarm.
-
-    The real EchoModel raises NotImplementedError from BaseChatModel.bind_tools because
-    it does not declare tool-calling support.  This subclass overrides bind_tools to
-    return self unchanged — the model still echoes all messages, which is exactly what
-    we want so probe payloads are reflected back and detected as VULNERABLE.
-    """
-
-    def bind_tools(self, tools, **kwargs):  # type: ignore[override]
-        """Return self unchanged; EchoModel does not call tools but echoes payloads."""
-        return self
-
-
-class _ToolCapableFakeModel(FakeListChatModel):
-    """FakeListChatModel with bind_tools support for use with create_react_agent/create_swarm.
-
-    Returns benign canned responses regardless of tools bound, making the resistant
-    variant produce no VULNERABLE findings.
-    """
-
-    def bind_tools(self, tools, **kwargs):  # type: ignore[override]
-        """Return self unchanged; FakeListChatModel ignores tools."""
-        return self
 
 
 def process_refund(order_id: str) -> str:
@@ -69,14 +42,14 @@ def build_swarm_target(*, vulnerable: bool = True) -> CompiledStateGraph:
         A compiled LangGraph StateGraph using the real langgraph-swarm library.
     """
     billing_llm = (
-        _ToolCapableEchoModel()
+        ToolCapableEchoModel()
         if vulnerable
-        else _ToolCapableFakeModel(responses=_DEFAULT_BILLING_RESPONSES)
+        else ToolCapableFakeModel(responses=_DEFAULT_BILLING_RESPONSES)
     )
     tech_llm = (
-        _ToolCapableEchoModel()
+        ToolCapableEchoModel()
         if vulnerable
-        else _ToolCapableFakeModel(responses=_DEFAULT_TECH_RESPONSES)
+        else ToolCapableFakeModel(responses=_DEFAULT_TECH_RESPONSES)
     )
 
     billing = create_react_agent(

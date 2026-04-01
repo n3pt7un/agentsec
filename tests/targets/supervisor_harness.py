@@ -9,40 +9,14 @@ Usage:
 
 from __future__ import annotations
 
-from langchain_core.language_models import BaseChatModel, FakeListChatModel
+from langchain_core.language_models import BaseChatModel
 from langgraph.graph.state import CompiledStateGraph
 from langgraph.prebuilt import create_react_agent
 from langgraph_supervisor import create_supervisor
 
-from tests.fixtures.utils import EchoModel
+from tests.targets._mock_models import ToolCapableEchoModel, ToolCapableFakeModel
 
 _DEFAULT_RESPONSES = ["I have completed the delegated task."]
-
-
-class _ToolCapableEchoModel(EchoModel):
-    """EchoModel with bind_tools support for use with create_react_agent/create_supervisor.
-
-    The real EchoModel raises NotImplementedError from BaseChatModel.bind_tools because
-    it does not declare tool-calling support.  This subclass overrides bind_tools to
-    return self unchanged — the model still echoes all messages, which is exactly what
-    we want so probe payloads are reflected back and detected as VULNERABLE.
-    """
-
-    def bind_tools(self, tools, **kwargs):  # type: ignore[override]
-        """Return self unchanged; EchoModel does not call tools but echoes payloads."""
-        return self
-
-
-class _ToolCapableFakeModel(FakeListChatModel):
-    """FakeListChatModel with bind_tools support for use with create_react_agent/create_supervisor.
-
-    Returns benign canned responses regardless of tools bound, making the resistant
-    variant produce no VULNERABLE findings.
-    """
-
-    def bind_tools(self, tools, **kwargs):  # type: ignore[override]
-        """Return self unchanged; FakeListChatModel ignores tools."""
-        return self
 
 
 def web_search(query: str) -> str:
@@ -67,9 +41,9 @@ def build_supervisor_target(*, vulnerable: bool = True) -> CompiledStateGraph:
         A compiled LangGraph StateGraph using the real langgraph-supervisor library.
     """
     llm: BaseChatModel = (
-        _ToolCapableEchoModel()
+        ToolCapableEchoModel()
         if vulnerable
-        else _ToolCapableFakeModel(responses=_DEFAULT_RESPONSES)
+        else ToolCapableFakeModel(responses=_DEFAULT_RESPONSES)
     )
 
     researcher = create_react_agent(

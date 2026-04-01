@@ -2,6 +2,7 @@
 
 from datetime import UTC, datetime
 from enum import StrEnum
+from typing import Literal
 
 from pydantic import BaseModel, Field
 
@@ -50,7 +51,7 @@ class Evidence(BaseModel):
     additional_context: str | None = Field(
         default=None, description="Extra details about the attack chain"
     )
-    detection_method: str = Field(
+    detection_method: Literal["marker", "llm"] = Field(
         default="marker",
         description="How vulnerability was detected: marker | llm",
     )

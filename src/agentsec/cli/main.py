@@ -118,6 +118,8 @@ def scan(
     format: str = typer.Option("markdown", help="Report format: markdown, json"),
     verbose: bool = typer.Option(False, help="Verbose output — print each finding as it completes"),
     vulnerable: bool = typer.Option(True, help="Pass vulnerable flag to fixture builders"),
+    smart: bool = typer.Option(False, help="Use LLM-powered smart payloads via OpenRouter"),
+    model: str = typer.Option("anthropic/claude-sonnet-4", help="OpenRouter model identifier"),
 ) -> None:
     """Scan a multi-agent system for OWASP Agentic vulnerabilities."""
     cat_list = [c.strip() for c in categories.split(",")] if categories else None
@@ -127,6 +129,8 @@ def scan(
         categories=cat_list,
         probes=probe_list,
         verbose=verbose,
+        smart=smart,
+        llm_model=model,
     )
 
     try:
@@ -137,7 +141,18 @@ def scan(
 
     adapter_inst = _make_adapter(adapter, graph)
 
-    result = asyncio.run(_run_scan(adapter_inst, config, target, verbose))
+    from agentsec.core.exceptions import LLMProviderError
+
+    try:
+        result = asyncio.run(_run_scan(adapter_inst, config, target, verbose))
+    except LLMProviderError as exc:
+        console.print(f"\n[bold red]LLM Provider Error:[/] {exc}")
+        if "API key" in str(exc):
+            console.print(
+                "[yellow]Set AGENTSEC_OPENROUTER_API_KEY environment variable "
+                "or check your key at https://openrouter.ai/keys[/]"
+            )
+        raise typer.Exit(code=1) from exc
 
     # Generate report
     if format == "json":
@@ -196,6 +211,8 @@ def probe(
     adapter: str = typer.Option("langgraph", help="Adapter to use (e.g. langgraph)"),
     target: str = typer.Option(..., help="Path to target agent system"),
     vulnerable: bool = typer.Option(True, help="Pass vulnerable flag to fixture builders"),
+    smart: bool = typer.Option(False, help="Use LLM-powered smart payloads via OpenRouter"),
+    model: str = typer.Option("anthropic/claude-sonnet-4", help="OpenRouter model identifier"),
 ) -> None:
     """Run a single probe for debugging."""
     try:
@@ -206,12 +223,24 @@ def probe(
 
     adapter_inst = _make_adapter(adapter, graph)
 
-    config = ScanConfig(probes=[probe_id], verbose=True)
+    config = ScanConfig(probes=[probe_id], verbose=True, smart=smart, llm_model=model)
 
     from agentsec.core.scanner import Scanner
 
     scanner = Scanner(adapter_inst, config)
-    result = asyncio.run(scanner.run(target=target))
+
+    from agentsec.core.exceptions import LLMProviderError
+
+    try:
+        result = asyncio.run(scanner.run(target=target))
+    except LLMProviderError as exc:
+        console.print(f"\n[bold red]LLM Provider Error:[/] {exc}")
+        if "API key" in str(exc):
+            console.print(
+                "[yellow]Set AGENTSEC_OPENROUTER_API_KEY environment variable "
+                "or check your key at https://openrouter.ai/keys[/]"
+            )
+        raise typer.Exit(code=1) from exc
 
     if not result.findings:
         console.print(f"[yellow]No probe found with ID: {probe_id}[/]")

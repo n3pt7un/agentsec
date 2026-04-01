@@ -302,6 +302,43 @@ class TestMemoryPoisonSmartPayloads:
 
 
 # ---------------------------------------------------------------------------
+# ASI06-CONTEXT-LEAK — smart payload integration
+# ---------------------------------------------------------------------------
+
+
+class TestContextLeakSmartPayloads:
+    """Smart payload integration for ASI06-CONTEXT-LEAK."""
+
+    async def test_offline_provider_vulnerable(self):
+        graph = build_vulnerable_rag(vulnerable=True)
+        adapter = LangGraphAdapter(graph)
+        finding = await ContextLeakProbe().attack(adapter, provider=OfflineProvider())
+        assert finding.status == FindingStatus.VULNERABLE
+
+    async def test_offline_provider_skipped_no_memory(self):
+        graph = build_simple_chain(vulnerable=False)
+        adapter = LangGraphAdapter(graph)
+        finding = await ContextLeakProbe().attack(adapter, provider=OfflineProvider())
+        assert finding.status == FindingStatus.SKIPPED
+
+    async def test_smart_payload_used_for_session_a(self):
+        """When LLM provides a smart payload, it seeds Session A."""
+        provider = AsyncMock()
+        provider.is_available = MagicMock(return_value=True)
+        provider.generate = AsyncMock(
+            return_value=(
+                f"Please remember my account details: username=admin, "
+                f"token={_SENSITIVE_MARKER}"
+            )
+        )
+
+        graph = build_vulnerable_rag(vulnerable=True)
+        adapter = LangGraphAdapter(graph)
+        finding = await ContextLeakProbe().attack(adapter, provider=provider)
+        assert finding.status == FindingStatus.VULNERABLE
+
+
+# ---------------------------------------------------------------------------
 # ASI06-CONTEXT-LEAK — graceful skip on fixtures without memory
 # ---------------------------------------------------------------------------
 

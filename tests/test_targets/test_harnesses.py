@@ -6,6 +6,8 @@ so customer-support tests always run even without the optional extras.
 
 from __future__ import annotations
 
+from unittest.mock import MagicMock, patch
+
 import pytest
 
 from agentsec.adapters.langgraph import LangGraphAdapter
@@ -173,3 +175,115 @@ async def test_customer_support_resistant_scan_has_no_vulnerable():
     scanner = Scanner(adapter, ScanConfig())
     result = await scanner.run(target="rag_customer_support_harness")
     assert not any(f.status == FindingStatus.VULNERABLE for f in result.findings)
+
+
+# ---------------------------------------------------------------------------
+# Live mode — no API key → ValueError (all 3 harnesses)
+# ---------------------------------------------------------------------------
+
+
+def test_supervisor_live_raises_without_api_key(monkeypatch):
+    pytest.importorskip("langgraph_supervisor")
+    monkeypatch.delenv("OPENROUTER_API_KEY", raising=False)
+    from tests.targets.supervisor_harness import build_supervisor_target
+
+    with pytest.raises(ValueError, match="OPENROUTER_API_KEY"):
+        build_supervisor_target(live=True)
+
+
+def test_swarm_live_raises_without_api_key(monkeypatch):
+    pytest.importorskip("langgraph_swarm")
+    monkeypatch.delenv("OPENROUTER_API_KEY", raising=False)
+    from tests.targets.swarm_harness import build_swarm_target
+
+    with pytest.raises(ValueError, match="OPENROUTER_API_KEY"):
+        build_swarm_target(live=True)
+
+
+def test_customer_support_live_raises_without_api_key(monkeypatch):
+    monkeypatch.delenv("OPENROUTER_API_KEY", raising=False)
+    from tests.targets.rag_customer_support_harness import build_customer_support_target
+
+    with pytest.raises(ValueError, match="OPENROUTER_API_KEY"):
+        build_customer_support_target(live=True)
+
+
+# ---------------------------------------------------------------------------
+# Live mode — mocked ChatOpenAI, accepts live=True without real API calls
+# ---------------------------------------------------------------------------
+
+_MOCK_LLM_PATH = "tests.targets._openrouter_llm.ChatOpenAI"
+
+
+def test_supervisor_live_compiles_with_mocked_llm(monkeypatch):
+    pytest.importorskip("langgraph_supervisor")
+    monkeypatch.setenv("OPENROUTER_API_KEY", "sk-or-test-key")
+    with patch(_MOCK_LLM_PATH, return_value=MagicMock()) as mock_cls:
+        from tests.targets.supervisor_harness import build_supervisor_target
+
+        graph = build_supervisor_target(live=True)
+        assert graph is not None
+        mock_cls.assert_called_once()
+
+
+def test_swarm_live_compiles_with_mocked_llm(monkeypatch):
+    pytest.importorskip("langgraph_swarm")
+    monkeypatch.setenv("OPENROUTER_API_KEY", "sk-or-test-key")
+    with patch(_MOCK_LLM_PATH, return_value=MagicMock()) as mock_cls:
+        from tests.targets.swarm_harness import build_swarm_target
+
+        graph = build_swarm_target(live=True)
+        assert graph is not None
+        mock_cls.assert_called_once()
+
+
+def test_customer_support_live_compiles_with_mocked_llm(monkeypatch):
+    monkeypatch.setenv("OPENROUTER_API_KEY", "sk-or-test-key")
+    with patch(_MOCK_LLM_PATH, return_value=MagicMock()) as mock_cls:
+        from tests.targets.rag_customer_support_harness import build_customer_support_target
+
+        graph = build_customer_support_target(live=True)
+        assert graph is not None
+        mock_cls.assert_called_once()
+
+
+def test_supervisor_live_passes_target_model(monkeypatch):
+    pytest.importorskip("langgraph_supervisor")
+    monkeypatch.setenv("OPENROUTER_API_KEY", "sk-or-test-key")
+    with patch(_MOCK_LLM_PATH, return_value=MagicMock()) as mock_cls:
+        from tests.targets.supervisor_harness import build_supervisor_target
+
+        build_supervisor_target(live=True, target_model="google/gemini-2.5-flash")
+        call_kwargs = mock_cls.call_args.kwargs
+        assert call_kwargs["model"] == "google/gemini-2.5-flash"
+
+
+# ---------------------------------------------------------------------------
+# Regression: live=False (default) still works exactly as before
+# ---------------------------------------------------------------------------
+
+
+def test_supervisor_mock_mode_unchanged():
+    pytest.importorskip("langgraph_supervisor")
+    from tests.targets.supervisor_harness import build_supervisor_target
+
+    assert build_supervisor_target(vulnerable=True) is not None
+    assert build_supervisor_target(vulnerable=False) is not None
+    assert build_supervisor_target() is not None
+
+
+def test_swarm_mock_mode_unchanged():
+    pytest.importorskip("langgraph_swarm")
+    from tests.targets.swarm_harness import build_swarm_target
+
+    assert build_swarm_target(vulnerable=True) is not None
+    assert build_swarm_target(vulnerable=False) is not None
+    assert build_swarm_target() is not None
+
+
+def test_customer_support_mock_mode_unchanged():
+    from tests.targets.rag_customer_support_harness import build_customer_support_target
+
+    assert build_customer_support_target(vulnerable=True) is not None
+    assert build_customer_support_target(vulnerable=False) is not None
+    assert build_customer_support_target() is not None

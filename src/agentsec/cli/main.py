@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import importlib.util
+import inspect
 import json
 import logging
 import sys
@@ -39,7 +40,13 @@ def _find_project_root(path: Path) -> Path | None:
     return None
 
 
-def _load_graph(target: str, *, vulnerable: bool = True):
+def _load_graph(
+    target: str,
+    *,
+    vulnerable: bool = True,
+    live: bool = False,
+    target_model: str | None = None,
+):
     """Dynamically import a target module and return its compiled graph.
 
     Looks for any callable starting with ``build_`` and invokes it, or
@@ -71,12 +78,15 @@ def _load_graph(target: str, *, vulnerable: bool = True):
     for attr_name in sorted(dir(module)):
         if attr_name.startswith("build_") and callable(getattr(module, attr_name)):
             builder = getattr(module, attr_name)
-            import inspect
-
             sig = inspect.signature(builder)
+            kwargs: dict = {}
+            if "live" in sig.parameters:
+                kwargs["live"] = live
+            if "target_model" in sig.parameters:
+                kwargs["target_model"] = target_model
             if "vulnerable" in sig.parameters:
-                return builder(vulnerable=vulnerable)
-            return builder()
+                kwargs["vulnerable"] = vulnerable
+            return builder(**kwargs)
 
     # Fallback: look for a 'graph' attribute
     graph = getattr(module, "graph", None)
@@ -120,6 +130,10 @@ def scan(
     vulnerable: bool = typer.Option(True, help="Pass vulnerable flag to fixture builders"),
     smart: bool = typer.Option(False, help="Use LLM-powered smart payloads via OpenRouter"),
     model: str = typer.Option("anthropic/claude-sonnet-4.6", help="OpenRouter model identifier"),
+    live: bool = typer.Option(False, help="Use a real LLM via OpenRouter for target agents"),
+    target_model: str | None = typer.Option(
+        None, help="OpenRouter model ID for target agents (live mode only)"
+    ),
 ) -> None:
     """Scan a multi-agent system for OWASP Agentic vulnerabilities."""
     cat_list = [c.strip() for c in categories.split(",")] if categories else None
@@ -134,8 +148,8 @@ def scan(
     )
 
     try:
-        graph = _load_graph(target, vulnerable=vulnerable)
-    except typer.BadParameter as exc:
+        graph = _load_graph(target, vulnerable=vulnerable, live=live, target_model=target_model)
+    except (typer.BadParameter, ValueError) as exc:
         console.print(f"[red]Error:[/] {exc}")
         raise typer.Exit(code=1) from exc
 
@@ -213,11 +227,15 @@ def probe(
     vulnerable: bool = typer.Option(True, help="Pass vulnerable flag to fixture builders"),
     smart: bool = typer.Option(False, help="Use LLM-powered smart payloads via OpenRouter"),
     model: str = typer.Option("anthropic/claude-sonnet-4.6", help="OpenRouter model identifier"),
+    live: bool = typer.Option(False, help="Use a real LLM via OpenRouter for target agents"),
+    target_model: str | None = typer.Option(
+        None, help="OpenRouter model ID for target agents (live mode only)"
+    ),
 ) -> None:
     """Run a single probe for debugging."""
     try:
-        graph = _load_graph(target, vulnerable=vulnerable)
-    except typer.BadParameter as exc:
+        graph = _load_graph(target, vulnerable=vulnerable, live=live, target_model=target_model)
+    except (typer.BadParameter, ValueError) as exc:
         console.print(f"[red]Error:[/] {exc}")
         raise typer.Exit(code=1) from exc
 

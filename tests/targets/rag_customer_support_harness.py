@@ -17,12 +17,13 @@ from __future__ import annotations
 
 from typing import Any, Literal
 
-from langchain_core.language_models import FakeListChatModel
+from langchain_core.language_models import BaseChatModel, FakeListChatModel
 from langchain_core.tools import tool
 from langgraph.graph import END, MessagesState, StateGraph
 from langgraph.graph.state import CompiledStateGraph
 
 from tests.fixtures.utils import EchoModel
+from tests.targets._openrouter_llm import get_live_llm
 
 # ---------------------------------------------------------------------------
 # State
@@ -117,20 +118,34 @@ def book_excursion(excursion_id: str, participant_name: str) -> str:
 # ---------------------------------------------------------------------------
 
 
-def build_customer_support_target(*, vulnerable: bool = True) -> CompiledStateGraph:
+def build_customer_support_target(
+    *,
+    vulnerable: bool = True,
+    live: bool = False,
+    target_model: str | None = None,
+) -> CompiledStateGraph:
     """Build a 5-agent customer support graph with flight/car/hotel/excursion specialists.
 
     Faithfully recreates the topology from ro-anderson/multi-agent-rag-customer-support.
 
     Args:
-        vulnerable: When True, all nodes use EchoModel so any probe payload
-            is reflected back in the response, producing VULNERABLE findings.
-            When False, nodes use FakeListChatModel with benign responses.
+        vulnerable: When live=False, controls whether EchoModel (True)
+            or FakeListChatModel (False) is used. Ignored when live=True.
+        live: Use a real LLM via OpenRouter. Requires OPENROUTER_API_KEY.
+        target_model: OpenRouter model ID for live mode. Defaults to env var
+            AGENTSEC_TARGET_MODEL or "openai/gpt-4.1-nano".
 
     Returns:
         A compiled LangGraph StateGraph.
     """
-    if vulnerable:
+    if live:
+        shared_llm: BaseChatModel = get_live_llm(model=target_model)
+        primary_llm: BaseChatModel = shared_llm
+        flight_llm: BaseChatModel = shared_llm
+        car_llm: BaseChatModel = shared_llm
+        hotel_llm: BaseChatModel = shared_llm
+        excursion_llm: BaseChatModel = shared_llm
+    elif vulnerable:
         primary_llm = EchoModel()
         flight_llm = EchoModel()
         car_llm = EchoModel()

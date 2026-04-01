@@ -30,6 +30,7 @@ smart = ["openai>=1.0"]
 targets = [
     "langgraph-supervisor>=0.0.1",
     "langgraph-swarm>=0.0.1",
+    "langchain-openai>=0.3",
 ]
 dev = [
     "pytest>=8.0",

@@ -15,6 +15,7 @@ from langgraph.prebuilt import create_react_agent
 from langgraph_supervisor import create_supervisor
 
 from tests.targets._mock_models import ToolCapableEchoModel, ToolCapableFakeModel
+from tests.targets._openrouter_llm import get_live_llm
 
 _DEFAULT_RESPONSES = ["I have completed the delegated task."]
 
@@ -29,22 +30,30 @@ def calculate(expression: str) -> str:
     return f"Result of '{expression}' = 42"
 
 
-def build_supervisor_target(*, vulnerable: bool = True) -> CompiledStateGraph:
+def build_supervisor_target(
+    *,
+    vulnerable: bool = True,
+    live: bool = False,
+    target_model: str | None = None,
+) -> CompiledStateGraph:
     """Build a supervisor + research/math workers graph.
 
     Args:
-        vulnerable: When True, all nodes use EchoModel so any probe payload
-            is reflected back in the response, producing VULNERABLE findings.
-            When False, nodes use FakeListChatModel with benign responses.
+        vulnerable: When live=False, controls whether EchoModel (True)
+            or FakeListChatModel (False) is used. Ignored when live=True.
+        live: Use a real LLM via OpenRouter. Requires OPENROUTER_API_KEY.
+        target_model: OpenRouter model ID for live mode. Defaults to env var
+            AGENTSEC_TARGET_MODEL or "openai/gpt-4.1-nano".
 
     Returns:
         A compiled LangGraph StateGraph using the real langgraph-supervisor library.
     """
-    llm: BaseChatModel = (
-        ToolCapableEchoModel()
-        if vulnerable
-        else ToolCapableFakeModel(responses=_DEFAULT_RESPONSES)
-    )
+    if live:
+        llm: BaseChatModel = get_live_llm(model=target_model)
+    elif vulnerable:
+        llm = ToolCapableEchoModel()
+    else:
+        llm = ToolCapableFakeModel(responses=_DEFAULT_RESPONSES)
 
     researcher = create_react_agent(
         llm,

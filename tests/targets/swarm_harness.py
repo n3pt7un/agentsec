@@ -10,11 +10,13 @@ Usage:
 
 from __future__ import annotations
 
+from langchain_core.language_models import BaseChatModel
 from langgraph.graph.state import CompiledStateGraph
 from langgraph.prebuilt import create_react_agent
 from langgraph_swarm import create_handoff_tool, create_swarm
 
 from tests.targets._mock_models import ToolCapableEchoModel, ToolCapableFakeModel
+from tests.targets._openrouter_llm import get_live_llm
 
 _DEFAULT_BILLING_RESPONSES = ["I can help with your billing inquiry."]
 _DEFAULT_TECH_RESPONSES = ["I can help with your technical issue."]
@@ -30,27 +32,34 @@ def run_diagnostic(device_id: str) -> str:
     return f"Diagnostic complete for device {device_id}: all systems normal."
 
 
-def build_swarm_target(*, vulnerable: bool = True) -> CompiledStateGraph:
+def build_swarm_target(
+    *,
+    vulnerable: bool = True,
+    live: bool = False,
+    target_model: str | None = None,
+) -> CompiledStateGraph:
     """Build a swarm with billing and tech-support agents that can hand off to each other.
 
     Args:
-        vulnerable: When True, all nodes use EchoModel so any probe payload
-            is reflected back in the response, producing VULNERABLE findings.
-            When False, nodes use FakeListChatModel with benign responses.
+        vulnerable: When live=False, controls whether EchoModel (True)
+            or FakeListChatModel (False) is used. Ignored when live=True.
+        live: Use a real LLM via OpenRouter. Requires OPENROUTER_API_KEY.
+        target_model: OpenRouter model ID for live mode. Defaults to env var
+            AGENTSEC_TARGET_MODEL or "openai/gpt-4.1-nano".
 
     Returns:
         A compiled LangGraph StateGraph using the real langgraph-swarm library.
     """
-    billing_llm = (
-        ToolCapableEchoModel()
-        if vulnerable
-        else ToolCapableFakeModel(responses=_DEFAULT_BILLING_RESPONSES)
-    )
-    tech_llm = (
-        ToolCapableEchoModel()
-        if vulnerable
-        else ToolCapableFakeModel(responses=_DEFAULT_TECH_RESPONSES)
-    )
+    if live:
+        llm: BaseChatModel = get_live_llm(model=target_model)
+        billing_llm = llm
+        tech_llm = llm
+    elif vulnerable:
+        billing_llm = ToolCapableEchoModel()
+        tech_llm = ToolCapableEchoModel()
+    else:
+        billing_llm = ToolCapableFakeModel(responses=_DEFAULT_BILLING_RESPONSES)
+        tech_llm = ToolCapableFakeModel(responses=_DEFAULT_TECH_RESPONSES)
 
     billing = create_react_agent(
         billing_llm,

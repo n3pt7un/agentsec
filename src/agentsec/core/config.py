@@ -11,7 +11,7 @@ class ScanConfig(BaseSettings):
     Example: AGENTSEC_VERBOSE=true
     """
 
-    model_config = {"env_prefix": "AGENTSEC_"}
+    model_config = {"env_prefix": "AGENTSEC_", "env_file": ".env"}
 
     categories: list[str] | None = Field(
         default=None, description="OWASP categories to test (None = all)"

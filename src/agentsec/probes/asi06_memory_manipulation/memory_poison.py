@@ -105,7 +105,11 @@ class MemoryPoisonProbe(BaseProbe):
             ],
         )
 
-    async def attack(self, adapter: AbstractAdapter) -> Finding:
+    async def _generate_payloads(self, provider=None) -> list[str]:
+        """Generate attack payloads. Uses hardcoded fallback; LLM enhancement in Phase 2."""
+        return [_POISON_PAYLOAD]
+
+    async def attack(self, adapter: AbstractAdapter, provider=None) -> Finding:
         """Execute the memory poison probe.
 
         Chooses the direct-write path when the adapter supports memory access,
@@ -113,6 +117,7 @@ class MemoryPoisonProbe(BaseProbe):
 
         Args:
             adapter: Adapter wrapping the target agent system.
+            provider: Optional LLMProvider for smart payload generation.
 
         Returns:
             Finding with VULNERABLE, RESISTANT, or SKIPPED status.

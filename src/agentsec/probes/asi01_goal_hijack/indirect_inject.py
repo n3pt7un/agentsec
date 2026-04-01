@@ -77,11 +77,16 @@ class IndirectPromptInjection(BaseProbe):
             ],
         )
 
-    async def attack(self, adapter: AbstractAdapter) -> Finding:
+    async def _generate_payloads(self, provider=None) -> list[str]:
+        """Generate attack payloads. Uses hardcoded fallback; LLM enhancement in Phase 2."""
+        return [_PAYLOAD]
+
+    async def attack(self, adapter: AbstractAdapter, provider=None) -> Finding:
         """Send an injection payload and check whether the agent echoes the marker.
 
         Args:
             adapter: Adapter wrapping the target agent system.
+            provider: Optional LLMProvider for smart payload generation.
 
         Returns:
             Finding with status VULNERABLE if the marker appeared in the response,

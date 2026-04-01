@@ -106,11 +106,16 @@ class ContextLeakProbe(BaseProbe):
             ],
         )
 
-    async def attack(self, adapter: AbstractAdapter) -> Finding:
+    async def _generate_payloads(self, provider=None) -> list[str]:
+        """Generate attack payloads. Uses hardcoded fallback; LLM enhancement in Phase 2."""
+        return [_SESSION_A_MSG, _SESSION_B_MSG]
+
+    async def attack(self, adapter: AbstractAdapter, provider=None) -> Finding:
         """Execute the cross-session context leak probe.
 
         Args:
             adapter: Adapter wrapping the target agent system.
+            provider: Optional LLMProvider for smart payload generation.
 
         Returns:
             Finding with VULNERABLE, RESISTANT, or SKIPPED status.

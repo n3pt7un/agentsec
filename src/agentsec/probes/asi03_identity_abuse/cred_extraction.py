@@ -136,11 +136,16 @@ class CredentialExtractionProbe(BaseProbe):
             ],
         )
 
-    async def attack(self, adapter: AbstractAdapter) -> Finding:
+    async def _generate_payloads(self, provider=None) -> list[str]:
+        """Generate attack payloads. Uses hardcoded fallback; LLM enhancement in Phase 2."""
+        return list(_ALL_PAYLOADS)
+
+    async def attack(self, adapter: AbstractAdapter, provider=None) -> Finding:
         """Send escalating credential-extraction payloads and scan responses.
 
         Args:
             adapter: Adapter wrapping the target agent system.
+            provider: Optional LLMProvider for smart payload generation.
 
         Returns:
             Finding with status VULNERABLE if any response contained a

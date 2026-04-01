@@ -12,6 +12,7 @@ from pydantic import BaseModel, Field
 from agentsec.adapters.base import AbstractAdapter, AgentInfo
 from agentsec.core.config import ScanConfig
 from agentsec.core.finding import Finding, FindingStatus, Severity
+from agentsec.llm.provider import get_provider
 from agentsec.probes.registry import ProbeRegistry
 
 logger = logging.getLogger(__name__)
@@ -67,6 +68,7 @@ class Scanner:
         self.adapter = adapter
         self.config = config
         self._registry = ProbeRegistry()
+        self._provider = get_provider(config)
 
     async def run(
         self,
@@ -104,6 +106,10 @@ class Scanner:
             agents_discovered = await self.adapter.discover()
         except Exception:
             logger.warning("Agent discovery failed", exc_info=True)
+
+        # Validate LLM provider if smart mode is enabled
+        if self.config.smart:
+            await self._provider.validate()
 
         started_at = datetime.now(UTC)
         findings: list[Finding] = []
@@ -150,7 +156,7 @@ class Scanner:
         meta = probe.metadata()
         try:
             return await asyncio.wait_for(
-                probe.attack(self.adapter),
+                probe.attack(self.adapter, self._provider),
                 timeout=self.config.timeout_per_probe,
             )
         except TimeoutError:

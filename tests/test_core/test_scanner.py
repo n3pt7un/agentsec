@@ -38,7 +38,7 @@ def _make_probe(
         def remediation(self):
             return Remediation(summary="fix it")
 
-        async def attack(self, adapter):
+        async def attack(self, adapter, provider=None):
             if raise_exc is not None:
                 raise raise_exc
             return Finding(

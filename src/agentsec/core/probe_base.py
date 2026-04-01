@@ -32,11 +32,12 @@ class BaseProbe(ABC):
         ...
 
     @abstractmethod
-    async def attack(self, adapter) -> Finding:
+    async def attack(self, adapter, provider=None) -> Finding:
         """Execute the probe against a target system via the adapter.
 
         Args:
             adapter: An adapter instance (LangGraph, Protocol, etc.)
+            provider: Optional LLMProvider for smart payload generation.
 
         Returns:
             Finding with status, evidence, and remediation.

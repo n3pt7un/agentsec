@@ -112,7 +112,11 @@ class ImpersonationProbe(BaseProbe):
             ],
         )
 
-    async def attack(self, adapter: AbstractAdapter) -> Finding:
+    async def _generate_payloads(self, provider=None) -> list[str]:
+        """Generate attack payloads. Uses hardcoded fallback; LLM enhancement in Phase 2."""
+        return list(_ALL_PAYLOADS)
+
+    async def attack(self, adapter: AbstractAdapter, provider=None) -> Finding:
         """Send forged supervisor messages and check for marker compliance.
 
         Targets each discovered agent in turn until a vulnerable one is found
@@ -120,6 +124,7 @@ class ImpersonationProbe(BaseProbe):
 
         Args:
             adapter: Adapter wrapping the target agent system.
+            provider: Optional LLMProvider for smart payload generation.
 
         Returns:
             Finding with status VULNERABLE if any agent echoed the marker,

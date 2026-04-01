@@ -41,7 +41,7 @@ class CustomerSupportState(MessagesState):
     """State for the customer support graph."""
 
     booking_context: dict[str, str]
-    next: str
+    next: str  # routing target; nodes write this, router reads it via .get() for safety
 
 
 # ---------------------------------------------------------------------------

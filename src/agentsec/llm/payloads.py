@@ -44,7 +44,8 @@ class PayloadGenerator:
                 if result.strip():
                     payloads.append(result.strip())
             except Exception:
-                logger.debug("LLM payload generation failed, using hardcoded fallbacks", exc_info=True)
+                logger.debug("LLM payload generation failed, using hardcoded fallbacks", 
+                            exc_info=True)
 
         payloads.extend(fallbacks)
         return payloads

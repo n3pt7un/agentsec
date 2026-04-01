@@ -21,11 +21,12 @@ class ScanConfig(BaseSettings):
     )
     verbose: bool = False
     timeout_per_probe: int = Field(default=120, description="Max seconds per probe")
-    llm_provider: str = Field(
-        default="anthropic", description="LLM provider for payload generation"
-    )
+    smart: bool = Field(default=False, description="Use LLM for smart payloads and detection")
     llm_model: str = Field(
-        default="claude-sonnet-4-20250514", description="Model for payload generation"
+        default="anthropic/claude-sonnet-4", description="Model for payload generation"
+    )
+    openrouter_api_key: str | None = Field(
+        default=None, description="OpenRouter API key for smart mode"
     )
     output_file: str | None = Field(default=None, description="Write findings to this file")
     output_format: str = Field(

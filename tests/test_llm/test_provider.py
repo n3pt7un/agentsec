@@ -5,8 +5,11 @@ from __future__ import annotations
 import pytest
 from pydantic import ValidationError
 
+from agentsec.core.config import ScanConfig
+from agentsec.core.exceptions import LLMAuthError
 from agentsec.llm.offline import OfflineProvider
-from agentsec.llm.provider import ClassificationResult, LLMProvider
+from agentsec.llm.openrouter import OpenRouterProvider
+from agentsec.llm.provider import ClassificationResult, LLMProvider, get_provider
 
 
 class TestClassificationResult:
@@ -51,3 +54,30 @@ class TestOfflineProvider:
     async def test_validate_succeeds(self):
         provider = OfflineProvider()
         await provider.validate()  # Should not raise
+
+
+class TestGetProvider:
+    def test_returns_offline_when_not_smart(self):
+        config = ScanConfig()
+        provider = get_provider(config)
+        assert isinstance(provider, OfflineProvider)
+
+    def test_returns_openrouter_when_smart_with_key(self):
+        config = ScanConfig(smart=True, openrouter_api_key="sk-or-test")
+        provider = get_provider(config)
+        assert isinstance(provider, OpenRouterProvider)
+
+    def test_raises_when_smart_without_key(self):
+        config = ScanConfig(smart=True)
+        with pytest.raises(LLMAuthError, match="OpenRouter API key"):
+            get_provider(config)
+
+    def test_uses_configured_model(self):
+        config = ScanConfig(
+            smart=True,
+            openrouter_api_key="sk-or-test",
+            llm_model="google/gemini-2.5-pro",
+        )
+        provider = get_provider(config)
+        assert isinstance(provider, OpenRouterProvider)
+        assert provider._model == "google/gemini-2.5-pro"

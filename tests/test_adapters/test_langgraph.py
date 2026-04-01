@@ -14,20 +14,20 @@ from tests.fixtures.vulnerable_rag import build_vulnerable_rag
 
 @pytest.fixture
 def simple_chain_adapter():
-    """Adapter wrapping the simple 3-node chain."""
-    return LangGraphAdapter(build_simple_chain())
+    """Adapter wrapping the simple 3-node chain with safe responses."""
+    return LangGraphAdapter(build_simple_chain(vulnerable=False))
 
 
 @pytest.fixture
 def supervisor_adapter():
-    """Adapter wrapping the supervisor crew graph."""
-    return LangGraphAdapter(build_supervisor_crew())
+    """Adapter wrapping the supervisor crew graph with safe responses."""
+    return LangGraphAdapter(build_supervisor_crew(vulnerable=False))
 
 
 @pytest.fixture
 def rag_adapter():
-    """Adapter wrapping the vulnerable RAG graph."""
-    return LangGraphAdapter(build_vulnerable_rag())
+    """Adapter wrapping the vulnerable RAG graph with safe responses."""
+    return LangGraphAdapter(build_vulnerable_rag(vulnerable=False))
 
 
 # ------------------------------------------------------------------
@@ -208,7 +208,7 @@ class TestCapabilities:
         assert caps.can_access_memory is False
 
     def test_with_checkpointer_capabilities(self):
-        graph = build_simple_chain()
+        graph = build_simple_chain(vulnerable=False)
         adapter = LangGraphAdapter(graph, checkpointer=object())
         caps = adapter.capabilities()
         assert caps.can_inspect_state is True
@@ -237,6 +237,7 @@ class TestCustomResponses:
 
     async def test_simple_chain_custom_responses(self):
         graph = build_simple_chain(
+            vulnerable=False,
             responses_a=["Custom A"],
             responses_b=["Custom B"],
             responses_c=["Custom C"],
@@ -247,6 +248,7 @@ class TestCustomResponses:
 
     async def test_supervisor_custom_responses(self):
         graph = build_supervisor_crew(
+            vulnerable=False,
             reviewer_responses=["LGTM, ship it!"],
         )
         adapter = LangGraphAdapter(graph)

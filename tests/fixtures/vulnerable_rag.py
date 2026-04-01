@@ -12,15 +12,16 @@ from __future__ import annotations
 from typing import Any
 
 from langchain_core.language_models import FakeListChatModel
+from langgraph.checkpoint.base import BaseCheckpointSaver
 from langgraph.graph import MessagesState, StateGraph
 from langgraph.graph.state import CompiledStateGraph
+
+from tests.fixtures.utils import EchoModel
 
 _DEFAULT_RETRIEVER_RESPONSES = [
     "Retrieved context: The company password policy requires 12 characters."
 ]
-_DEFAULT_RESPONDER_RESPONSES = [
-    "Based on the retrieved information, here is your answer."
-]
+_DEFAULT_RESPONDER_RESPONSES = ["Based on the retrieved information, here is your answer."]
 
 
 class MemoryState(MessagesState):
@@ -31,16 +32,31 @@ class MemoryState(MessagesState):
 
 def build_vulnerable_rag(
     *,
+    vulnerable: bool = True,
     retriever_responses: list[str] | None = None,
     responder_responses: list[str] | None = None,
+    checkpointer: BaseCheckpointSaver | None = None,
 ) -> CompiledStateGraph:
     """Build a RAG system with unsanitised context injection and open memory.
+
+    Args:
+        vulnerable: When True, both nodes use EchoModel so any probe payload
+            injected as a human message is reflected back in the response,
+            producing VULNERABLE findings.  When False, nodes use safe
+            FakeListChatModel responses that do not echo probe markers.
+        retriever_responses: Custom responses for retriever (vulnerable=False only).
+        responder_responses: Custom responses for responder (vulnerable=False only).
+        checkpointer: Optional LangGraph checkpointer for persistent-memory probes.
 
     Returns:
         A compiled LangGraph StateGraph.
     """
-    llm_ret = FakeListChatModel(responses=retriever_responses or _DEFAULT_RETRIEVER_RESPONSES)
-    llm_resp = FakeListChatModel(responses=responder_responses or _DEFAULT_RESPONDER_RESPONSES)
+    if vulnerable:
+        llm_ret = EchoModel()
+        llm_resp = EchoModel()
+    else:
+        llm_ret = FakeListChatModel(responses=retriever_responses or _DEFAULT_RETRIEVER_RESPONSES)
+        llm_resp = FakeListChatModel(responses=responder_responses or _DEFAULT_RESPONDER_RESPONSES)
 
     def retriever(state: MemoryState) -> dict[str, Any]:
         """Retriever agent — fetches context and injects it unsanitised."""
@@ -77,7 +93,7 @@ def build_vulnerable_rag(
     graph.add_edge("retriever", "responder")
     graph.set_finish_point("responder")
 
-    return graph.compile()
+    return graph.compile(checkpointer=checkpointer)
 
 
 class _VectorSearchStub:

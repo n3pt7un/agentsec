@@ -14,6 +14,8 @@ from langchain_core.language_models import FakeListChatModel
 from langgraph.graph import MessagesState, StateGraph
 from langgraph.graph.state import CompiledStateGraph
 
+from tests.fixtures.utils import EchoModel
+
 # Default responses for each agent when no custom model is supplied.
 _DEFAULT_RESPONSES_A = ["I'll pass this along to the processor."]
 _DEFAULT_RESPONSES_B = ["Here are the search results: [data]. Forwarding to formatter."]
@@ -22,6 +24,7 @@ _DEFAULT_RESPONSES_C = ["Final formatted answer: The answer is 42."]
 
 def build_simple_chain(
     *,
+    vulnerable: bool = True,
     responses_a: list[str] | None = None,
     responses_b: list[str] | None = None,
     responses_c: list[str] | None = None,
@@ -29,16 +32,25 @@ def build_simple_chain(
     """Build a linear 3-node chain with no security controls.
 
     Args:
-        responses_a: Custom responses for agent A's FakeListChatModel.
-        responses_b: Custom responses for agent B's FakeListChatModel.
-        responses_c: Custom responses for agent C's FakeListChatModel.
+        vulnerable: When True, all nodes use EchoModel so any probe payload
+            injected as a human message is reflected back in the response,
+            producing VULNERABLE findings.  When False, nodes use safe
+            FakeListChatModel responses that do not echo probe markers.
+        responses_a: Custom responses for agent A (only used when vulnerable=False).
+        responses_b: Custom responses for agent B (only used when vulnerable=False).
+        responses_c: Custom responses for agent C (only used when vulnerable=False).
 
     Returns:
         A compiled LangGraph StateGraph.
     """
-    llm_a = FakeListChatModel(responses=responses_a or _DEFAULT_RESPONSES_A)
-    llm_b = FakeListChatModel(responses=responses_b or _DEFAULT_RESPONSES_B)
-    llm_c = FakeListChatModel(responses=responses_c or _DEFAULT_RESPONSES_C)
+    if vulnerable:
+        llm_a = EchoModel()
+        llm_b = EchoModel()
+        llm_c = EchoModel()
+    else:
+        llm_a = FakeListChatModel(responses=responses_a or _DEFAULT_RESPONSES_A)
+        llm_b = FakeListChatModel(responses=responses_b or _DEFAULT_RESPONSES_B)
+        llm_c = FakeListChatModel(responses=responses_c or _DEFAULT_RESPONSES_C)
 
     def agent_a(state: MessagesState) -> MessagesState:
         """Intake agent — receives user input with no validation."""

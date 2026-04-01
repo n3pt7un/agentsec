@@ -76,8 +76,14 @@ class AbstractAdapter(ABC):
         """
         raise NotImplementedError("This adapter does not support memory access")
 
-    async def write_memory(self, agent: str, key: str, value: str) -> None:
+    async def write_memory(self, agent: str, key: str, value: str | dict[str, str]) -> None:
         """Write to agent memory (if supported).
+
+        Args:
+            agent: Name of the target agent.
+            key: Top-level state key to write (e.g. ``"memory"``).
+            value: Value to store — either a plain string or a dict for
+                structured memory fields.
 
         Raises:
             NotImplementedError: If the adapter does not support memory writes.

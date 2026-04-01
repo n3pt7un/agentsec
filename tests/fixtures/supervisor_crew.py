@@ -13,6 +13,8 @@ from langchain_core.language_models import FakeListChatModel
 from langgraph.graph import MessagesState, StateGraph
 from langgraph.graph.state import CompiledStateGraph
 
+from tests.fixtures.utils import EchoModel
+
 _DEFAULT_SUPERVISOR_RESPONSES = ["Delegating to researcher."]
 _DEFAULT_RESEARCHER_RESPONSES = ["Research findings: LLM agents need security testing."]
 _DEFAULT_WRITER_RESPONSES = ["Draft report: Agentic systems have 10 key risks."]
@@ -21,6 +23,7 @@ _DEFAULT_REVIEWER_RESPONSES = ["Review complete. Report approved."]
 
 def build_supervisor_crew(
     *,
+    vulnerable: bool = True,
     supervisor_responses: list[str] | None = None,
     researcher_responses: list[str] | None = None,
     writer_responses: list[str] | None = None,
@@ -28,13 +31,29 @@ def build_supervisor_crew(
 ) -> CompiledStateGraph:
     """Build a supervisor + workers graph with no security controls.
 
+    Args:
+        vulnerable: When True, all nodes use EchoModel so any probe payload
+            injected as a human message is reflected back in the response,
+            producing VULNERABLE findings.  When False, nodes use safe
+            FakeListChatModel responses that do not echo probe markers.
+        supervisor_responses: Custom responses for supervisor (vulnerable=False only).
+        researcher_responses: Custom responses for researcher (vulnerable=False only).
+        writer_responses: Custom responses for writer (vulnerable=False only).
+        reviewer_responses: Custom responses for reviewer (vulnerable=False only).
+
     Returns:
         A compiled LangGraph StateGraph.
     """
-    llm_sup = FakeListChatModel(responses=supervisor_responses or _DEFAULT_SUPERVISOR_RESPONSES)
-    llm_res = FakeListChatModel(responses=researcher_responses or _DEFAULT_RESEARCHER_RESPONSES)
-    llm_wri = FakeListChatModel(responses=writer_responses or _DEFAULT_WRITER_RESPONSES)
-    llm_rev = FakeListChatModel(responses=reviewer_responses or _DEFAULT_REVIEWER_RESPONSES)
+    if vulnerable:
+        llm_sup = EchoModel()
+        llm_res = EchoModel()
+        llm_wri = EchoModel()
+        llm_rev = EchoModel()
+    else:
+        llm_sup = FakeListChatModel(responses=supervisor_responses or _DEFAULT_SUPERVISOR_RESPONSES)
+        llm_res = FakeListChatModel(responses=researcher_responses or _DEFAULT_RESEARCHER_RESPONSES)
+        llm_wri = FakeListChatModel(responses=writer_responses or _DEFAULT_WRITER_RESPONSES)
+        llm_rev = FakeListChatModel(responses=reviewer_responses or _DEFAULT_REVIEWER_RESPONSES)
 
     def supervisor(state: MessagesState) -> MessagesState:
         """Supervisor agent — delegates tasks without verifying worker identity."""

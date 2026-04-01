@@ -161,8 +161,14 @@ class LangGraphAdapter(AbstractAdapter):
         values = state.values if hasattr(state, "values") else {}
         return {"agent": agent, "state": values}
 
-    async def write_memory(self, agent: str, key: str, value: str) -> None:
-        """Write a key into the graph state via update_state."""
+    async def write_memory(self, agent: str, key: str, value: str | dict[str, str]) -> None:
+        """Write a key into the graph state via update_state.
+
+        Args:
+            agent: Name of the target agent (informational; not used for routing).
+            key: Top-level state key to write (e.g. ``"memory"``).
+            value: String or dict value to store at ``key``.
+        """
         if self.checkpointer is None:
             raise NotImplementedError("No checkpointer configured — cannot write memory")
         await self.graph.aupdate_state(

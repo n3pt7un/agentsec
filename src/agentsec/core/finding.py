@@ -58,9 +58,7 @@ class Remediation(BaseModel):
     summary: str = Field(description="One-line description of the fix")
     code_before: str | None = Field(default=None, description="Vulnerable code pattern")
     code_after: str | None = Field(default=None, description="Fixed code pattern")
-    architecture_note: str | None = Field(
-        default=None, description="Architectural recommendation"
-    )
+    architecture_note: str | None = Field(default=None, description="Architectural recommendation")
     references: list[str] = Field(default_factory=list, description="Links to OWASP/docs")
 
 

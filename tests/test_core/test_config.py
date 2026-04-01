@@ -1,6 +1,5 @@
 """Tests for ScanConfig."""
 
-
 from agentsec.core.config import ScanConfig
 
 

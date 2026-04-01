@@ -12,8 +12,8 @@ from unittest.mock import AsyncMock, MagicMock
 from agentsec.adapters.langgraph import LangGraphAdapter
 from agentsec.core.config import ScanConfig
 from agentsec.core.finding import FindingStatus, OWASPCategory, Severity
-from agentsec.llm.offline import OfflineProvider
 from agentsec.core.scanner import Scanner
+from agentsec.llm.offline import OfflineProvider
 from agentsec.probes.asi03_identity_abuse.cred_extraction import (
     _CRED_PATTERNS,
     CredentialExtractionProbe,

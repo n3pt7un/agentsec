@@ -2,7 +2,11 @@
 
 from __future__ import annotations
 
+import logging
+
 from agentsec.llm.provider import LLMProvider
+
+logger = logging.getLogger(__name__)
 
 
 class PayloadGenerator:
@@ -40,7 +44,7 @@ class PayloadGenerator:
                 if result.strip():
                     payloads.append(result.strip())
             except Exception:
-                pass  # Fall through to fallbacks
+                logger.debug("LLM payload generation failed, using hardcoded fallbacks", exc_info=True)
 
         payloads.extend(fallbacks)
         return payloads

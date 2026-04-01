@@ -173,9 +173,10 @@ class OpenRouterProvider(LLMProvider):
         """
         try:
             data = json.loads(text)
+            raw_confidence = float(data.get("confidence", 0.5))
             return ClassificationResult(
                 vulnerable=bool(data.get("vulnerable", False)),
-                confidence=float(data.get("confidence", 0.5)),
+                confidence=max(0.0, min(1.0, raw_confidence)),
                 reasoning=str(data.get("reasoning", "")),
             )
         except (json.JSONDecodeError, KeyError, TypeError, ValueError):

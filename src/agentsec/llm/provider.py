@@ -3,15 +3,19 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from typing import TYPE_CHECKING
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
+
+if TYPE_CHECKING:
+    from agentsec.core.config import ScanConfig
 
 
 class ClassificationResult(BaseModel):
     """Structured result from LLM-based vulnerability classification."""
 
     vulnerable: bool
-    confidence: float
+    confidence: float = Field(ge=0.0, le=1.0)
     reasoning: str
 
 
@@ -39,7 +43,7 @@ class LLMProvider(ABC):
         ...
 
 
-def get_provider(config) -> LLMProvider:
+def get_provider(config: ScanConfig) -> LLMProvider:
     """Return the best available provider based on config.
 
     Args:
@@ -54,17 +58,15 @@ def get_provider(config) -> LLMProvider:
     """
     from agentsec.llm.offline import OfflineProvider
 
-    if getattr(config, "smart", False):
+    if config.smart:
         from agentsec.core.exceptions import LLMAuthError
         from agentsec.llm.openrouter import OpenRouterProvider
 
-        api_key = getattr(config, "openrouter_api_key", None)
-        if not api_key:
+        if not config.openrouter_api_key:
             raise LLMAuthError(
                 "Smart mode requires an OpenRouter API key. "
                 "Set AGENTSEC_OPENROUTER_API_KEY or pass --openrouter-api-key."
             )
-        model = getattr(config, "llm_model", "anthropic/claude-sonnet-4")
-        return OpenRouterProvider(model=model, api_key=api_key)
+        return OpenRouterProvider(model=config.llm_model, api_key=config.openrouter_api_key)
 
     return OfflineProvider()

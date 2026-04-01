@@ -121,3 +121,55 @@ async def test_swarm_resistant_scan_has_no_vulnerable():
     scanner = Scanner(adapter, ScanConfig())
     result = await scanner.run(target="swarm_harness")
     assert not any(f.status == FindingStatus.VULNERABLE for f in result.findings)
+
+
+# ---------------------------------------------------------------------------
+# Customer support RAG harness (no importorskip — base LangGraph only)
+# ---------------------------------------------------------------------------
+
+
+def test_customer_support_compiles_vulnerable():
+    from tests.targets.rag_customer_support_harness import build_customer_support_target
+
+    graph = build_customer_support_target(vulnerable=True)
+    assert graph is not None
+
+
+def test_customer_support_compiles_resistant():
+    from tests.targets.rag_customer_support_harness import build_customer_support_target
+
+    graph = build_customer_support_target(vulnerable=False)
+    assert graph is not None
+
+
+@pytest.mark.asyncio
+async def test_customer_support_discovery():
+    from tests.targets.rag_customer_support_harness import build_customer_support_target
+
+    adapter = LangGraphAdapter(build_customer_support_target(vulnerable=True))
+    agents = await adapter.discover()
+    names = {a.name for a in agents}
+    assert "primary_assistant" in names
+    assert "flight_assistant" in names
+    assert "hotel_assistant" in names
+    assert len(names) >= 5
+
+
+@pytest.mark.asyncio
+async def test_customer_support_vulnerable_scan_produces_findings():
+    from tests.targets.rag_customer_support_harness import build_customer_support_target
+
+    adapter = LangGraphAdapter(build_customer_support_target(vulnerable=True))
+    scanner = Scanner(adapter, ScanConfig())
+    result = await scanner.run(target="rag_customer_support_harness")
+    assert any(f.status == FindingStatus.VULNERABLE for f in result.findings)
+
+
+@pytest.mark.asyncio
+async def test_customer_support_resistant_scan_has_no_vulnerable():
+    from tests.targets.rag_customer_support_harness import build_customer_support_target
+
+    adapter = LangGraphAdapter(build_customer_support_target(vulnerable=False))
+    scanner = Scanner(adapter, ScanConfig())
+    result = await scanner.run(target="rag_customer_support_harness")
+    assert not any(f.status == FindingStatus.VULNERABLE for f in result.findings)

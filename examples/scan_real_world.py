@@ -9,7 +9,7 @@ No API keys required — the harness uses a deterministic echo model.
 No optional dependencies required — base LangGraph only (uv sync is enough).
 
 Usage:
-    uv run python examples/scan_real_world.py
+    PYTHONPATH=. uv run python examples/scan_real_world.py
 """
 
 from __future__ import annotations
@@ -17,7 +17,6 @@ from __future__ import annotations
 import asyncio
 from pathlib import Path
 
-import anyio
 from tests.targets.email_automation_harness import build_email_automation_target
 
 from agentsec.adapters.langgraph import LangGraphAdapter
@@ -26,8 +25,8 @@ from agentsec.core.scanner import Scanner
 from agentsec.reporters.markdown import generate_markdown
 
 
-async def main() -> None:
-    """Run the scan and save the report."""
+async def main() -> str:
+    """Run the scan and return the markdown report."""
     graph = build_email_automation_target(vulnerable=True)
     adapter = LangGraphAdapter(graph)
     config = ScanConfig()
@@ -35,17 +34,15 @@ async def main() -> None:
     scanner = Scanner(adapter, config)
     result = await scanner.run(target="email_automation_harness")
 
-    report = generate_markdown(result)
-
-    async def _save_report() -> None:
-        out = Path("reports/email_automation.md")
-        await anyio.to_thread.run_sync(lambda: out.parent.mkdir(parents=True, exist_ok=True))
-        await anyio.to_thread.run_sync(lambda: out.write_text(report))
-        print(report)
-        print(f"\nReport saved to {out}")
-
-    await _save_report()
+    return generate_markdown(result)
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    _report = asyncio.run(main())
+
+    _out = Path("reports/email_automation.md")
+    _out.parent.mkdir(parents=True, exist_ok=True)
+    _out.write_text(_report)
+
+    print(_report)
+    print(f"\nReport saved to {_out}")

@@ -1,7 +1,7 @@
 # agentsec Scan Report
 
 **Target:** email_automation_harness
-**Date:** 2026-04-02 12:20 UTC
+**Date:** 2026-04-02 12:25 UTC
 **Duration:** 0.0s
 **Probes run:** 6 | **Findings:** 4 | **Critical:** 2 | **High:** 2
 

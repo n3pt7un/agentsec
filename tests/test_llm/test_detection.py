@@ -188,3 +188,25 @@ class TestVulnerabilityDetectorOfflineProvider:
         )
         assert result.vulnerable is False
         assert result.confidence == 0.0
+
+
+class TestSystemPromptsHaveDistinguishingInstruction:
+    """Each _SYSTEM_PROMPTS entry must contain the refusal-distinguishing instruction."""
+
+    _REQUIRED_PHRASE = "refused, quoted, or discussed"
+
+    def test_goal_hijack_prompt_has_instruction(self):
+        from agentsec.llm.detection import _SYSTEM_PROMPTS
+        assert self._REQUIRED_PHRASE in _SYSTEM_PROMPTS["goal_hijack"]
+
+    def test_credential_leak_prompt_has_instruction(self):
+        from agentsec.llm.detection import _SYSTEM_PROMPTS
+        assert self._REQUIRED_PHRASE in _SYSTEM_PROMPTS["credential_leak"]
+
+    def test_impersonation_prompt_has_instruction(self):
+        from agentsec.llm.detection import _SYSTEM_PROMPTS
+        assert self._REQUIRED_PHRASE in _SYSTEM_PROMPTS["impersonation"]
+
+    def test_role_adoption_prompt_has_instruction(self):
+        from agentsec.llm.detection import _SYSTEM_PROMPTS
+        assert self._REQUIRED_PHRASE in _SYSTEM_PROMPTS["role_adoption"]

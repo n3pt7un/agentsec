@@ -1,12 +1,38 @@
+import { IconAlertCircle } from '@tabler/icons-react';
+
 export default function ErrorState({ message, onRetry }) {
   return (
-    <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-6 text-center">
-      <div className="text-3xl mb-3">⚠️</div>
-      <p className="text-red-300 mb-4">{message || 'Something went wrong'}</p>
+    <div style={{
+      background: 'var(--danger-bg)',
+      border: '1px solid var(--border-red)',
+      borderRadius: 'var(--radius)',
+      padding: '24px',
+      textAlign: 'center',
+    }}>
+      <div style={{ color: 'var(--danger)', marginBottom: '12px', display: 'flex', justifyContent: 'center' }}>
+        <IconAlertCircle size={32} stroke={1.25} />
+      </div>
+      <p style={{
+        color: 'var(--danger)',
+        marginBottom: onRetry ? '16px' : 0,
+        fontSize: '13px',
+        fontFamily: 'var(--font-sans)',
+      }}>
+        {message || 'Something went wrong'}
+      </p>
       {onRetry && (
         <button
           onClick={onRetry}
-          className="bg-red-600 hover:bg-red-500 px-4 py-2 rounded text-sm text-white"
+          style={{
+            border: '1px solid var(--danger)',
+            borderRadius: 'var(--radius)',
+            padding: '6px 14px',
+            fontSize: '13px',
+            color: 'var(--danger)',
+            background: 'transparent',
+            cursor: 'pointer',
+            fontFamily: 'var(--font-sans)',
+          }}
         >
           Try Again
         </button>

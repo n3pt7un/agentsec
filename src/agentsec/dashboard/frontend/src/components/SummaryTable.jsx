@@ -11,8 +11,19 @@ const CATEGORY_NAMES = {
   ASI10: 'Rogue Agent Behavior',
 };
 
+const thStyle = {
+  padding: '8px 14px',
+  fontSize: '10px',
+  fontFamily: 'var(--font-sans)',
+  color: 'var(--text-muted)',
+  textTransform: 'uppercase',
+  letterSpacing: '0.08em',
+  fontWeight: 600,
+  textAlign: 'left',
+  borderBottom: '1px solid var(--border)',
+};
+
 export default function SummaryTable({ findings }) {
-  // Group by category
   const categories = {};
   for (const f of findings) {
     const cat = f.category;
@@ -26,33 +37,52 @@ export default function SummaryTable({ findings }) {
   const sorted = Object.entries(categories).sort(([a], [b]) => a.localeCompare(b));
 
   return (
-    <div className="bg-slate-800 rounded-lg border border-slate-700 overflow-hidden">
-      <table className="w-full text-sm">
+    <div style={{
+      background: 'var(--bg-surface)',
+      border: '1px solid var(--border)',
+      borderRadius: 'var(--radius)',
+      overflow: 'hidden',
+    }}>
+      <table style={{ width: '100%', fontSize: '13px', borderCollapse: 'collapse' }}>
         <thead>
-          <tr className="border-b border-slate-700 text-left text-slate-400">
-            <th className="px-4 py-3">Category</th>
-            <th className="px-4 py-3 text-center">Probes</th>
-            <th className="px-4 py-3 text-center">Vulnerable</th>
-            <th className="px-4 py-3 text-center">Resistant</th>
+          <tr>
+            <th style={thStyle}>Category</th>
+            <th style={{ ...thStyle, textAlign: 'center' }}>Probes</th>
+            <th style={{ ...thStyle, textAlign: 'center' }}>Vulnerable</th>
+            <th style={{ ...thStyle, textAlign: 'center' }}>Resistant</th>
           </tr>
         </thead>
         <tbody>
-          {sorted.map(([cat, counts]) => (
-            <tr key={cat} className="border-b border-slate-700/50 hover:bg-slate-700/30">
-              <td className="px-4 py-2">
-                <span className="font-mono text-xs text-blue-400 mr-2">{cat}</span>
-                <span className="text-slate-300">{CATEGORY_NAMES[cat] || cat}</span>
+          {sorted.map(([cat, counts], i) => (
+            <tr key={cat} style={{
+              background: i % 2 === 0 ? 'var(--bg-surface)' : 'var(--bg-surface-raised)',
+              borderBottom: '1px solid var(--border)',
+            }}>
+              <td style={{ padding: '8px 14px' }}>
+                <span style={{
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: '11px',
+                  color: 'var(--accent)',
+                  marginRight: '8px',
+                }}>
+                  {cat}
+                </span>
+                <span style={{ color: 'var(--text-secondary)', fontFamily: 'var(--font-sans)' }}>
+                  {CATEGORY_NAMES[cat] || cat}
+                </span>
               </td>
-              <td className="px-4 py-2 text-center text-slate-300">{counts.total}</td>
-              <td className="px-4 py-2 text-center">
-                {counts.vulnerable > 0
-                  ? <span className="text-red-400 font-bold">{counts.vulnerable}</span>
-                  : <span className="text-slate-500">0</span>}
+              <td style={{ padding: '8px 14px', textAlign: 'center', color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)' }}>
+                {counts.total}
               </td>
-              <td className="px-4 py-2 text-center">
-                {counts.resistant > 0
-                  ? <span className="text-green-400">{counts.resistant}</span>
-                  : <span className="text-slate-500">0</span>}
+              <td style={{ padding: '8px 14px', textAlign: 'center', fontFamily: 'var(--font-mono)', fontWeight: counts.vulnerable > 0 ? 600 : 400 }}>
+                <span style={{ color: counts.vulnerable > 0 ? 'var(--danger)' : 'var(--text-muted)' }}>
+                  {counts.vulnerable}
+                </span>
+              </td>
+              <td style={{ padding: '8px 14px', textAlign: 'center', fontFamily: 'var(--font-mono)' }}>
+                <span style={{ color: counts.resistant > 0 ? 'var(--accent)' : 'var(--text-muted)' }}>
+                  {counts.resistant}
+                </span>
               </td>
             </tr>
           ))}

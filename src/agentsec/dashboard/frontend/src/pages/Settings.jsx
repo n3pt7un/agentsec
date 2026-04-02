@@ -10,6 +10,16 @@ const MODELS = [
   { value: 'google/gemini-2.0-flash-001', label: 'Gemini 2.0 Flash' },
 ];
 
+const TARGET_MODELS = [
+  { value: 'openai/gpt-4.1-nano', label: 'GPT-4.1 Nano (fast, cheap — good default)' },
+  { value: 'openai/gpt-4o-mini', label: 'GPT-4o Mini' },
+  { value: 'openai/gpt-4o', label: 'GPT-4o' },
+  { value: 'anthropic/claude-haiku-4-5', label: 'Claude Haiku 4.5' },
+  { value: 'anthropic/claude-sonnet-4-6', label: 'Claude Sonnet 4.6' },
+  { value: 'google/gemini-2.0-flash-001', label: 'Gemini 2.0 Flash' },
+  { value: 'meta-llama/llama-3.3-70b-instruct', label: 'Llama 3.3 70B' },
+];
+
 export default function Settings() {
   const { settings, updateSettings } = useSettings();
   const [saved, setSaved] = useState(false);
@@ -40,6 +50,22 @@ export default function Settings() {
             className="w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 text-sm"
           >
             {MODELS.map(m => (
+              <option key={m.value} value={m.value}>{m.label}</option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-sm text-slate-400 mb-1">Target Model</label>
+          <p className="text-xs text-slate-500 mb-2">
+            The LLM running <em>inside</em> your agent under test. Only used when <strong>Live LLM</strong> is enabled on a scan.
+          </p>
+          <select
+            value={form.target_model}
+            onChange={e => setForm({ ...form, target_model: e.target.value })}
+            className="w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 text-sm"
+          >
+            {TARGET_MODELS.map(m => (
               <option key={m.value} value={m.value}>{m.label}</option>
             ))}
           </select>

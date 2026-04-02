@@ -4,6 +4,7 @@ const STORAGE_KEY = 'agentsec-settings';
 
 const DEFAULTS = {
   llm_model: 'anthropic/claude-sonnet-4-6',
+  target_model: 'openai/gpt-4.1-nano',
   openrouter_api_key: '',
 };
 

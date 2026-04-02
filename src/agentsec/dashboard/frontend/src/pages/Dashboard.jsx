@@ -37,6 +37,7 @@ export default function Dashboard() {
       const mergedConfig = {
         ...config,
         llm_model: settings.llm_model,
+        target_model: settings.target_model || undefined,
         openrouter_api_key: settings.openrouter_api_key || undefined,
       };
       const data = await startScan(mergedConfig);

@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
 import { useTheme } from '../hooks/useTheme';
 import {
@@ -17,6 +18,8 @@ const NAV_ITEMS = [
 export default function Layout() {
   const location = useLocation();
   const { theme, toggle } = useTheme();
+  const [hoveredNav, setHoveredNav] = useState(null);
+  const [toggleHovered, setToggleHovered] = useState(false);
 
   const isActive = (to) =>
     to === '/' ? location.pathname === '/' : location.pathname.startsWith(to);
@@ -56,6 +59,8 @@ export default function Layout() {
               <Link
                 key={to}
                 to={to}
+                onMouseEnter={() => setHoveredNav(to)}
+                onMouseLeave={() => setHoveredNav(null)}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
@@ -63,13 +68,11 @@ export default function Layout() {
                   padding: '4px 10px',
                   fontSize: '13px',
                   fontFamily: 'var(--font-sans)',
-                  color: active ? 'var(--accent)' : 'var(--text-muted)',
+                  color: active ? 'var(--accent)' : (hoveredNav === to ? 'var(--text-secondary)' : 'var(--text-muted)'),
                   textDecoration: 'none',
                   borderBottom: active ? '1px solid var(--accent)' : '1px solid transparent',
                   transition: 'color 0.1s',
                 }}
-                onMouseEnter={e => { if (!active) e.currentTarget.style.color = 'var(--text-secondary)'; }}
-                onMouseLeave={e => { if (!active) e.currentTarget.style.color = 'var(--text-muted)'; }}
               >
                 <Icon size={14} stroke={1.25} />
                 {label}
@@ -81,21 +84,22 @@ export default function Layout() {
         {/* Theme toggle */}
         <button
           onClick={toggle}
+          aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
           title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+          onMouseEnter={() => setToggleHovered(true)}
+          onMouseLeave={() => setToggleHovered(false)}
           style={{
             marginLeft: 'auto',
             background: 'none',
             border: 'none',
             cursor: 'pointer',
-            color: 'var(--text-muted)',
+            color: toggleHovered ? 'var(--text-primary)' : 'var(--text-muted)',
             display: 'flex',
             alignItems: 'center',
             padding: '4px',
             borderRadius: 'var(--radius)',
             transition: 'color 0.1s',
           }}
-          onMouseEnter={e => { e.currentTarget.style.color = 'var(--text-primary)'; }}
-          onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-muted)'; }}
         >
           {theme === 'dark'
             ? <IconSun size={16} stroke={1.25} />

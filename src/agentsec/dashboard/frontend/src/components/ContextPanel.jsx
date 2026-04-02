@@ -1,6 +1,6 @@
 import { useActiveSection } from '../hooks/useActiveSection';
 
-export default function ContextPanel({ sections }) {
+export default function ContextPanel({ sections = [] }) {
   const ids = sections.map(s => s.id);
   const activeId = useActiveSection(ids);
 
@@ -19,6 +19,7 @@ export default function ContextPanel({ sections }) {
           <a
             key={s.id}
             href={`#${s.id}`}
+            aria-current={activeId === s.id ? 'true' : undefined}
             style={{
               display: 'block',
               padding: '5px 0',

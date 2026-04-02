@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 
 export function useActiveSection(sectionIds) {
-  const [activeId, setActiveId] = useState(sectionIds[0] ?? null);
+  const [activeId, setActiveId] = useState(null);
 
   useEffect(() => {
     if (sectionIds.length === 0) return;

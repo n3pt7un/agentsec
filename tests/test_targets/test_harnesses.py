@@ -212,7 +212,7 @@ def test_customer_support_live_raises_without_api_key(monkeypatch):
 # Live mode — mocked ChatOpenAI, accepts live=True without real API calls
 # ---------------------------------------------------------------------------
 
-_MOCK_LLM_PATH = "tests.targets._openrouter_llm.ChatOpenAI"
+_MOCK_LLM_PATH = "langchain_openai.ChatOpenAI"
 
 
 def test_supervisor_live_compiles_with_mocked_llm(monkeypatch):

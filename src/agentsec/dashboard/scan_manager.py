@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import os
 from dataclasses import dataclass, field
 from uuid import uuid4
 
@@ -100,6 +101,9 @@ class ScanManager:
     ) -> None:
         """Execute the scan, publishing events to the job's queue."""
         try:
+            if config.openrouter_api_key:
+                os.environ["OPENROUTER_API_KEY"] = config.openrouter_api_key
+
             graph = load_graph(
                 target, vulnerable=vulnerable, live=live, target_model=target_model
             )

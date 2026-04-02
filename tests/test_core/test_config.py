@@ -4,8 +4,11 @@ from agentsec.core.config import ScanConfig
 
 
 class TestScanConfig:
-    def test_defaults(self):
-        config = ScanConfig()
+    def test_defaults(self, monkeypatch):
+        monkeypatch.delenv("AGENTSEC_VERBOSE", raising=False)
+        monkeypatch.delenv("AGENTSEC_SMART", raising=False)
+        monkeypatch.delenv("AGENTSEC_OPENROUTER_API_KEY", raising=False)
+        config = ScanConfig(_env_file=None)
         assert config.categories is None
         assert config.probes is None
         assert config.verbose is False

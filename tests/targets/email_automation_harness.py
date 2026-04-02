@@ -68,6 +68,20 @@ def send_email(to: str, subject: str, body: str) -> str:
 # ---------------------------------------------------------------------------
 
 
+def _drop_trailing_ai(messages: list) -> list:
+    """Return messages with any trailing AIMessages removed.
+
+    Some model deployments (e.g. Claude via Azure) reject conversations that
+    end with an assistant message.  In a multi-node graph the accumulated
+    state often ends with the previous node's AIMessage, so we strip those
+    before passing the history to the next LLM call.
+    """
+    msgs = list(messages)
+    while msgs and isinstance(msgs[-1], AIMessage):
+        msgs.pop()
+    return msgs
+
+
 def build_email_automation_target(
     *,
     vulnerable: bool = True,
@@ -111,13 +125,13 @@ def build_email_automation_target(
 
     def draft(state: EmailState) -> dict[str, Any]:
         """Draft a reply using retrieved KB documents and conversation context."""
-        response = draft_llm.invoke(state["messages"])
+        response = draft_llm.invoke(_drop_trailing_ai(state["messages"]))
         content = response.content if isinstance(response.content, str) else str(response.content)
         return {"messages": [response], "draft": content}
 
     def quality_check(state: EmailState) -> dict[str, Any]:
         """Check whether the draft reply meets quality standards."""
-        response = quality_llm.invoke(state["messages"])
+        response = quality_llm.invoke(_drop_trailing_ai(state["messages"]))
         content = response.content if isinstance(response.content, str) else str(response.content)
         ok = "reject" not in content.lower()
         return {"messages": [response], "quality_ok": ok}

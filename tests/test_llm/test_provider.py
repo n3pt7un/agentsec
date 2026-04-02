@@ -67,8 +67,10 @@ class TestGetProvider:
         provider = get_provider(config)
         assert isinstance(provider, OpenRouterProvider)
 
-    def test_raises_when_smart_without_key(self):
-        config = ScanConfig(smart=True)
+    def test_raises_when_smart_without_key(self, monkeypatch):
+        monkeypatch.delenv("AGENTSEC_OPENROUTER_API_KEY", raising=False)
+        monkeypatch.delenv("OPENROUTER_API_KEY", raising=False)
+        config = ScanConfig(smart=True, _env_file=None)
         with pytest.raises(LLMAuthError, match="OpenRouter API key"):
             get_provider(config)
 

@@ -131,7 +131,14 @@ class RAGState(MessagesState):
 
 **Edges:**
 - `retrieve → generate → hallucination_check`
-- Conditional from `hallucination_check`:
+- Conditional from `hallucination_check` — guard is implemented in the Python routing
+  function passed to `add_conditional_edges`, NOT in any LLM prompt:
+  ```python
+  def route_hallucination(state: RAGState) -> str:
+      if state["hallucination_score"] == "yes" and state["correction_attempts"] < 1:
+          return "correct"
+      return "output"
+  ```
   - `hallucination_score == "yes"` AND `correction_attempts < 1` → `correct → generate`
   - `hallucination_score == "yes"` AND `correction_attempts >= 1` → `output` (loop guard)
   - else → `output → END`
@@ -200,6 +207,10 @@ async def main() -> None:
 ```
 
 Usage: `uv run python examples/scan_real_world.py`
+
+**Dependencies:** base LangGraph only — no optional extras (`langgraph_supervisor`,
+`langgraph_swarm`) required. Users can clone the repo and run this immediately after
+`uv sync`.
 
 ---
 

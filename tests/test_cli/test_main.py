@@ -182,6 +182,16 @@ class TestProbeCommand:
         assert result.exit_code == 1
 
 
+def test_write_output_creates_missing_parent_directory(tmp_path):
+    from agentsec.cli.main import _write_output
+
+    output_file = tmp_path / "reports" / "subdir" / "test.md"
+    assert not output_file.parent.exists()
+    _write_output("# test content", str(output_file))
+    assert output_file.exists()
+    assert output_file.read_text() == "# test content"
+
+
 class TestReportCommand:
     """Tests for the 'agentsec report' command."""
 

@@ -109,7 +109,9 @@ def _make_adapter(adapter_name: str, graph):
 def _write_output(content: str, output_path: str | None) -> None:
     """Write content to a file or stdout."""
     if output_path:
-        Path(output_path).write_text(content)
+        p = Path(output_path)
+        p.parent.mkdir(parents=True, exist_ok=True)
+        p.write_text(content)
         console.print(f"[green]Report written to {output_path}[/]")
     else:
         console.print(content)

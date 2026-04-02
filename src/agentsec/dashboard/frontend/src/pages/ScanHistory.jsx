@@ -9,7 +9,8 @@ export default function ScanHistory() {
   const [scans, setScans] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [sortBy, setSortBy] = useState('date'); // date | vulnerabilities | probes
+  const [sortBy, setSortBy] = useState('date');
+  const [hoveredId, setHoveredId] = useState(null);
 
   const loadScans = useCallback(async () => {
     setLoading(true);
@@ -36,7 +37,6 @@ export default function ScanHistory() {
     }
   };
 
-  // Sort
   const sorted = [...scans].sort((a, b) => {
     if (sortBy === 'vulnerabilities') return b.vulnerable_count - a.vulnerable_count;
     if (sortBy === 'probes') return b.total_probes - a.total_probes;
@@ -45,22 +45,28 @@ export default function ScanHistory() {
 
   if (error) return <ErrorState message={error} onRetry={loadScans} />;
 
+  const sortButtonStyle = (s) => ({
+    padding: '3px 8px',
+    borderRadius: 'var(--radius)',
+    fontSize: '11px',
+    fontFamily: 'var(--font-mono)',
+    border: '1px solid transparent',
+    cursor: 'pointer',
+    background: sortBy === s ? 'var(--bg-surface-raised)' : 'transparent',
+    color: sortBy === s ? 'var(--text-primary)' : 'var(--text-muted)',
+    transition: 'color 0.1s',
+  });
+
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold">Scan History</h1>
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-slate-500">Sort:</span>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <h1 style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'var(--font-sans)' }}>
+          Scan History
+        </h1>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+          <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontFamily: 'var(--font-sans)', marginRight: '4px' }}>Sort:</span>
           {['date', 'vulnerabilities', 'probes'].map(s => (
-            <button
-              key={s}
-              onClick={() => setSortBy(s)}
-              className={`px-2 py-1 rounded text-xs transition-colors ${
-                sortBy === s
-                  ? 'bg-slate-700 text-white'
-                  : 'text-slate-400 hover:text-white'
-              }`}
-            >
+            <button key={s} onClick={() => setSortBy(s)} style={sortButtonStyle(s)}>
               {s}
             </button>
           ))}
@@ -68,7 +74,7 @@ export default function ScanHistory() {
       </div>
 
       {loading ? (
-        <div className="space-y-2">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
           {Array.from({ length: 5 }).map((_, i) => <SkeletonCard key={i} />)}
         </div>
       ) : sorted.length === 0 ? (
@@ -79,13 +85,31 @@ export default function ScanHistory() {
           actionTo="/"
         />
       ) : (
-        <div className="space-y-2">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
           {sorted.map(scan => (
-            <div key={scan.scan_id} className="relative group">
+            <div
+              key={scan.scan_id}
+              style={{ position: 'relative' }}
+              onMouseEnter={() => setHoveredId(scan.scan_id)}
+              onMouseLeave={() => setHoveredId(null)}
+            >
               <ScanCard scan={scan} />
               <button
                 onClick={(e) => { e.preventDefault(); handleDelete(scan.scan_id); }}
-                className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 text-xs text-red-400 hover:text-red-300 transition-opacity"
+                style={{
+                  position: 'absolute',
+                  top: '12px',
+                  right: '12px',
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontSize: '11px',
+                  color: 'var(--danger)',
+                  fontFamily: 'var(--font-sans)',
+                  opacity: hoveredId === scan.scan_id ? 1 : 0,
+                  transition: 'opacity 0.1s',
+                  pointerEvents: hoveredId === scan.scan_id ? 'auto' : 'none',
+                }}
               >
                 Delete
               </button>
@@ -95,8 +119,8 @@ export default function ScanHistory() {
       )}
 
       {scans.length > 0 && (
-        <div className="text-xs text-slate-500 text-center pt-4">
-          {scans.length} scan{scans.length !== 1 ? 's' : ''} total
+        <div style={{ fontSize: '11px', color: 'var(--text-muted)', textAlign: 'center', paddingTop: '8px', fontFamily: 'var(--font-mono)' }}>
+          {scans.length} scan{scans.length !== 1 ? 's' : ''}
         </div>
       )}
     </div>

@@ -65,6 +65,19 @@ def generate_markdown(result: ScanResult) -> str:
         lines.append("**Detection:** Offline (marker-only)")
     lines.append("")
 
+    # ── LLM usage (smart mode only) ─────────────────────────────────
+    if result.smart:
+        if result.models_used:
+            lines.append(f"**Models:** {', '.join(result.models_used)}")
+        lines.append(
+            f"**Tokens:** {result.total_input_tokens:,} in · {result.total_output_tokens:,} out"
+        )
+        if result.total_cost_usd is not None:
+            lines.append(f"**Cost:** ${result.total_cost_usd:.4f}")
+        else:
+            lines.append("**Cost:** —")
+        lines.append("")
+
     # ── Agents discovered ───────────────────────────────────────────
     if result.agents_discovered:
         lines.append("## Agents Discovered\n")

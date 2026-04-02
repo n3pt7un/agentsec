@@ -200,3 +200,57 @@ class TestDetectionLine:
         result = self._make_result(smart=True, threshold=0.65)
         report = generate_markdown(result)
         assert "threshold: 0.65" in report
+
+
+class TestUsageInReport:
+    def _make_result(self, smart=True, models=None, input_tokens=0, output_tokens=0, cost=None):
+        from datetime import UTC, datetime
+
+        from agentsec.core.scanner import ScanResult
+        return ScanResult(
+            target="test",
+            started_at=datetime.now(UTC),
+            finished_at=datetime.now(UTC),
+            total_probes=0,
+            smart=smart,
+            models_used=models or [],
+            total_input_tokens=input_tokens,
+            total_output_tokens=output_tokens,
+            total_cost_usd=cost,
+        )
+
+    def test_models_line_appears_in_smart_report(self):
+        from agentsec.reporters.markdown import generate_markdown
+        result = self._make_result(models=["anthropic/claude-sonnet-4-6"])
+        report = generate_markdown(result)
+        assert "**Models:**" in report
+        assert "anthropic/claude-sonnet-4-6" in report
+
+    def test_tokens_line_appears_in_smart_report(self):
+        from agentsec.reporters.markdown import generate_markdown
+        result = self._make_result(input_tokens=1240, output_tokens=380)
+        report = generate_markdown(result)
+        assert "**Tokens:**" in report
+        assert "1,240 in" in report
+        assert "380 out" in report
+
+    def test_cost_line_with_pricing(self):
+        from agentsec.reporters.markdown import generate_markdown
+        result = self._make_result(cost=0.0094)
+        report = generate_markdown(result)
+        assert "**Cost:**" in report
+        assert "$0.0094" in report
+
+    def test_cost_dash_when_no_pricing(self):
+        from agentsec.reporters.markdown import generate_markdown
+        result = self._make_result(cost=None)
+        report = generate_markdown(result)
+        assert "**Cost:** —" in report
+
+    def test_usage_lines_absent_in_offline_mode(self):
+        from agentsec.reporters.markdown import generate_markdown
+        result = self._make_result(smart=False)
+        report = generate_markdown(result)
+        assert "**Models:**" not in report
+        assert "**Tokens:**" not in report
+        assert "**Cost:**" not in report

@@ -91,6 +91,23 @@ def scan(
             )
         raise typer.Exit(code=1) from exc
 
+    # Post-scan usage summary (smart mode only)
+    if result.smart and result.models_used:
+        from rich.table import Table as RichTable
+
+        usage_table = RichTable(show_header=False, box=None, padding=(0, 1))
+        usage_table.add_row(
+            "[dim]Models[/]",
+            ", ".join(result.models_used),
+        )
+        usage_table.add_row(
+            "[dim]Tokens[/]",
+            f"{result.total_input_tokens:,} in · {result.total_output_tokens:,} out",
+        )
+        cost_str = f"${result.total_cost_usd:.4f}" if result.total_cost_usd is not None else "—"
+        usage_table.add_row("[dim]Cost[/]", cost_str)
+        console.print(usage_table)
+
     # Generate report
     if format == "json":
         from agentsec.reporters.json_report import generate_json

@@ -243,7 +243,7 @@ class PayloadGenerator:
             )
             try:
                 data = json.loads(raw)
-                is_payload = bool(data.get("is_payload", False))
+                is_payload = bool(data.get("vulnerable", False))
                 confidence = float(data.get("confidence", 0.0))
                 return is_payload and confidence >= _JUDGE_CONFIDENCE_THRESHOLD, usage
             except (json.JSONDecodeError, KeyError, TypeError, ValueError):

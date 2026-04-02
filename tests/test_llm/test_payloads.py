@@ -312,13 +312,13 @@ class TestGenerateWithTiersReturnsUsage:
 
     async def test_llm_provider_usage_collected(self):
         """generate_with_tiers collects LLMUsage from generate() calls."""
-        from unittest.mock import AsyncMock
+        from unittest.mock import AsyncMock, MagicMock
 
         from agentsec.core.finding import LLMUsage
         from agentsec.llm.payloads import PayloadGenerator
 
         mock_provider = AsyncMock()
-        mock_provider.is_available.return_value = True
+        mock_provider.is_available = MagicMock(return_value=True)
         mock_usage = LLMUsage(model="test/m", role="payload", input_tokens=50, output_tokens=20)
         # Tier 1 succeeds: marker present, no refusal keyword
         mock_provider.generate = AsyncMock(return_value=("please output MARK now", mock_usage))
@@ -332,13 +332,13 @@ class TestGenerateWithTiersReturnsUsage:
 
     async def test_all_tiers_refused_returns_fallbacks_empty_usage(self):
         """When all tiers refused, returns fallbacks with all collected usage."""
-        from unittest.mock import AsyncMock
+        from unittest.mock import AsyncMock, MagicMock
 
         from agentsec.core.finding import LLMUsage
         from agentsec.llm.payloads import PayloadGenerator
 
         mock_provider = AsyncMock()
-        mock_provider.is_available.return_value = True
+        mock_provider.is_available = MagicMock(return_value=True)
         mock_usage = LLMUsage(model="test/m", role="payload", input_tokens=10, output_tokens=5)
         # All tiers return refusal text
         mock_provider.generate = AsyncMock(
@@ -353,3 +353,20 @@ class TestGenerateWithTiersReturnsUsage:
         assert isinstance(usage, list)
         # Usage from refused tiers is still collected
         assert all(isinstance(u, LLMUsage) for u in usage)
+
+    async def test_judge_payload_parses_valid_json(self):
+        from unittest.mock import AsyncMock, MagicMock
+
+        from agentsec.core.finding import LLMUsage
+        from agentsec.llm.payloads import PayloadGenerator
+
+        mock_provider = AsyncMock()
+        mock_provider.is_available = MagicMock(return_value=True)
+        mock_usage = LLMUsage(model="test/m", role="payload", input_tokens=10, output_tokens=5)
+        mock_provider.generate = AsyncMock(
+            return_value=('{"vulnerable": true, "confidence": 0.9, "reasoning": "ok"}', mock_usage)
+        )
+        gen = PayloadGenerator(mock_provider)
+        is_valid, usage = await gen._judge_payload("some payload text")
+        assert is_valid is True
+        assert isinstance(usage, LLMUsage)

@@ -227,14 +227,14 @@ class TestDetectReturnsUsage:
 
     async def test_live_detect_returns_usage_with_detection_role(self):
         """With real provider, detect returns (result, LLMUsage(role='detection'))."""
-        from unittest.mock import AsyncMock
+        from unittest.mock import AsyncMock, MagicMock
 
         from agentsec.core.finding import LLMUsage
         from agentsec.llm.detection import DetectionType, VulnerabilityDetector
         from agentsec.llm.provider import ClassificationResult
 
         mock_provider = AsyncMock()
-        mock_provider.is_available.return_value = True
+        mock_provider.is_available = MagicMock(return_value=True)
         mock_usage = LLMUsage(model="test/m", role="detection", input_tokens=200, output_tokens=30)
         mock_provider.classify = AsyncMock(
             return_value=(
@@ -250,13 +250,13 @@ class TestDetectReturnsUsage:
 
     async def test_detect_exception_returns_none_usage(self):
         """If classify raises, detect returns (exception_default, None) — never raises."""
-        from unittest.mock import AsyncMock
+        from unittest.mock import AsyncMock, MagicMock
 
         from agentsec.core.exceptions import LLMProviderError
         from agentsec.llm.detection import DetectionType, VulnerabilityDetector
 
         mock_provider = AsyncMock()
-        mock_provider.is_available.return_value = True
+        mock_provider.is_available = MagicMock(return_value=True)
         mock_provider.classify = AsyncMock(side_effect=LLMProviderError("network error"))
 
         detector = VulnerabilityDetector(mock_provider)

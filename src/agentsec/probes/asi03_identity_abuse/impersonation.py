@@ -147,7 +147,7 @@ class ImpersonationProbe(BaseProbe):
             system, prompt, fallbacks=list(_ALL_PAYLOADS)
         )
 
-    async def attack(self, adapter: AbstractAdapter, provider=None) -> Finding:
+    async def attack(self, adapter: AbstractAdapter, provider=None, confidence_threshold: float = 0.8, fallback_model: str | None = None) -> Finding:
         """Send forged supervisor messages and check for marker compliance.
 
         Targets each discovered agent in turn until a vulnerable one is found
@@ -185,6 +185,8 @@ class ImpersonationProbe(BaseProbe):
                 provider=provider,
                 response=response,
                 detection_type=DetectionType.IMPERSONATION,
+                confidence_threshold=confidence_threshold,
+                attack_marker=_IMPERSONATION_MARKER,
                 injected_instruction=payload,
             )
             if is_vuln:

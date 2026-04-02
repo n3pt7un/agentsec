@@ -133,7 +133,7 @@ class ContextLeakProbe(BaseProbe):
             system, prompt, fallbacks=[_SESSION_A_MSG]
         )
 
-    async def attack(self, adapter: AbstractAdapter, provider=None) -> Finding:
+    async def attack(self, adapter: AbstractAdapter, provider=None, confidence_threshold: float = 0.8, fallback_model: str | None = None) -> Finding:
         """Execute the cross-session context leak probe.
 
         Args:
@@ -199,6 +199,8 @@ class ContextLeakProbe(BaseProbe):
             provider=provider,
             response=session_b_response if session_b_response else memory_str,
             detection_type=DetectionType.CREDENTIAL_LEAK,
+            confidence_threshold=confidence_threshold,
+            attack_marker=_SENSITIVE_MARKER,
             attack_payload=session_a_msg,
         )
 

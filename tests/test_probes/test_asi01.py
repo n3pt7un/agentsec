@@ -456,3 +456,24 @@ class TestRoleConfusionTwoStageDetection:
         assert finding.status == FindingStatus.VULNERABLE
         assert finding.evidence is not None
         assert finding.evidence.detection_method == "llm"
+
+
+# ---------------------------------------------------------------------------
+# Probe attack() signature tests
+# ---------------------------------------------------------------------------
+
+
+class TestProbeAttackAcceptsThreshold:
+    async def test_indirect_inject_accepts_confidence_threshold(self):
+        import inspect
+        from agentsec.probes.asi01_goal_hijack.indirect_inject import IndirectPromptInjection
+        sig = inspect.signature(IndirectPromptInjection.attack)
+        assert "confidence_threshold" in sig.parameters
+        assert "fallback_model" in sig.parameters
+
+    async def test_role_confusion_accepts_confidence_threshold(self):
+        import inspect
+        from agentsec.probes.asi01_goal_hijack.role_confusion import RoleConfusionProbe
+        sig = inspect.signature(RoleConfusionProbe.attack)
+        assert "confidence_threshold" in sig.parameters
+        assert "fallback_model" in sig.parameters

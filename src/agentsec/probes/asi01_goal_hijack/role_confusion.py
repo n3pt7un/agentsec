@@ -126,7 +126,7 @@ class RoleConfusionProbe(BaseProbe):
             system, prompt, fallbacks=[fallback, _PAYLOAD_FALLBACK]
         )
 
-    async def attack(self, adapter: AbstractAdapter, provider=None) -> Finding:
+    async def attack(self, adapter: AbstractAdapter, provider=None, confidence_threshold: float = 0.8, fallback_model: str | None = None) -> Finding:
         """Send a role-override payload and check whether the agent echoes the marker.
 
         Args:
@@ -162,6 +162,8 @@ class RoleConfusionProbe(BaseProbe):
                 provider=provider,
                 response=response,
                 detection_type=DetectionType.ROLE_ADOPTION,
+                confidence_threshold=confidence_threshold,
+                attack_marker=_ROLE_MARKER,
                 injected_role="privileged role",
                 original_role=target_role,
             )

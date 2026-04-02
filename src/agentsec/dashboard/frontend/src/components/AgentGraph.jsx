@@ -1,6 +1,10 @@
 import { useEffect, useRef } from 'react';
 import * as d3 from 'd3';
 
+function getCssVar(name) {
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+}
+
 export default function AgentGraph({ agents }) {
   const svgRef = useRef(null);
 
@@ -10,7 +14,20 @@ export default function AgentGraph({ agents }) {
     const width = svgRef.current.clientWidth || 600;
     const height = 400;
 
-    // Build nodes and links
+    // Read theme-aware colors at render time
+    const colBgRaised  = getCssVar('--bg-surface-raised') || '#111111';
+    const colBorderGrn = getCssVar('--border-green')      || '#1a2a1a';
+    const colAccent    = getCssVar('--accent')             || '#22c55e';
+    const colTextMuted = getCssVar('--text-secondary')     || '#6b7280';
+    const colEdge      = getCssVar('--accent-dim')         || '#166534';
+
+    const nodeColor = (d) => {
+      const role = (d.role || '').toLowerCase();
+      if (role.includes('supervis')) return colAccent;
+      if (role.includes('retriev'))  return '#60a5fa';
+      return colBgRaised;
+    };
+
     const nodes = agents.map(a => ({
       id: a.name,
       role: a.role,
@@ -28,24 +45,20 @@ export default function AgentGraph({ agents }) {
       }
     }
 
-    // Clear previous
     d3.select(svgRef.current).selectAll('*').remove();
 
     const svg = d3.select(svgRef.current)
       .attr('viewBox', [0, 0, width, height]);
 
-    // Arrow marker
     svg.append('defs').append('marker')
       .attr('id', 'arrowhead')
       .attr('viewBox', '0 -5 10 10')
-      .attr('refX', 25)
-      .attr('refY', 0)
-      .attr('markerWidth', 6)
-      .attr('markerHeight', 6)
+      .attr('refX', 25).attr('refY', 0)
+      .attr('markerWidth', 6).attr('markerHeight', 6)
       .attr('orient', 'auto')
       .append('path')
       .attr('d', 'M0,-5L10,0L0,5')
-      .attr('fill', '#475569');
+      .attr('fill', colEdge);
 
     const simulation = d3.forceSimulation(nodes)
       .force('link', d3.forceLink(links).id(d => d.id).distance(120))
@@ -54,62 +67,46 @@ export default function AgentGraph({ agents }) {
       .force('collision', d3.forceCollide().radius(d => d.radius + 10));
 
     const link = svg.append('g')
-      .selectAll('line')
-      .data(links)
-      .join('line')
-      .attr('stroke', '#475569')
-      .attr('stroke-width', 2)
+      .selectAll('line').data(links).join('line')
+      .attr('stroke', colEdge)
+      .attr('stroke-width', 1)
+      .attr('opacity', 0.6)
       .attr('marker-end', 'url(#arrowhead)');
 
     const node = svg.append('g')
-      .selectAll('g')
-      .data(nodes)
-      .join('g')
+      .selectAll('g').data(nodes).join('g')
       .call(d3.drag()
-        .on('start', (event, d) => {
-          if (!event.active) simulation.alphaTarget(0.3).restart();
-          d.fx = d.x; d.fy = d.y;
-        })
-        .on('drag', (event, d) => { d.fx = event.x; d.fy = event.y; })
-        .on('end', (event, d) => {
-          if (!event.active) simulation.alphaTarget(0);
-          d.fx = null; d.fy = null;
-        })
+        .on('start', (e, d) => { if (!e.active) simulation.alphaTarget(0.3).restart(); d.fx = d.x; d.fy = d.y; })
+        .on('drag',  (e, d) => { d.fx = e.x; d.fy = e.y; })
+        .on('end',   (e, d) => { if (!e.active) simulation.alphaTarget(0); d.fx = null; d.fy = null; })
       );
 
-    // Circles
     node.append('circle')
       .attr('r', d => d.radius)
-      .attr('fill', d => {
-        if (d.role && d.role.toLowerCase().includes('supervis')) return '#3b82f6';
-        if (d.role && d.role.toLowerCase().includes('retriev')) return '#8b5cf6';
-        return '#64748b';
-      })
-      .attr('stroke', '#1e293b')
-      .attr('stroke-width', 2);
+      .attr('fill', d => nodeColor(d))
+      .attr('stroke', colBorderGrn)
+      .attr('stroke-width', 1);
 
-    // Labels
     node.append('text')
       .text(d => d.id)
       .attr('text-anchor', 'middle')
       .attr('dy', d => d.radius + 16)
-      .attr('fill', '#94a3b8')
-      .attr('font-size', '11px');
+      .attr('fill', colTextMuted)
+      .attr('font-size', '11px')
+      .attr('font-family', 'IBM Plex Mono, monospace');
 
-    // Tool count
     node.append('text')
       .text(d => d.tools.length > 0 ? `${d.tools.length} tools` : '')
       .attr('text-anchor', 'middle')
       .attr('dy', d => d.radius + 28)
-      .attr('fill', '#64748b')
-      .attr('font-size', '9px');
+      .attr('fill', colEdge)
+      .attr('font-size', '9px')
+      .attr('font-family', 'IBM Plex Sans, sans-serif');
 
     simulation.on('tick', () => {
       link
-        .attr('x1', d => d.source.x)
-        .attr('y1', d => d.source.y)
-        .attr('x2', d => d.target.x)
-        .attr('y2', d => d.target.y);
+        .attr('x1', d => d.source.x).attr('y1', d => d.source.y)
+        .attr('x2', d => d.target.x).attr('y2', d => d.target.y);
       node.attr('transform', d => `translate(${d.x},${d.y})`);
     });
 
@@ -117,13 +114,32 @@ export default function AgentGraph({ agents }) {
   }, [agents]);
 
   if (!agents || agents.length === 0) {
-    return <div className="text-slate-500 text-sm">No agents discovered.</div>;
+    return (
+      <p style={{ fontSize: '13px', color: 'var(--text-muted)', fontFamily: 'var(--font-sans)' }}>
+        No agents discovered.
+      </p>
+    );
   }
 
   return (
-    <div className="bg-slate-800 rounded-lg border border-slate-700 p-4">
-      <h3 className="text-sm font-semibold text-slate-300 mb-3">Agent Topology</h3>
-      <svg ref={svgRef} className="w-full" style={{ height: 400 }} />
+    <div style={{
+      background: 'var(--bg-surface)',
+      border: '1px solid var(--border)',
+      borderRadius: 'var(--radius)',
+      padding: '16px',
+    }}>
+      <h3 style={{
+        fontSize: '11px',
+        fontWeight: 600,
+        color: 'var(--text-muted)',
+        marginBottom: '12px',
+        fontFamily: 'var(--font-sans)',
+        textTransform: 'uppercase',
+        letterSpacing: '0.08em',
+      }}>
+        Agent Topology
+      </h3>
+      <svg ref={svgRef} style={{ width: '100%', height: 400 }} />
     </div>
   );
 }

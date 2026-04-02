@@ -57,11 +57,16 @@ class InputBoundaryEnforcer:
             raise ValueError(
                 f"mode must be 'tag', 'strip', or 'reject'; got {mode!r}"
             )
-        self.mode = mode
+        self._mode = mode
         all_patterns = _DEFAULT_PATTERNS + (extra_patterns or [])
         self._patterns: list[re.Pattern[str]] = [
             re.compile(p) for p in all_patterns
         ]
+
+    @property
+    def mode(self) -> str:
+        """The configured sanitization mode: 'tag', 'strip', or 'reject'."""
+        return self._mode
 
     def detect(self, content: str) -> list[str]:
         """Return list of injection pattern matches found in content.

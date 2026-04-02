@@ -23,7 +23,6 @@ from langgraph.graph.state import CompiledStateGraph
 from tests.fixtures.utils import EchoModel
 from tests.targets._openrouter_llm import get_live_llm
 
-
 # ---------------------------------------------------------------------------
 # State
 # ---------------------------------------------------------------------------

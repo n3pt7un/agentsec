@@ -1,5 +1,8 @@
 """Tests for ScanConfig."""
 
+import pytest
+from pydantic import ValidationError
+
 from agentsec.core.config import ScanConfig
 
 
@@ -80,11 +83,9 @@ class TestScanConfigNewFields:
         assert config.detection_confidence_threshold == 0.5
 
     def test_detection_confidence_threshold_clamped_ge(self):
-        import pytest
-        with pytest.raises(Exception):
+        with pytest.raises(ValidationError):
             ScanConfig(detection_confidence_threshold=-0.1)
 
     def test_detection_confidence_threshold_clamped_le(self):
-        import pytest
-        with pytest.raises(Exception):
+        with pytest.raises(ValidationError):
             ScanConfig(detection_confidence_threshold=1.1)

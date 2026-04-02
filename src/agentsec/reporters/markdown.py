@@ -54,6 +54,15 @@ def generate_markdown(result: ScanResult) -> str:
         f"**Critical:** {result.critical_count} | "
         f"**High:** {_count_severity(result, Severity.HIGH)}"
     )
+
+    # ── Detection mode ──────────────────────────────────────────────
+    if result.smart:
+        lines.append(
+            f"**Detection:** Smart · confidence threshold: {result.detection_confidence_threshold} "
+            f"· 3-tier payload retry"
+        )
+    else:
+        lines.append("**Detection:** Offline (marker-only)")
     lines.append("")
 
     # ── Agents discovered ───────────────────────────────────────────

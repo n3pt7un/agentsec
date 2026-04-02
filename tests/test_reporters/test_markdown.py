@@ -163,3 +163,40 @@ class TestMarkdownReport:
         findings = [_vuln_finding()]
         report = generate_markdown(_make_result(findings))
         assert "> Use defense in depth" in report
+
+
+class TestDetectionLine:
+    def _make_result(self, smart: bool, threshold: float = 0.8):
+        from datetime import UTC, datetime
+
+        from agentsec.core.scanner import ScanResult
+        return ScanResult(
+            target="test-target",
+            started_at=datetime.now(UTC),
+            finished_at=datetime.now(UTC),
+            total_probes=0,
+            smart=smart,
+            detection_confidence_threshold=threshold,
+        )
+
+    def test_smart_mode_shows_threshold(self):
+        from agentsec.reporters.markdown import generate_markdown
+        result = self._make_result(smart=True, threshold=0.8)
+        report = generate_markdown(result)
+        assert "**Detection:**" in report
+        assert "threshold: 0.8" in report
+        assert "3-tier payload retry" in report
+
+    def test_offline_mode_shows_marker_only(self):
+        from agentsec.reporters.markdown import generate_markdown
+        result = self._make_result(smart=False)
+        report = generate_markdown(result)
+        assert "**Detection:**" in report
+        assert "Offline" in report
+        assert "marker-only" in report
+
+    def test_custom_threshold_shown_correctly(self):
+        from agentsec.reporters.markdown import generate_markdown
+        result = self._make_result(smart=True, threshold=0.65)
+        report = generate_markdown(result)
+        assert "threshold: 0.65" in report

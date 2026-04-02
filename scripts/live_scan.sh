@@ -11,6 +11,11 @@
 
 set -euo pipefail
 
+# Auto-load .env if present and key not already exported
+if [ -z "${OPENROUTER_API_KEY:-}" ] && [ -f .env ]; then
+    set -a && source .env && set +a
+fi
+
 if [ -z "${OPENROUTER_API_KEY:-}" ]; then
     echo "ERROR: OPENROUTER_API_KEY not set"
     echo "Get a key at https://openrouter.ai/keys"
@@ -21,6 +26,9 @@ TARGETS=(
     "tests/targets/supervisor_harness.py"
     "tests/targets/swarm_harness.py"
     "tests/targets/rag_customer_support_harness.py"
+    "tests/targets/email_automation_harness.py"
+    "tests/targets/rag_research_harness.py"
+    "tests/targets/multi_agentic_rag_harness.py"
 )
 
 OUTDIR="reports/live-$(date +%Y%m%d-%H%M%S)"
@@ -34,7 +42,7 @@ for target in "${TARGETS[@]}"; do
         --target "$target" \
         --live \
         --smart \
-        --model "anthropic/claude-sonnet-4" \
+        --model "anthropic/claude-sonnet-4.6" \
         --format markdown \
         --output "$OUTDIR/$name.md" \
         || echo "WARN: $name scan failed, continuing..."

@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
-import { fetchScan } from '../api';
+import { useParams, Link, useNavigate } from 'react-router-dom';
+import { fetchScan, deleteScan } from '../api';
+import { SkeletonTable, SkeletonGraph } from '../components/LoadingSkeleton';
+import ErrorState from '../components/ErrorState';
 import SummaryTable from '../components/SummaryTable';
 import AgentGraph from '../components/AgentGraph';
 import FindingCard from '../components/FindingCard';
@@ -8,14 +10,62 @@ import FindingFilters from '../components/FindingFilters';
 
 export default function ScanDetail() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [scan, setScan] = useState(null);
+  const [error, setError] = useState(null);
   const [filters, setFilters] = useState({ statuses: [], severities: [], categories: [] });
 
   useEffect(() => {
-    fetchScan(id).then(setScan);
+    const load = async () => {
+      try {
+        const data = await fetchScan(id);
+        setScan(data);
+      } catch (err) {
+        setError(err.message || 'Failed to load scan');
+      }
+    };
+    load();
   }, [id]);
 
-  if (!scan) return <div className="text-slate-400">Loading scan...</div>;
+  const handleDelete = async () => {
+    try {
+      await deleteScan(id);
+      navigate('/scans');
+    } catch (err) {
+      setError(err.message || 'Failed to delete scan');
+    }
+  };
+
+  if (error) {
+    return (
+      <div className="space-y-4">
+        <ErrorState message={error} />
+        <div className="text-center">
+          <button
+            onClick={() => navigate('/scans')}
+            className="text-sm text-blue-400 hover:underline"
+          >
+            ← Back to scans
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!scan) {
+    return (
+      <div className="space-y-6">
+        <div className="h-10 bg-slate-800 rounded w-1/3 animate-pulse" />
+        <div className="grid grid-cols-4 gap-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="bg-slate-800 rounded-lg border border-slate-700 p-4 animate-pulse h-20" />
+          ))}
+        </div>
+        <SkeletonGraph />
+        <SkeletonTable />
+      </div>
+    );
+  }
 
   const findings = scan.findings || [];
 
@@ -37,7 +87,15 @@ export default function ScanDetail() {
             {new Date(scan.started_at).toLocaleString()} · {scan.duration_ms}ms · {scan.total_probes} probes
           </p>
         </div>
-        <Link to="/scans" className="text-sm text-blue-400 hover:underline">← All scans</Link>
+        <div className="flex items-center gap-4">
+          <button
+            onClick={handleDelete}
+            className="text-xs text-red-400 hover:text-red-300"
+          >
+            Delete scan
+          </button>
+          <Link to="/scans" className="text-sm text-blue-400 hover:underline">← All scans</Link>
+        </div>
       </div>
 
       {/* Stats row */}

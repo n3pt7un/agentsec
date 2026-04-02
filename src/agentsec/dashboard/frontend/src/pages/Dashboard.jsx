@@ -1,25 +1,41 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ScanForm from '../components/ScanForm';
 import ScanCard from '../components/ScanCard';
+import { SkeletonCard } from '../components/LoadingSkeleton';
+import ErrorState from '../components/ErrorState';
+import EmptyState from '../components/EmptyState';
 import { startScan, fetchScans } from '../api';
 
 export default function Dashboard() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [scanError, setScanError] = useState(null);
   const [recentScans, setRecentScans] = useState([]);
+  const [scansLoading, setScansLoading] = useState(true);
+  const [scansError, setScansError] = useState(null);
+
+  const loadScans = useCallback(() => {
+    setScansLoading(true);
+    setScansError(null);
+    fetchScans(5)
+      .then(data => setRecentScans(data.scans || []))
+      .catch(err => setScansError(err.message || 'Failed to load recent scans'))
+      .finally(() => setScansLoading(false));
+  }, []);
 
   useEffect(() => {
-    fetchScans(5).then(data => setRecentScans(data.scans || []));
-  }, []);
+    loadScans();
+  }, [loadScans]);
 
   const handleScan = async (config) => {
     setLoading(true);
+    setScanError(null);
     try {
       const data = await startScan(config);
       navigate(`/scans/${data.scan_id}/progress`);
     } catch (err) {
-      console.error('Failed to start scan:', err);
+      setScanError(err.message || 'Failed to start scan');
     } finally {
       setLoading(false);
     }
@@ -29,16 +45,42 @@ export default function Dashboard() {
     <div className="space-y-8">
       <ScanForm onSubmit={handleScan} loading={loading} />
 
-      {recentScans.length > 0 && (
-        <div>
-          <h2 className="text-lg font-semibold mb-3">Recent Scans</h2>
+      {scanError && (
+        <ErrorState message={scanError} onRetry={null} />
+      )}
+
+      <div>
+        <h2 className="text-lg font-semibold mb-3">Recent Scans</h2>
+
+        {scansLoading && (
+          <div className="space-y-2">
+            <SkeletonCard />
+            <SkeletonCard />
+            <SkeletonCard />
+          </div>
+        )}
+
+        {!scansLoading && scansError && (
+          <ErrorState message={scansError} onRetry={loadScans} />
+        )}
+
+        {!scansLoading && !scansError && recentScans.length === 0 && (
+          <EmptyState
+            title="No scans yet"
+            description="Run your first scan to see results here."
+            actionLabel="Start Scanning"
+            actionTo="/"
+          />
+        )}
+
+        {!scansLoading && !scansError && recentScans.length > 0 && (
           <div className="space-y-2">
             {recentScans.map(scan => (
               <ScanCard key={scan.scan_id} scan={scan} />
             ))}
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }

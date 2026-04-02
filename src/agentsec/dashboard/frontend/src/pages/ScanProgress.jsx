@@ -1,6 +1,7 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useScanStream } from '../hooks/useScanStream';
 import ProbeProgress from '../components/ProbeProgress';
+import ErrorState from '../components/ErrorState';
 
 export default function ScanProgress() {
   const { id } = useParams();
@@ -8,6 +9,24 @@ export default function ScanProgress() {
   const { events, status } = useScanStream(id);
 
   const completion = events.find(e => e.type === 'scan_complete');
+  const scanErrorEvent = events.find(e => e.type === 'error');
+
+  if (status === 'error') {
+    const errorMessage = scanErrorEvent?.message || 'The scan encountered an unexpected error.';
+    return (
+      <div className="space-y-4">
+        <ErrorState message={errorMessage} />
+        <div className="text-center">
+          <button
+            onClick={() => navigate('/')}
+            className="text-sm text-blue-400 hover:underline"
+          >
+            ← Back to Dashboard
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

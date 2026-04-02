@@ -26,9 +26,7 @@ export default function Dashboard() {
       .finally(() => setScansLoading(false));
   }, []);
 
-  useEffect(() => {
-    loadScans();
-  }, [loadScans]);
+  useEffect(() => { loadScans(); }, [loadScans]);
 
   const handleScan = async (config) => {
     setLoading(true);
@@ -50,21 +48,27 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="space-y-8">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
       <ScanForm onSubmit={handleScan} loading={loading} />
 
-      {scanError && (
-        <ErrorState message={scanError} onRetry={null} />
-      )}
+      {scanError && <ErrorState message={scanError} onRetry={null} />}
 
       <div>
-        <h2 className="text-lg font-semibold mb-3">Recent Scans</h2>
+        <h2 style={{
+          fontSize: '11px',
+          fontWeight: 600,
+          color: 'var(--text-muted)',
+          fontFamily: 'var(--font-sans)',
+          textTransform: 'uppercase',
+          letterSpacing: '0.08em',
+          marginBottom: '10px',
+        }}>
+          Recent Scans
+        </h2>
 
         {scansLoading && (
-          <div className="space-y-2">
-            <SkeletonCard />
-            <SkeletonCard />
-            <SkeletonCard />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            <SkeletonCard /><SkeletonCard /><SkeletonCard />
           </div>
         )}
 
@@ -82,7 +86,7 @@ export default function Dashboard() {
         )}
 
         {!scansLoading && !scansError && recentScans.length > 0 && (
-          <div className="space-y-2">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
             {recentScans.map(scan => (
               <ScanCard key={scan.scan_id} scan={scan} />
             ))}

@@ -65,19 +65,20 @@ class OpenRouterProvider(LLMProvider):
             max_tokens=5,
         )
 
-    async def generate(self, system: str, prompt: str, max_tokens: int = 1024) -> str:
+    async def generate(self, system: str, prompt: str, max_tokens: int = 1024, model: str | None = None) -> str:
         """Generate text via OpenRouter.
 
         Args:
             system: System prompt for the LLM.
             prompt: User prompt.
             max_tokens: Maximum tokens in the response.
+            model: Optional model override for this call only.
 
         Returns:
             Generated text content.
         """
         response = await self._call_with_retry(
-            model=self._model,
+            model=model or self._model,
             messages=[
                 {"role": "system", "content": system},
                 {"role": "user", "content": prompt},

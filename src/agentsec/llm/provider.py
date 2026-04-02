@@ -23,8 +23,15 @@ class LLMProvider(ABC):
     """Abstract LLM provider for payload generation and detection."""
 
     @abstractmethod
-    async def generate(self, system: str, prompt: str, max_tokens: int = 1024) -> str:
-        """Generate text. Used for creating attack payloads."""
+    async def generate(self, system: str, prompt: str, max_tokens: int = 1024, model: str | None = None) -> str:
+        """Generate text. Used for creating attack payloads.
+
+        Args:
+            system: System prompt.
+            prompt: User prompt.
+            max_tokens: Maximum output tokens.
+            model: Optional model override for this call only.
+        """
         ...
 
     @abstractmethod

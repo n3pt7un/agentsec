@@ -12,7 +12,7 @@ class OfflineProvider(LLMProvider):
     Ensures all probes work offline for testing and CI.
     """
 
-    async def generate(self, system: str, prompt: str, max_tokens: int = 1024) -> str:
+    async def generate(self, system: str, prompt: str, max_tokens: int = 1024, model: str | None = None) -> str:
         """Return empty string — probes should use their hardcoded fallback."""
         return ""
 

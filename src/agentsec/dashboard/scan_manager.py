@@ -52,6 +52,9 @@ class ScanManager:
         target_model: str | None = None,
         llm_model: str = "anthropic/claude-sonnet-4.6",
         openrouter_api_key: str | None = None,
+        fallback_llm_model: str | None = None,
+        detection_confidence_threshold: float = 0.8,
+        pricing: dict | None = None,
     ) -> ScanJob:
         """Launch a scan in the background.
 
@@ -78,6 +81,9 @@ class ScanManager:
             smart=smart,
             llm_model=llm_model,
             openrouter_api_key=openrouter_api_key,
+            fallback_llm_model=fallback_llm_model,
+            detection_confidence_threshold=detection_confidence_threshold,
+            pricing_data=pricing or {},
         )
 
         job.task = asyncio.create_task(

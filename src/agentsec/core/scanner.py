@@ -12,6 +12,7 @@ from pydantic import BaseModel, Field
 from agentsec.adapters.base import AbstractAdapter, AgentInfo
 from agentsec.core.config import ScanConfig
 from agentsec.core.finding import Finding, FindingStatus, Severity
+from agentsec.core.pricing import load_pricing
 from agentsec.llm.provider import get_provider
 from agentsec.probes.registry import ProbeRegistry
 
@@ -32,6 +33,12 @@ class ScanResult(BaseModel):
     error_count: int = 0
     smart: bool = False
     detection_confidence_threshold: float = 0.8
+    models_used: list[str] = Field(default_factory=list,
+        description="Ordered unique list of model IDs used across all probes")
+    total_input_tokens: int = 0
+    total_output_tokens: int = 0
+    total_cost_usd: float | None = Field(default=None,
+        description="None when no pricing source is available")
 
     @property
     def duration_ms(self) -> int:
@@ -134,6 +141,23 @@ class Scanner:
 
         finished_at = datetime.now(UTC)
 
+        # ── Aggregate LLM usage ──────────────────────────────────────
+        all_usage = [u for f in findings for u in f.llm_usage]
+        seen: set[str] = set()
+        models_used: list[str] = []
+        for u in all_usage:
+            if u.model not in seen:
+                seen.add(u.model)
+                models_used.append(u.model)
+        total_input = sum(u.input_tokens for u in all_usage)
+        total_output = sum(u.output_tokens for u in all_usage)
+
+        pricing = load_pricing(
+            pricing_data=self.config.pricing_data or None,
+            pricing_file=getattr(self.config, "pricing_file", None),
+        )
+        total_cost: float | None = pricing.compute_cost(all_usage) if pricing is not None else None
+
         return ScanResult(
             target=target,
             findings=findings,
@@ -146,6 +170,10 @@ class Scanner:
             error_count=sum(1 for f in findings if f.status == FindingStatus.ERROR),
             smart=self.config.smart,
             detection_confidence_threshold=self.config.detection_confidence_threshold,
+            models_used=models_used,
+            total_input_tokens=total_input,
+            total_output_tokens=total_output,
+            total_cost_usd=total_cost,
         )
 
     async def _run_probe(self, probe) -> Finding:

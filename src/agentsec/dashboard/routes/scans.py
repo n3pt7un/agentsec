@@ -31,6 +31,9 @@ class ScanRequest(BaseModel):
     target_model: str | None = None
     llm_model: str = "anthropic/claude-sonnet-4.6"
     openrouter_api_key: str | None = None
+    fallback_llm_model: str | None = None
+    detection_confidence_threshold: float = 0.8
+    pricing: dict[str, dict[str, float]] = {}
 
 
 @router.post("")
@@ -46,6 +49,9 @@ async def create_scan(request: ScanRequest) -> dict:
         target_model=request.target_model,
         llm_model=request.llm_model,
         openrouter_api_key=request.openrouter_api_key,
+        fallback_llm_model=request.fallback_llm_model,
+        detection_confidence_threshold=request.detection_confidence_threshold,
+        pricing=request.pricing,
     )
     return {
         "scan_id": job.scan_id,

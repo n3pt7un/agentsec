@@ -340,3 +340,77 @@ class TestScannerPropagatesThreshold:
         result = await scanner.run()
         assert result.smart is False
         assert result.detection_confidence_threshold == 0.75
+
+
+# ------------------------------------------------------------------
+# ScanResult LLM usage aggregation
+# ------------------------------------------------------------------
+
+
+class TestScanResultUsageAggregation:
+    async def test_models_used_collected_from_findings(self):
+        """ScanResult.models_used is deduplicated list of models from finding.llm_usage."""
+        from agentsec.core.finding import LLMUsage, Finding, OWASPCategory, Remediation, Severity
+
+        usage = [
+            LLMUsage(model="a/model", role="payload", input_tokens=100, output_tokens=20),
+            LLMUsage(model="b/model", role="detection", input_tokens=50, output_tokens=10),
+        ]
+
+        class _UsageProbe(BaseProbe):
+            def metadata(self):
+                return ProbeMetadata(
+                    id="USAGE-TEST", name="Usage Test",
+                    category=OWASPCategory.ASI01, default_severity=Severity.HIGH, description="test",
+                )
+            def remediation(self):
+                return Remediation(summary="fix")
+            async def attack(self, adapter, provider=None, confidence_threshold=0.8, fallback_model=None):
+                return Finding(
+                    probe_id=self.metadata().id, probe_name=self.metadata().name,
+                    category=self.metadata().category, status=FindingStatus.RESISTANT,
+                    severity=self.metadata().default_severity, description=self.metadata().description,
+                    remediation=self.remediation(), llm_usage=usage,
+                )
+
+        scanner = _scanner_with_probes([_UsageProbe])
+        result = await scanner.run()
+        assert "a/model" in result.models_used
+        assert "b/model" in result.models_used
+        assert result.total_input_tokens == 150
+        assert result.total_output_tokens == 30
+
+    async def test_total_cost_none_when_no_pricing(self, tmp_path, monkeypatch):
+        """Without a pricing file, total_cost_usd is None."""
+        monkeypatch.chdir(tmp_path)
+        ProbeClass = _make_probe("P1", FindingStatus.RESISTANT)
+        scanner = _scanner_with_probes([ProbeClass])
+        result = await scanner.run()
+        assert result.total_cost_usd is None
+
+    async def test_total_cost_computed_with_pricing_data(self):
+        """With pricing_data in config, total_cost_usd is calculated."""
+        import pytest
+        from agentsec.core.finding import LLMUsage, Finding, OWASPCategory, Remediation, Severity
+
+        class _CostProbe(BaseProbe):
+            def metadata(self):
+                return ProbeMetadata(
+                    id="COST-TEST", name="Cost Test",
+                    category=OWASPCategory.ASI01, default_severity=Severity.HIGH, description="test",
+                )
+            def remediation(self):
+                return Remediation(summary="fix")
+            async def attack(self, adapter, provider=None, confidence_threshold=0.8, fallback_model=None):
+                return Finding(
+                    probe_id=self.metadata().id, probe_name=self.metadata().name,
+                    category=self.metadata().category, status=FindingStatus.RESISTANT,
+                    severity=self.metadata().default_severity, description=self.metadata().description,
+                    remediation=self.remediation(),
+                    llm_usage=[LLMUsage(model="priced/model", role="payload", input_tokens=1_000_000, output_tokens=0)],
+                )
+
+        config = ScanConfig(pricing_data={"priced/model": {"input_per_1m": 3.0, "output_per_1m": 15.0}})
+        scanner = _scanner_with_probes([_CostProbe], config=config)
+        result = await scanner.run()
+        assert result.total_cost_usd == pytest.approx(3.0)

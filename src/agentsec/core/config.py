@@ -42,3 +42,11 @@ class ScanConfig(BaseSettings):
         default=None,
         description="Model used for Tier 3 payload generation if primary model refuses",
     )
+    pricing_data: dict[str, dict[str, float]] = Field(
+        default_factory=dict,
+        description=(
+            "Inline model pricing (input_per_1m / output_per_1m). "
+            "Takes precedence over agentsec-pricing.yaml. "
+            "Keys are model IDs."
+        ),
+    )

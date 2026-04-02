@@ -421,3 +421,70 @@ def test_rag_research_live_compiles_with_mocked_llm(monkeypatch):
         graph = build_rag_research_target(live=True)
         assert graph is not None
         mock_cls.assert_called_once()
+
+
+# ---------------------------------------------------------------------------
+# Multi-agentic RAG harness (no importorskip — base LangGraph only)
+# ---------------------------------------------------------------------------
+
+
+def test_multi_agentic_rag_compiles_vulnerable():
+    from tests.targets.multi_agentic_rag_harness import build_multi_agentic_rag_target
+
+    graph = build_multi_agentic_rag_target(vulnerable=True)
+    assert graph is not None
+
+
+def test_multi_agentic_rag_compiles_resistant():
+    from tests.targets.multi_agentic_rag_harness import build_multi_agentic_rag_target
+
+    graph = build_multi_agentic_rag_target(vulnerable=False)
+    assert graph is not None
+
+
+@pytest.mark.asyncio
+async def test_multi_agentic_rag_discovery():
+    from tests.targets.multi_agentic_rag_harness import build_multi_agentic_rag_target
+
+    adapter = LangGraphAdapter(build_multi_agentic_rag_target(vulnerable=True))
+    agents = await adapter.discover()
+    names = {a.name for a in agents}
+    assert {"retrieve", "generate", "hallucination_check", "correct", "output"} <= names
+
+
+@pytest.mark.asyncio
+async def test_multi_agentic_rag_vulnerable_scan_produces_findings():
+    from tests.targets.multi_agentic_rag_harness import build_multi_agentic_rag_target
+
+    adapter = LangGraphAdapter(build_multi_agentic_rag_target(vulnerable=True))
+    scanner = Scanner(adapter, ScanConfig())
+    result = await scanner.run(target="multi_agentic_rag_harness")
+    assert any(f.status == FindingStatus.VULNERABLE for f in result.findings)
+
+
+@pytest.mark.asyncio
+async def test_multi_agentic_rag_resistant_scan_has_no_vulnerable():
+    from tests.targets.multi_agentic_rag_harness import build_multi_agentic_rag_target
+
+    adapter = LangGraphAdapter(build_multi_agentic_rag_target(vulnerable=False))
+    scanner = Scanner(adapter, ScanConfig())
+    result = await scanner.run(target="multi_agentic_rag_harness")
+    assert not any(f.status == FindingStatus.VULNERABLE for f in result.findings)
+
+
+def test_multi_agentic_rag_live_raises_without_api_key(monkeypatch):
+    monkeypatch.delenv("OPENROUTER_API_KEY", raising=False)
+    from tests.targets.multi_agentic_rag_harness import build_multi_agentic_rag_target
+
+    with pytest.raises(ValueError, match="OPENROUTER_API_KEY"):
+        build_multi_agentic_rag_target(live=True)
+
+
+def test_multi_agentic_rag_live_compiles_with_mocked_llm(monkeypatch):
+    monkeypatch.setenv("OPENROUTER_API_KEY", "sk-or-test-key")
+    with patch(_MOCK_LLM_PATH, return_value=MagicMock()) as mock_cls:
+        from tests.targets.multi_agentic_rag_harness import build_multi_agentic_rag_target
+
+        graph = build_multi_agentic_rag_target(live=True)
+        assert graph is not None
+        mock_cls.assert_called_once()

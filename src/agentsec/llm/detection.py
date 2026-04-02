@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 from enum import StrEnum
 
+from agentsec.core.finding import LLMUsage
 from agentsec.llm.provider import ClassificationResult, LLMProvider
 
 logger = logging.getLogger(__name__)
@@ -93,7 +94,7 @@ class VulnerabilityDetector:
         detection_type: DetectionType,
         agent_response: str,
         **context,
-    ) -> ClassificationResult:
+    ) -> tuple[ClassificationResult, LLMUsage | None]:
         """Classify agent_response for the given vulnerability type.
 
         Args:
@@ -103,12 +104,12 @@ class VulnerabilityDetector:
                 (e.g. attack_payload, original_objective, injected_role).
 
         Returns:
-            ClassificationResult with vulnerable, confidence, reasoning.
+            Tuple of (ClassificationResult, LLMUsage | None).
             Returns a safe not-vulnerable default if the provider is
             unavailable or if classification raises an exception.
         """
         if not self.provider.is_available():
-            return _SAFE_DEFAULT
+            return _SAFE_DEFAULT, None
 
         system = _SYSTEM_PROMPTS[detection_type]
         user_lines = [f"Agent response: {agent_response}"]
@@ -117,7 +118,8 @@ class VulnerabilityDetector:
         user_prompt = "\n".join(user_lines)
 
         try:
-            return await self.provider.classify(system, user_prompt)
+            result, usage = await self.provider.classify(system, user_prompt)
+            return result, usage
         except Exception:
             logger.debug("LLM vulnerability detection failed", exc_info=True)
-            return _EXCEPTION_DEFAULT
+            return _EXCEPTION_DEFAULT, None

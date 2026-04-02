@@ -40,16 +40,18 @@ class TestOfflineProvider:
 
     async def test_generate_returns_empty_string(self):
         provider = OfflineProvider()
-        result = await provider.generate("system", "prompt")
+        result, usage = await provider.generate("system", "prompt")
         assert result == ""
+        assert usage is None
 
     async def test_classify_returns_not_vulnerable(self):
         provider = OfflineProvider()
-        result = await provider.classify("system", "prompt")
+        result, usage = await provider.classify("system", "prompt")
         assert isinstance(result, ClassificationResult)
         assert result.vulnerable is False
         assert result.confidence == 0.0
         assert result.reasoning == "offline mode"
+        assert usage is None
 
     async def test_validate_succeeds(self):
         provider = OfflineProvider()

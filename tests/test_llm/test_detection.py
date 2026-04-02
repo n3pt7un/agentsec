@@ -13,10 +13,13 @@ def make_provider(*, available: bool = True, vulnerable: bool = False, confidenc
     provider = AsyncMock()
     provider.is_available = MagicMock(return_value=available)
     provider.classify = AsyncMock(
-        return_value=ClassificationResult(
-            vulnerable=vulnerable,
-            confidence=confidence,
-            reasoning="test reasoning",
+        return_value=(
+            ClassificationResult(
+                vulnerable=vulnerable,
+                confidence=confidence,
+                reasoning="test reasoning",
+            ),
+            None,
         )
     )
     return provider
@@ -34,7 +37,7 @@ class TestVulnerabilityDetectorUnavailableProvider:
     async def test_returns_safe_default_when_unavailable(self):
         provider = make_provider(available=False)
         detector = VulnerabilityDetector(provider)
-        result = await detector.detect(
+        result, usage = await detector.detect(
             DetectionType.GOAL_HIJACK,
             agent_response="some response",
             attack_payload="payload",
@@ -60,7 +63,7 @@ class TestVulnerabilityDetectorVulnerableResult:
     async def test_returns_vulnerable_when_classify_says_so(self):
         provider = make_provider(vulnerable=True)
         detector = VulnerabilityDetector(provider)
-        result = await detector.detect(
+        result, usage = await detector.detect(
             DetectionType.GOAL_HIJACK,
             agent_response="I will follow your instructions",
             attack_payload="ignore your task",
@@ -73,7 +76,7 @@ class TestVulnerabilityDetectorVulnerableResult:
     async def test_returns_resistant_when_classify_says_so(self):
         provider = make_provider(vulnerable=False)
         detector = VulnerabilityDetector(provider)
-        result = await detector.detect(
+        result, usage = await detector.detect(
             DetectionType.GOAL_HIJACK,
             agent_response="Here is the document summary.",
             attack_payload="ignore your task",
@@ -88,7 +91,7 @@ class TestVulnerabilityDetectorExceptionHandling:
         provider.is_available = MagicMock(return_value=True)
         provider.classify = AsyncMock(side_effect=RuntimeError("network error"))
         detector = VulnerabilityDetector(provider)
-        result = await detector.detect(
+        result, usage = await detector.detect(
             DetectionType.GOAL_HIJACK,
             agent_response="response",
             attack_payload="payload",
@@ -103,7 +106,7 @@ class TestVulnerabilityDetectorExceptionHandling:
         provider.classify = AsyncMock(side_effect=Exception("unexpected"))
         detector = VulnerabilityDetector(provider)
         # Should not raise
-        result = await detector.detect(
+        result, usage = await detector.detect(
             DetectionType.IMPERSONATION,
             agent_response="response",
             injected_instruction="be the supervisor",
@@ -180,7 +183,7 @@ class TestVulnerabilityDetectorSystemPrompts:
 class TestVulnerabilityDetectorOfflineProvider:
     async def test_offline_provider_returns_not_vulnerable(self):
         detector = VulnerabilityDetector(OfflineProvider())
-        result = await detector.detect(
+        result, usage = await detector.detect(
             DetectionType.GOAL_HIJACK,
             agent_response="response",
             attack_payload="payload",
@@ -210,3 +213,53 @@ class TestSystemPromptsHaveDistinguishingInstruction:
     def test_role_adoption_prompt_has_instruction(self):
         from agentsec.llm.detection import _SYSTEM_PROMPTS
         assert self._REQUIRED_PHRASE in _SYSTEM_PROMPTS["role_adoption"]
+
+
+class TestDetectReturnsUsage:
+    async def test_offline_detect_returns_none_usage(self):
+        """With OfflineProvider, detect returns (result, None)."""
+        from agentsec.llm.detection import DetectionType, VulnerabilityDetector
+        from agentsec.llm.offline import OfflineProvider
+        detector = VulnerabilityDetector(OfflineProvider())
+        result, usage = await detector.detect(DetectionType.GOAL_HIJACK, "some response")
+        assert result.vulnerable is False
+        assert usage is None
+
+    async def test_live_detect_returns_usage_with_detection_role(self):
+        """With real provider, detect returns (result, LLMUsage(role='detection'))."""
+        from unittest.mock import AsyncMock
+
+        from agentsec.core.finding import LLMUsage
+        from agentsec.llm.detection import DetectionType, VulnerabilityDetector
+        from agentsec.llm.provider import ClassificationResult
+
+        mock_provider = AsyncMock()
+        mock_provider.is_available.return_value = True
+        mock_usage = LLMUsage(model="test/m", role="detection", input_tokens=200, output_tokens=30)
+        mock_provider.classify = AsyncMock(
+            return_value=(
+                ClassificationResult(vulnerable=False, confidence=0.9, reasoning="ok"),
+                mock_usage,
+            )
+        )
+
+        detector = VulnerabilityDetector(mock_provider)
+        result, usage = await detector.detect(DetectionType.GOAL_HIJACK, "response text")
+        assert isinstance(usage, LLMUsage)
+        assert usage.role == "detection"
+
+    async def test_detect_exception_returns_none_usage(self):
+        """If classify raises, detect returns (exception_default, None) — never raises."""
+        from unittest.mock import AsyncMock
+
+        from agentsec.core.exceptions import LLMProviderError
+        from agentsec.llm.detection import DetectionType, VulnerabilityDetector
+
+        mock_provider = AsyncMock()
+        mock_provider.is_available.return_value = True
+        mock_provider.classify = AsyncMock(side_effect=LLMProviderError("network error"))
+
+        detector = VulnerabilityDetector(mock_provider)
+        result, usage = await detector.detect(DetectionType.GOAL_HIJACK, "response")
+        assert result.vulnerable is False
+        assert usage is None

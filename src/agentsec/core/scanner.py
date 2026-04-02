@@ -30,6 +30,8 @@ class ScanResult(BaseModel):
     vulnerable_count: int = 0
     resistant_count: int = 0
     error_count: int = 0
+    smart: bool = False
+    detection_confidence_threshold: float = 0.8
 
     @property
     def duration_ms(self) -> int:
@@ -142,6 +144,8 @@ class Scanner:
             vulnerable_count=sum(1 for f in findings if f.status == FindingStatus.VULNERABLE),
             resistant_count=sum(1 for f in findings if f.status == FindingStatus.RESISTANT),
             error_count=sum(1 for f in findings if f.status == FindingStatus.ERROR),
+            smart=self.config.smart,
+            detection_confidence_threshold=self.config.detection_confidence_threshold,
         )
 
     async def _run_probe(self, probe) -> Finding:
@@ -156,7 +160,12 @@ class Scanner:
         meta = probe.metadata()
         try:
             return await asyncio.wait_for(
-                probe.attack(self.adapter, self._provider),
+                probe.attack(
+                    self.adapter,
+                    self._provider,
+                    confidence_threshold=self.config.detection_confidence_threshold,
+                    fallback_model=self.config.fallback_llm_model,
+                ),
                 timeout=self.config.timeout_per_probe,
             )
         except TimeoutError:

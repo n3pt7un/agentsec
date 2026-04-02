@@ -38,7 +38,9 @@ def _make_probe(
         def remediation(self):
             return Remediation(summary="fix it")
 
-        async def attack(self, adapter, provider=None):
+        async def attack(
+            self, adapter, provider=None, confidence_threshold=0.8, fallback_model=None
+        ):
             if raise_exc is not None:
                 raise raise_exc
             return Finding(
@@ -252,3 +254,89 @@ class TestScannerWithRealProbe:
         result = await scanner.run()
         assert result.total_probes == 1
         assert result.findings[0].probe_id == "ASI01-INDIRECT-INJECT"
+
+
+# ------------------------------------------------------------------
+# ScanResult new fields
+# ------------------------------------------------------------------
+
+
+class TestScanResultNewFields:
+    def test_smart_defaults_to_false(self):
+        from datetime import UTC, datetime
+
+        result = ScanResult(
+            started_at=datetime.now(UTC),
+            finished_at=datetime.now(UTC),
+            total_probes=0,
+        )
+        assert result.smart is False
+
+    def test_detection_confidence_threshold_defaults_to_08(self):
+        from datetime import UTC, datetime
+
+        result = ScanResult(
+            started_at=datetime.now(UTC),
+            finished_at=datetime.now(UTC),
+            total_probes=0,
+        )
+        assert result.detection_confidence_threshold == 0.8
+
+
+# ------------------------------------------------------------------
+# Scanner propagates threshold + fallback_model to probes
+# ------------------------------------------------------------------
+
+
+class TestScannerPropagatesThreshold:
+    async def test_scanner_passes_confidence_threshold_to_probe(self):
+        """Scanner calls probe.attack() with confidence_threshold from config."""
+        received = {}
+
+        from agentsec.core.finding import Finding, OWASPCategory, Remediation, Severity
+
+        class _CapturingProbe(BaseProbe):
+            def metadata(self):
+                return ProbeMetadata(
+                    id="CAPTURE-PROBE",
+                    name="Capturing Probe",
+                    category=OWASPCategory.ASI01,
+                    default_severity=Severity.HIGH,
+                    description="capture",
+                )
+
+            def remediation(self):
+                return Remediation(summary="fix")
+
+            async def attack(
+                self, adapter, provider=None, confidence_threshold=0.8, fallback_model=None
+            ):
+                received["confidence_threshold"] = confidence_threshold
+                received["fallback_model"] = fallback_model
+                return Finding(
+                    probe_id=self.metadata().id,
+                    probe_name=self.metadata().name,
+                    category=self.metadata().category,
+                    status=FindingStatus.RESISTANT,
+                    severity=self.metadata().default_severity,
+                    description=self.metadata().description,
+                    remediation=self.remediation(),
+                )
+
+        config = ScanConfig(
+            detection_confidence_threshold=0.65,
+            fallback_llm_model="meta-llama/llama-3-8b",
+        )
+        scanner = _scanner_with_probes([_CapturingProbe], config=config)
+        await scanner.run()
+        assert received["confidence_threshold"] == 0.65
+        assert received["fallback_model"] == "meta-llama/llama-3-8b"
+
+    async def test_scan_result_smart_and_threshold_populated(self):
+        """ScanResult.smart and .detection_confidence_threshold come from config."""
+        probe_class = _make_probe("P1", FindingStatus.RESISTANT)
+        config = ScanConfig(smart=False, detection_confidence_threshold=0.75)
+        scanner = _scanner_with_probes([probe_class], config=config)
+        result = await scanner.run()
+        assert result.smart is False
+        assert result.detection_confidence_threshold == 0.75

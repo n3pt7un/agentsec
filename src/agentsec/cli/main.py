@@ -3,11 +3,8 @@
 from __future__ import annotations
 
 import asyncio
-import importlib.util
-import inspect
 import json
 import logging
-import sys
 from collections import Counter
 from pathlib import Path
 
@@ -15,6 +12,7 @@ import typer
 from rich.console import Console
 
 from agentsec.core.config import ScanConfig
+from agentsec.core.loader import load_graph, make_adapter
 
 app = typer.Typer(
     name="agentsec",
@@ -27,83 +25,6 @@ app.add_typer(probes_app, name="probes")
 
 console = Console()
 logger = logging.getLogger(__name__)
-
-
-# ── Helpers ─────────────────────────────────────────────────────────
-
-
-def _find_project_root(path: Path) -> Path | None:
-    """Walk up from *path* looking for a pyproject.toml or .git directory."""
-    for parent in [path, *path.parents]:
-        if (parent / "pyproject.toml").exists() or (parent / ".git").exists():
-            return parent
-    return None
-
-
-def _load_graph(
-    target: str,
-    *,
-    vulnerable: bool = True,
-    live: bool = False,
-    target_model: str | None = None,
-):
-    """Dynamically import a target module and return its compiled graph.
-
-    Looks for any callable starting with ``build_`` and invokes it, or
-    falls back to a ``graph`` module attribute.
-
-    Raises:
-        typer.BadParameter: When no graph can be found.
-    """
-    target_path = Path(target).resolve()
-    if not target_path.exists():
-        raise typer.BadParameter(f"Target file not found: {target}")
-
-    spec = importlib.util.spec_from_file_location("_target", str(target_path))
-    if spec is None or spec.loader is None:
-        raise typer.BadParameter(f"Cannot load module from: {target}")
-
-    module = importlib.util.module_from_spec(spec)
-    sys.modules["_target"] = module
-
-    # Add the target's parent directories to sys.path so relative imports
-    # (e.g. ``from tests.fixtures.utils import ...``) resolve correctly.
-    project_root = _find_project_root(target_path)
-    if project_root and str(project_root) not in sys.path:
-        sys.path.insert(0, str(project_root))
-
-    spec.loader.exec_module(module)
-
-    # Look for build_* callables
-    for attr_name in sorted(dir(module)):
-        if attr_name.startswith("build_") and callable(getattr(module, attr_name)):
-            builder = getattr(module, attr_name)
-            sig = inspect.signature(builder)
-            kwargs: dict = {}
-            if "live" in sig.parameters:
-                kwargs["live"] = live
-            if "target_model" in sig.parameters:
-                kwargs["target_model"] = target_model
-            if "vulnerable" in sig.parameters:
-                kwargs["vulnerable"] = vulnerable
-            return builder(**kwargs)
-
-    # Fallback: look for a 'graph' attribute
-    graph = getattr(module, "graph", None)
-    if graph is not None:
-        return graph
-
-    raise typer.BadParameter(f"No build_* function or 'graph' attribute found in {target}")
-
-
-def _make_adapter(adapter_name: str, graph):
-    """Create an adapter instance from its name."""
-    if adapter_name != "langgraph":
-        raise typer.BadParameter(f"Unknown adapter: {adapter_name}. Supported: langgraph")
-
-    from agentsec.adapters.langgraph import LangGraphAdapter
-
-    return LangGraphAdapter(graph)
 
 
 def _write_output(content: str, output_path: str | None) -> None:
@@ -150,12 +71,12 @@ def scan(
     )
 
     try:
-        graph = _load_graph(target, vulnerable=vulnerable, live=live, target_model=target_model)
-    except (typer.BadParameter, ValueError) as exc:
+        graph = load_graph(target, vulnerable=vulnerable, live=live, target_model=target_model)
+    except ValueError as exc:
         console.print(f"[red]Error:[/] {exc}")
         raise typer.Exit(code=1) from exc
 
-    adapter_inst = _make_adapter(adapter, graph)
+    adapter_inst = make_adapter(adapter, graph)
 
     from agentsec.core.exceptions import LLMProviderError
 
@@ -236,12 +157,12 @@ def probe(
 ) -> None:
     """Run a single probe for debugging."""
     try:
-        graph = _load_graph(target, vulnerable=vulnerable, live=live, target_model=target_model)
-    except (typer.BadParameter, ValueError) as exc:
+        graph = load_graph(target, vulnerable=vulnerable, live=live, target_model=target_model)
+    except ValueError as exc:
         console.print(f"[red]Error:[/] {exc}")
         raise typer.Exit(code=1) from exc
 
-    adapter_inst = _make_adapter(adapter, graph)
+    adapter_inst = make_adapter(adapter, graph)
 
     config = ScanConfig(probes=[probe_id], verbose=True, smart=smart, llm_model=model)
 
@@ -344,3 +265,28 @@ def report(
         content = generate_markdown(result)
 
     _write_output(content, output)
+
+
+@app.command()
+def serve(
+    port: int = typer.Option(8457, help="Port to serve the dashboard on"),
+    host: str = typer.Option("127.0.0.1", help="Host to bind to"),
+    reload: bool = typer.Option(False, help="Enable auto-reload for development"),
+) -> None:
+    """Start the agentsec web dashboard."""
+    try:
+        import uvicorn
+    except ImportError as exc:
+        console.print(
+            "[red]Error:[/] Dashboard requires extra dependencies.\n"
+            "Install with: [bold]uv sync --extra dashboard[/]"
+        )
+        raise typer.Exit(code=1) from exc
+
+    console.print(f"[cyan]Starting agentsec dashboard at http://{host}:{port}[/]")
+    uvicorn.run(
+        "agentsec.dashboard.app:app",
+        host=host,
+        port=port,
+        reload=reload,
+    )

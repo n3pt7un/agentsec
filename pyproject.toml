@@ -37,6 +37,10 @@ dev = [
     "pytest-asyncio>=0.24",
     "ruff>=0.8",
 ]
+dashboard = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.34",
+]
 
 [project.scripts]
 agentsec = "agentsec.cli.main:app"

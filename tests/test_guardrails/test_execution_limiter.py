@@ -4,12 +4,15 @@ import time
 
 import pytest
 
-from agentsec.guardrails.execution_limiter import ExecutionLimitExceeded, ExecutionLimiter
+from agentsec.guardrails.execution_limiter import (
+    ExecutionLimiter,
+    ExecutionLimitExceededError,
+)
 
 
 class TestExecutionLimitExceeded:
     def test_attributes_populated(self):
-        exc = ExecutionLimitExceeded(
+        exc = ExecutionLimitExceededError(
             agent_name="my_agent",
             limit_type="steps",
             value=10,
@@ -35,7 +38,7 @@ class TestEnforceDecorator:
 
         node({})
         node({})
-        with pytest.raises(ExecutionLimitExceeded) as exc_info:
+        with pytest.raises(ExecutionLimitExceededError) as exc_info:
             node({})
 
         assert exc_info.value.limit_type == "steps"
@@ -80,7 +83,7 @@ class TestEnforceDecorator:
         # Advance clock 2 seconds past started_at
         monkeypatch.setattr(time, "monotonic", lambda: original_monotonic() + 2.0)
 
-        with pytest.raises(ExecutionLimitExceeded) as exc_info:
+        with pytest.raises(ExecutionLimitExceededError) as exc_info:
             node({})
 
         assert exc_info.value.limit_type == "seconds"
@@ -106,7 +109,7 @@ class TestEnforceDecorator:
             return {"token_usage": 6}
 
         node({})  # 6 tokens — under limit
-        with pytest.raises(ExecutionLimitExceeded) as exc_info:
+        with pytest.raises(ExecutionLimitExceededError) as exc_info:
             node({})  # cumulative 12 — over limit
 
         assert exc_info.value.limit_type == "tokens"
@@ -194,5 +197,5 @@ class TestEnforceDecorator:
             return {}
 
         await node({})
-        with pytest.raises(ExecutionLimitExceeded):
+        with pytest.raises(ExecutionLimitExceededError):
             await node({})

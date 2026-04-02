@@ -9,7 +9,7 @@ import time
 from agentsec.core.exceptions import AgentSecError
 
 
-class ExecutionLimitExceeded(AgentSecError):
+class ExecutionLimitExceededError(AgentSecError):
     """Raised when an execution limit is hit.
 
     Attributes:
@@ -96,13 +96,13 @@ class ExecutionLimiter:
     def _check_pre(self, entry: dict, agent_name: str) -> None:
         """Check step and time limits before calling the node."""
         if self.max_steps is not None and entry["steps"] >= self.max_steps:
-            raise ExecutionLimitExceeded(
+            raise ExecutionLimitExceededError(
                 agent_name, "steps", entry["steps"], self.max_steps
             )
         if self.max_seconds is not None and entry["started_at"] is not None:
             elapsed = time.monotonic() - entry["started_at"]
             if elapsed >= self.max_seconds:
-                raise ExecutionLimitExceeded(
+                raise ExecutionLimitExceededError(
                     agent_name, "seconds", elapsed, self.max_seconds
                 )
 
@@ -113,7 +113,7 @@ class ExecutionLimiter:
             if token_usage is not None:
                 new_total = entry["tokens"] + token_usage
                 if new_total >= self.max_tokens:
-                    raise ExecutionLimitExceeded(
+                    raise ExecutionLimitExceededError(
                         agent_name, "tokens", new_total, self.max_tokens
                     )
                 entry["tokens"] = new_total

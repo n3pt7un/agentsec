@@ -287,3 +287,70 @@ def test_customer_support_mock_mode_unchanged():
     assert build_customer_support_target(vulnerable=True) is not None
     assert build_customer_support_target(vulnerable=False) is not None
     assert build_customer_support_target() is not None
+
+
+# ---------------------------------------------------------------------------
+# Email automation harness (no importorskip — base LangGraph only)
+# ---------------------------------------------------------------------------
+
+
+def test_email_automation_compiles_vulnerable():
+    from tests.targets.email_automation_harness import build_email_automation_target
+
+    graph = build_email_automation_target(vulnerable=True)
+    assert graph is not None
+
+
+def test_email_automation_compiles_resistant():
+    from tests.targets.email_automation_harness import build_email_automation_target
+
+    graph = build_email_automation_target(vulnerable=False)
+    assert graph is not None
+
+
+@pytest.mark.asyncio
+async def test_email_automation_discovery():
+    from tests.targets.email_automation_harness import build_email_automation_target
+
+    adapter = LangGraphAdapter(build_email_automation_target(vulnerable=True))
+    agents = await adapter.discover()
+    names = {a.name for a in agents}
+    assert {"classify", "retrieve", "draft", "quality_check", "send"} <= names
+
+
+@pytest.mark.asyncio
+async def test_email_automation_vulnerable_scan_produces_findings():
+    from tests.targets.email_automation_harness import build_email_automation_target
+
+    adapter = LangGraphAdapter(build_email_automation_target(vulnerable=True))
+    scanner = Scanner(adapter, ScanConfig())
+    result = await scanner.run(target="email_automation_harness")
+    assert any(f.status == FindingStatus.VULNERABLE for f in result.findings)
+
+
+@pytest.mark.asyncio
+async def test_email_automation_resistant_scan_has_no_vulnerable():
+    from tests.targets.email_automation_harness import build_email_automation_target
+
+    adapter = LangGraphAdapter(build_email_automation_target(vulnerable=False))
+    scanner = Scanner(adapter, ScanConfig())
+    result = await scanner.run(target="email_automation_harness")
+    assert not any(f.status == FindingStatus.VULNERABLE for f in result.findings)
+
+
+def test_email_automation_live_raises_without_api_key(monkeypatch):
+    monkeypatch.delenv("OPENROUTER_API_KEY", raising=False)
+    from tests.targets.email_automation_harness import build_email_automation_target
+
+    with pytest.raises(ValueError, match="OPENROUTER_API_KEY"):
+        build_email_automation_target(live=True)
+
+
+def test_email_automation_live_compiles_with_mocked_llm(monkeypatch):
+    monkeypatch.setenv("OPENROUTER_API_KEY", "sk-or-test-key")
+    with patch(_MOCK_LLM_PATH, return_value=MagicMock()) as mock_cls:
+        from tests.targets.email_automation_harness import build_email_automation_target
+
+        graph = build_email_automation_target(live=True)
+        assert graph is not None
+        mock_cls.assert_called_once()

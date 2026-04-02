@@ -60,9 +60,26 @@ export default function Settings() {
 
   useEffect(() => { setForm(settings); }, [settings]);
 
+  const [pricingRows, setPricingRows] = useState(
+    Object.entries(settings.pricing || {}).map(([model, p]) => ({
+      model,
+      input_per_1m: String(p.input_per_1m ?? ''),
+      output_per_1m: String(p.output_per_1m ?? ''),
+    }))
+  );
+  const [newRow, setNewRow] = useState({ model: '', input_per_1m: '', output_per_1m: '' });
+
   const handleSave = (e) => {
     e.preventDefault();
-    updateSettings(form);
+    const pricingData = Object.fromEntries(
+      pricingRows
+        .filter(r => r.model.trim())
+        .map(r => [r.model.trim(), {
+          input_per_1m: parseFloat(r.input_per_1m) || 0,
+          output_per_1m: parseFloat(r.output_per_1m) || 0,
+        }])
+    );
+    updateSettings({ ...form, pricing: pricingData });
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
   };
@@ -95,6 +112,23 @@ export default function Settings() {
           >
             {MODELS.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
           </select>
+        </div>
+
+        <div>
+          <label style={fieldLabel} htmlFor="settings-fallback-model">Fallback LLM Model</label>
+          <p style={fieldHint}>
+            Used for Tier 3 payload generation when the primary model refuses. Leave blank to use the primary model for all tiers.
+          </p>
+          <input
+            id="settings-fallback-model"
+            type="text"
+            value={form.fallback_llm_model || ''}
+            onChange={e => setForm({ ...form, fallback_llm_model: e.target.value || null })}
+            placeholder="e.g. meta-llama/llama-3.1-70b-instruct"
+            style={{ ...inputBase, fontFamily: 'var(--font-mono)' }}
+            onFocus={e => { e.target.style.borderColor = 'var(--accent)'; }}
+            onBlur={e => { e.target.style.borderColor = 'var(--border)'; }}
+          />
         </div>
 
         <div>
@@ -161,6 +195,173 @@ export default function Settings() {
           )}
         </div>
       </form>
+
+      <div style={{
+        background: 'var(--bg-surface)',
+        border: '1px solid var(--border)',
+        borderRadius: 'var(--radius)',
+        padding: '20px',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '14px',
+      }}>
+        <div>
+          <p style={{ ...fieldLabel, marginBottom: '3px' }}>Model Pricing</p>
+          <p style={fieldHint}>Cost per 1M tokens (USD). Used to compute total scan cost. Prices update at openrouter.ai/models.</p>
+        </div>
+
+        {/* Column headers */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 90px 90px 28px', gap: '6px', alignItems: 'center' }}>
+          <span style={{ ...fieldLabel, marginBottom: 0 }}>Model</span>
+          <span style={{ ...fieldLabel, marginBottom: 0 }}>In $/1M</span>
+          <span style={{ ...fieldLabel, marginBottom: 0 }}>Out $/1M</span>
+          <span />
+        </div>
+
+        {/* Existing rows */}
+        {pricingRows.map((row, i) => (
+          <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr 90px 90px 28px', gap: '6px', alignItems: 'center' }}>
+            <input
+              value={row.model}
+              onChange={e => {
+                const updated = [...pricingRows];
+                updated[i] = { ...updated[i], model: e.target.value };
+                setPricingRows(updated);
+              }}
+              style={{ ...inputBase, fontFamily: 'var(--font-mono)', fontSize: '12px' }}
+              onFocus={e => { e.target.style.borderColor = 'var(--accent)'; }}
+              onBlur={e => { e.target.style.borderColor = 'var(--border)'; }}
+            />
+            <input
+              type="number"
+              step="0.01"
+              min="0"
+              value={row.input_per_1m}
+              onChange={e => {
+                const updated = [...pricingRows];
+                updated[i] = { ...updated[i], input_per_1m: e.target.value };
+                setPricingRows(updated);
+              }}
+              style={{ ...inputBase, fontFamily: 'var(--font-mono)', fontSize: '12px' }}
+              onFocus={e => { e.target.style.borderColor = 'var(--accent)'; }}
+              onBlur={e => { e.target.style.borderColor = 'var(--border)'; }}
+            />
+            <input
+              type="number"
+              step="0.01"
+              min="0"
+              value={row.output_per_1m}
+              onChange={e => {
+                const updated = [...pricingRows];
+                updated[i] = { ...updated[i], output_per_1m: e.target.value };
+                setPricingRows(updated);
+              }}
+              style={{ ...inputBase, fontFamily: 'var(--font-mono)', fontSize: '12px' }}
+              onFocus={e => { e.target.style.borderColor = 'var(--accent)'; }}
+              onBlur={e => { e.target.style.borderColor = 'var(--border)'; }}
+            />
+            <button
+              type="button"
+              onClick={() => setPricingRows(pricingRows.filter((_, j) => j !== i))}
+              style={{
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                color: 'var(--text-muted)',
+                fontSize: '16px',
+                lineHeight: 1,
+                padding: '0',
+              }}
+            >×</button>
+          </div>
+        ))}
+
+        {/* Add new row */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 90px 90px 28px', gap: '6px', alignItems: 'center' }}>
+          <input
+            placeholder="model/id"
+            value={newRow.model}
+            onChange={e => setNewRow({ ...newRow, model: e.target.value })}
+            style={{ ...inputBase, fontFamily: 'var(--font-mono)', fontSize: '12px' }}
+            onFocus={e => { e.target.style.borderColor = 'var(--accent)'; }}
+            onBlur={e => { e.target.style.borderColor = 'var(--border)'; }}
+          />
+          <input
+            type="number"
+            step="0.01"
+            min="0"
+            placeholder="0.00"
+            value={newRow.input_per_1m}
+            onChange={e => setNewRow({ ...newRow, input_per_1m: e.target.value })}
+            style={{ ...inputBase, fontFamily: 'var(--font-mono)', fontSize: '12px' }}
+            onFocus={e => { e.target.style.borderColor = 'var(--accent)'; }}
+            onBlur={e => { e.target.style.borderColor = 'var(--border)'; }}
+          />
+          <input
+            type="number"
+            step="0.01"
+            min="0"
+            placeholder="0.00"
+            value={newRow.output_per_1m}
+            onChange={e => setNewRow({ ...newRow, output_per_1m: e.target.value })}
+            style={{ ...inputBase, fontFamily: 'var(--font-mono)', fontSize: '12px' }}
+            onFocus={e => { e.target.style.borderColor = 'var(--accent)'; }}
+            onBlur={e => { e.target.style.borderColor = 'var(--border)'; }}
+          />
+          <button
+            type="button"
+            onClick={() => {
+              if (newRow.model.trim()) {
+                setPricingRows([...pricingRows, { ...newRow }]);
+                setNewRow({ model: '', input_per_1m: '', output_per_1m: '' });
+              }
+            }}
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              color: 'var(--accent)',
+              fontSize: '20px',
+              fontWeight: 700,
+              lineHeight: 1,
+              padding: '0',
+            }}
+          >+</button>
+        </div>
+
+        {/* Save button for pricing card */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <button
+            type="button"
+            onClick={() => {
+              const pricingData = Object.fromEntries(
+                pricingRows
+                  .filter(r => r.model.trim())
+                  .map(r => [r.model.trim(), {
+                    input_per_1m: parseFloat(r.input_per_1m) || 0,
+                    output_per_1m: parseFloat(r.output_per_1m) || 0,
+                  }])
+              );
+              updateSettings({ ...form, pricing: pricingData });
+              setSaved(true);
+              setTimeout(() => setSaved(false), 2000);
+            }}
+            style={{
+              border: '1px solid var(--accent)',
+              borderRadius: 'var(--radius)',
+              padding: '7px 16px',
+              fontSize: '13px',
+              color: 'var(--accent)',
+              background: 'transparent',
+              cursor: 'pointer',
+              fontFamily: 'var(--font-sans)',
+              fontWeight: 500,
+            }}
+          >
+            Save Pricing
+          </button>
+        </div>
+      </div>
 
       <div style={{
         background: 'var(--bg-surface)',

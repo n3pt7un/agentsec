@@ -21,10 +21,12 @@ export default function AgentGraph({ agents }) {
     const colTextMuted = getCssVar('--text-secondary')     || '#6b7280';
     const colEdge      = getCssVar('--accent-dim')         || '#166534';
 
+    const COL_RETRIEVER = '#60a5fa'; // blue accent for retriever-type nodes, intentional non-token
+
     const nodeColor = (d) => {
       const role = (d.role || '').toLowerCase();
       if (role.includes('supervis')) return colAccent;
-      if (role.includes('retriev'))  return '#60a5fa';
+      if (role.includes('retriev'))  return COL_RETRIEVER;
       return colBgRaised;
     };
 

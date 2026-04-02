@@ -31,7 +31,7 @@ export default function FindingDetail({ finding }) {
             </div>
             <div>
               <span style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-sans)' }}>Response: </span>
-              <code style={{ color: '#fb923c', fontFamily: 'var(--font-mono)', wordBreak: 'break-all' }}>{evidence.agent_response}</code>
+              <code style={{ color: 'var(--warning)', fontFamily: 'var(--font-mono)', wordBreak: 'break-all' }}>{evidence.agent_response}</code>
             </div>
             {evidence.additional_context && (
               <div>

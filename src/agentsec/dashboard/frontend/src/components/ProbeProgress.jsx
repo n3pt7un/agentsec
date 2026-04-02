@@ -10,7 +10,7 @@ const STATUS_CONFIG = {
   started:    { Icon: IconRadar, color: 'var(--accent)', spin: true },
   vulnerable: { Icon: IconX, color: 'var(--danger)', spin: false },
   resistant:  { Icon: IconCheck, color: 'var(--accent)', spin: false },
-  partial:    { Icon: IconAdjustments, color: '#fbbf24', spin: false },
+  partial:    { Icon: IconAdjustments, color: 'var(--warning)', spin: false },
   error:      { Icon: IconX, color: 'var(--danger)', spin: false },
   skipped:    { Icon: IconPlayerSkipForward, color: 'var(--text-muted)', spin: false },
 };

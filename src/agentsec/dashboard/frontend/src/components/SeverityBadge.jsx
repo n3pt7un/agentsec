@@ -17,7 +17,7 @@ const SEVERITY_STYLES = {
 const STATUS_CONFIG = {
   vulnerable: { color: 'var(--danger)', bg: 'var(--danger-bg)', border: 'var(--border-red)', Icon: IconAlertTriangle },
   resistant:  { color: 'var(--accent)', bg: 'var(--success-bg)', border: 'var(--border-green)', Icon: IconShieldCheck },
-  partial:    { color: '#fbbf24', bg: '#2d2200', border: '#78350f', Icon: IconAdjustments },
+  partial:    { color: 'var(--warning)', bg: 'var(--warning-bg)', border: 'var(--warning-bg)', Icon: IconAdjustments },
   error:      { color: 'var(--danger)', bg: 'var(--danger-bg)', border: 'var(--border-red)', Icon: IconX },
   skipped:    { color: 'var(--text-muted)', bg: 'var(--bg-surface-raised)', border: 'var(--border)', Icon: IconPlayerSkipForward },
 };

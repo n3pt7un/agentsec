@@ -14,7 +14,7 @@ const CATEGORY_NAMES = {
 const thStyle = {
   padding: '8px 14px',
   fontSize: '10px',
-  fontFamily: 'var(--font-sans)',
+  fontFamily: 'var(--font-mono)',
   color: 'var(--text-muted)',
   textTransform: 'uppercase',
   letterSpacing: '0.08em',

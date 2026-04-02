@@ -6,7 +6,7 @@ import FindingDetail from './FindingDetail';
 const LEFT_BORDER = {
   vulnerable: 'var(--danger)',
   resistant:  'var(--accent-dim)',
-  partial:    '#78350f',
+  partial:    'var(--warning)',
   error:      'var(--danger)',
   skipped:    'var(--border)',
 };

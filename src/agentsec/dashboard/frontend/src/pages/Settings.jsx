@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { IconCheck } from '@tabler/icons-react';
 import { useSettings } from '../hooks/useSettings';
 
 const MODELS = [
@@ -20,9 +21,40 @@ const TARGET_MODELS = [
   { value: 'meta-llama/llama-3.3-70b-instruct', label: 'Llama 3.3 70B' },
 ];
 
+const fieldLabel = {
+  fontSize: '11px',
+  color: 'var(--text-muted)',
+  fontFamily: 'var(--font-sans)',
+  textTransform: 'uppercase',
+  letterSpacing: '0.06em',
+  display: 'block',
+  marginBottom: '5px',
+};
+
+const fieldHint = {
+  fontSize: '11px',
+  color: 'var(--text-muted)',
+  fontFamily: 'var(--font-sans)',
+  marginBottom: '6px',
+  lineHeight: 1.5,
+};
+
+const inputBase = {
+  width: '100%',
+  background: 'var(--bg-page)',
+  border: '1px solid var(--border)',
+  borderRadius: 'var(--radius)',
+  padding: '7px 10px',
+  fontSize: '13px',
+  color: 'var(--text-primary)',
+  outline: 'none',
+  boxSizing: 'border-box',
+};
+
 export default function Settings() {
   const { settings, updateSettings } = useSettings();
   const [saved, setSaved] = useState(false);
+  const [saveHovered, setSaveHovered] = useState(false);
   const [form, setForm] = useState(settings);
 
   useEffect(() => { setForm(settings); }, [settings]);
@@ -35,74 +67,112 @@ export default function Settings() {
   };
 
   return (
-    <div className="max-w-xl space-y-6">
-      <h1 className="text-xl font-bold">Settings</h1>
+    <div style={{ maxWidth: '520px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+      <h1 style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'var(--font-sans)' }}>
+        Settings
+      </h1>
 
-      <form onSubmit={handleSave} className="bg-slate-800 rounded-lg border border-slate-700 p-6 space-y-5">
+      <form onSubmit={handleSave} style={{
+        background: 'var(--bg-surface)',
+        border: '1px solid var(--border)',
+        borderRadius: 'var(--radius)',
+        padding: '20px',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '18px',
+      }}>
         <div>
-          <label className="block text-sm text-slate-400 mb-1">LLM Model</label>
-          <p className="text-xs text-slate-500 mb-2">
-            Used for smart payload generation and LLM-based detection. Requires an OpenRouter API key.
-          </p>
+          <label style={fieldLabel}>LLM Model</label>
+          <p style={fieldHint}>Used for smart payload generation. Requires an OpenRouter API key.</p>
           <select
             value={form.llm_model}
             onChange={e => setForm({ ...form, llm_model: e.target.value })}
-            className="w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 text-sm"
+            style={{ ...inputBase, fontFamily: 'var(--font-sans)' }}
+            onFocus={e => { e.target.style.borderColor = 'var(--accent)'; }}
+            onBlur={e => { e.target.style.borderColor = 'var(--border)'; }}
           >
-            {MODELS.map(m => (
-              <option key={m.value} value={m.value}>{m.label}</option>
-            ))}
+            {MODELS.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
           </select>
         </div>
 
         <div>
-          <label className="block text-sm text-slate-400 mb-1">Target Model</label>
-          <p className="text-xs text-slate-500 mb-2">
-            The LLM running <em>inside</em> your agent under test. Only used when <strong>Live LLM</strong> is enabled on a scan.
-          </p>
+          <label style={fieldLabel}>Target Model</label>
+          <p style={fieldHint}>The LLM running inside your agent under test. Only used when Live LLM is enabled on a scan.</p>
           <select
             value={form.target_model}
             onChange={e => setForm({ ...form, target_model: e.target.value })}
-            className="w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 text-sm"
+            style={{ ...inputBase, fontFamily: 'var(--font-sans)' }}
+            onFocus={e => { e.target.style.borderColor = 'var(--accent)'; }}
+            onBlur={e => { e.target.style.borderColor = 'var(--border)'; }}
           >
-            {TARGET_MODELS.map(m => (
-              <option key={m.value} value={m.value}>{m.label}</option>
-            ))}
+            {TARGET_MODELS.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
           </select>
         </div>
 
         <div>
-          <label className="block text-sm text-slate-400 mb-1">OpenRouter API Key</label>
-          <p className="text-xs text-slate-500 mb-2">
+          <label style={fieldLabel}>OpenRouter API Key</label>
+          <p style={fieldHint}>
             Required for smart mode scans. Get one at{' '}
-            <a href="https://openrouter.ai" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">openrouter.ai</a>.
-            Stored in your browser's localStorage only.
+            <a href="https://openrouter.ai" target="_blank" rel="noopener noreferrer"
+               style={{ color: 'var(--accent)', fontFamily: 'var(--font-sans)' }}>
+              openrouter.ai
+            </a>.
+            Stored in your browser only.
           </p>
           <input
             type="password"
             value={form.openrouter_api_key}
             onChange={e => setForm({ ...form, openrouter_api_key: e.target.value })}
             placeholder="sk-or-..."
-            className="w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 text-sm font-mono"
+            style={{ ...inputBase, fontFamily: 'var(--font-mono)' }}
+            onFocus={e => { e.target.style.borderColor = 'var(--accent)'; }}
+            onBlur={e => { e.target.style.borderColor = 'var(--border)'; }}
           />
         </div>
 
-        <div className="flex items-center gap-3">
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <button
             type="submit"
-            className="bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded text-sm font-medium transition-colors"
+            onMouseEnter={() => setSaveHovered(true)}
+            onMouseLeave={() => setSaveHovered(false)}
+            style={{
+              border: '1px solid var(--accent)',
+              borderRadius: 'var(--radius)',
+              padding: '7px 16px',
+              fontSize: '13px',
+              color: 'var(--accent)',
+              background: saveHovered ? 'var(--success-bg)' : 'transparent',
+              cursor: 'pointer',
+              fontFamily: 'var(--font-sans)',
+              fontWeight: 500,
+              transition: 'background 0.1s',
+            }}
           >
             Save Settings
           </button>
           {saved && (
-            <span className="text-green-400 text-sm">&#10003; Saved</span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '13px', color: 'var(--accent)', fontFamily: 'var(--font-sans)' }}>
+              <IconCheck size={14} stroke={2} /> Saved
+            </span>
           )}
         </div>
       </form>
 
-      <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-4 text-xs text-slate-400 space-y-1">
-        <p className="font-medium text-slate-300">About API Keys</p>
-        <p>Your API key is stored only in this browser's localStorage and never sent to any server other than OpenRouter (via the agentsec backend when running smart scans).</p>
+      <div style={{
+        background: 'var(--bg-surface)',
+        border: '1px solid var(--border)',
+        borderRadius: 'var(--radius)',
+        padding: '14px',
+        fontSize: '11px',
+        color: 'var(--text-muted)',
+        fontFamily: 'var(--font-sans)',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '5px',
+        lineHeight: 1.6,
+      }}>
+        <p style={{ fontWeight: 600, color: 'var(--text-secondary)' }}>About API Keys</p>
+        <p>Your API key is stored only in this browser localStorage and never sent to any server other than OpenRouter (via the agentsec backend when running smart scans).</p>
         <p>Smart mode is off by default. Enable it per-scan in the scan form.</p>
       </div>
     </div>

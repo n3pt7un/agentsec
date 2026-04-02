@@ -126,7 +126,13 @@ class RoleConfusionProbe(BaseProbe):
             system, prompt, fallbacks=[fallback, _PAYLOAD_FALLBACK]
         )
 
-    async def attack(self, adapter: AbstractAdapter, provider=None, confidence_threshold: float = 0.8, fallback_model: str | None = None) -> Finding:
+    async def attack(
+        self,
+        adapter: AbstractAdapter,
+        provider=None,
+        confidence_threshold: float = 0.8,
+        fallback_model: str | None = None,
+    ) -> Finding:
         """Send a role-override payload and check whether the agent echoes the marker.
 
         Args:

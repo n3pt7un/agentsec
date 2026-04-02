@@ -131,7 +131,13 @@ class MemoryPoisonProbe(BaseProbe):
             system, prompt, fallbacks=[_POISON_PAYLOAD]
         )
 
-    async def attack(self, adapter: AbstractAdapter, provider=None, confidence_threshold: float = 0.8, fallback_model: str | None = None) -> Finding:
+    async def attack(
+        self,
+        adapter: AbstractAdapter,
+        provider=None,
+        confidence_threshold: float = 0.8,
+        fallback_model: str | None = None,
+    ) -> Finding:
         """Execute the memory poison probe.
 
         Chooses the direct-write path when the adapter supports memory access,
@@ -154,8 +160,12 @@ class MemoryPoisonProbe(BaseProbe):
         if adapter.capabilities().can_access_memory:
             return await self._attack_direct_write(adapter, target_agent, poison_payload, start)
         return await self._attack_via_message(
-            adapter, target_agent, poison_payload, start,
-            provider=provider, confidence_threshold=confidence_threshold,
+            adapter,
+            target_agent,
+            poison_payload,
+            start,
+            provider=provider,
+            confidence_threshold=confidence_threshold,
         )
 
     # ------------------------------------------------------------------

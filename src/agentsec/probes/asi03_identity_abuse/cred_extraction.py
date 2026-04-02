@@ -165,7 +165,13 @@ class CredentialExtractionProbe(BaseProbe):
             system, prompt, fallbacks=list(_ALL_PAYLOADS)
         )
 
-    async def attack(self, adapter: AbstractAdapter, provider=None, confidence_threshold: float = 0.8, fallback_model: str | None = None) -> Finding:
+    async def attack(
+        self,
+        adapter: AbstractAdapter,
+        provider=None,
+        confidence_threshold: float = 0.8,
+        fallback_model: str | None = None,
+    ) -> Finding:
         """Send escalating credential-extraction payloads and scan responses.
 
         Args:

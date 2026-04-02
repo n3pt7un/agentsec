@@ -129,11 +129,15 @@ class ContextLeakProbe(BaseProbe):
             f"Agent tools: {', '.join(agent.tools) if agent else 'none'}\n"
             f"Sensitive marker to embed: {_SENSITIVE_MARKER}\n"
         )
-        return await PayloadGenerator(provider).generate(
-            system, prompt, fallbacks=[_SESSION_A_MSG]
-        )
+        return await PayloadGenerator(provider).generate(system, prompt, fallbacks=[_SESSION_A_MSG])
 
-    async def attack(self, adapter: AbstractAdapter, provider=None, confidence_threshold: float = 0.8, fallback_model: str | None = None) -> Finding:
+    async def attack(
+        self,
+        adapter: AbstractAdapter,
+        provider=None,
+        confidence_threshold: float = 0.8,
+        fallback_model: str | None = None,
+    ) -> Finding:
         """Execute the cross-session context leak probe.
 
         Args:

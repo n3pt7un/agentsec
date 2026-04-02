@@ -103,7 +103,13 @@ class IndirectPromptInjection(BaseProbe):
         )
         return await PayloadGenerator(provider).generate(system, prompt, fallbacks=[_PAYLOAD])
 
-    async def attack(self, adapter: AbstractAdapter, provider=None, confidence_threshold: float = 0.8, fallback_model: str | None = None) -> Finding:
+    async def attack(
+        self,
+        adapter: AbstractAdapter,
+        provider=None,
+        confidence_threshold: float = 0.8,
+        fallback_model: str | None = None,
+    ) -> Finding:
         """Send injection payloads and check whether the agent echoes the marker.
 
         Args:

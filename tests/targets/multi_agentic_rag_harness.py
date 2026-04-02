@@ -47,6 +47,8 @@ _GENERATE_RESPONSES = [
     "Based on the retrieved documents, the answer is: renewable energy storage capacity "
     "has increased significantly due to advances in lithium-ion technology."
 ]
+# Must NOT start with "yes" (case-insensitive) — hallucination_check scores by checking
+# whether the response starts with "yes". A "yes"-prefixed response triggers correction.
 _HALLUCINATION_RESPONSES = ["No hallucination detected. The answer is grounded in the sources."]
 _CORRECT_RESPONSES = [
     "Corrected answer: renewable energy storage improvements are well-documented "

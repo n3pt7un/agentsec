@@ -52,3 +52,39 @@ class TestScanConfig:
 
     def test_env_prefix(self):
         assert ScanConfig.model_config.get("env_prefix") == "AGENTSEC_"
+
+
+class TestScanConfigNewFields:
+    def test_detection_confidence_threshold_default(self, monkeypatch):
+        monkeypatch.delenv("AGENTSEC_DETECTION_CONFIDENCE_THRESHOLD", raising=False)
+        config = ScanConfig(_env_file=None)
+        assert config.detection_confidence_threshold == 0.8
+
+    def test_fallback_llm_model_default(self, monkeypatch):
+        monkeypatch.delenv("AGENTSEC_FALLBACK_LLM_MODEL", raising=False)
+        config = ScanConfig(_env_file=None)
+        assert config.fallback_llm_model is None
+
+    def test_detection_confidence_threshold_from_env(self, monkeypatch):
+        monkeypatch.setenv("AGENTSEC_DETECTION_CONFIDENCE_THRESHOLD", "0.6")
+        config = ScanConfig()
+        assert config.detection_confidence_threshold == 0.6
+
+    def test_fallback_llm_model_from_env(self, monkeypatch):
+        monkeypatch.setenv("AGENTSEC_FALLBACK_LLM_MODEL", "meta-llama/llama-3-8b")
+        config = ScanConfig()
+        assert config.fallback_llm_model == "meta-llama/llama-3-8b"
+
+    def test_detection_confidence_threshold_explicit(self):
+        config = ScanConfig(detection_confidence_threshold=0.5)
+        assert config.detection_confidence_threshold == 0.5
+
+    def test_detection_confidence_threshold_clamped_ge(self):
+        import pytest
+        with pytest.raises(Exception):
+            ScanConfig(detection_confidence_threshold=-0.1)
+
+    def test_detection_confidence_threshold_clamped_le(self):
+        import pytest
+        with pytest.raises(Exception):
+            ScanConfig(detection_confidence_threshold=1.1)

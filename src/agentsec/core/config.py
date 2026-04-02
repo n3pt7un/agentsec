@@ -32,3 +32,13 @@ class ScanConfig(BaseSettings):
     output_format: str = Field(
         default="markdown", description="Report format: markdown, html, json, sarif"
     )
+    detection_confidence_threshold: float = Field(
+        default=0.8,
+        ge=0.0,
+        le=1.0,
+        description="Minimum LLM confidence to classify a response as vulnerable (smart mode only)",
+    )
+    fallback_llm_model: str | None = Field(
+        default=None,
+        description="Model used for Tier 3 payload generation if primary model refuses",
+    )

@@ -28,8 +28,12 @@ export default function ScanHistory() {
 
   const handleDelete = async (scanId) => {
     if (!confirm('Delete this scan?')) return;
-    await deleteScan(scanId);
-    setScans(prev => prev.filter(s => s.scan_id !== scanId));
+    try {
+      await deleteScan(scanId);
+      setScans(prev => prev.filter(s => s.scan_id !== scanId));
+    } catch (err) {
+      setError(err.message || 'Failed to delete scan');
+    }
   };
 
   // Sort

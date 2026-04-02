@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useSettings } from '../hooks/useSettings';
 
 const MODELS = [
@@ -14,6 +14,8 @@ export default function Settings() {
   const { settings, updateSettings } = useSettings();
   const [saved, setSaved] = useState(false);
   const [form, setForm] = useState(settings);
+
+  useEffect(() => { setForm(settings); }, [settings]);
 
   const handleSave = (e) => {
     e.preventDefault();
@@ -47,7 +49,7 @@ export default function Settings() {
           <label className="block text-sm text-slate-400 mb-1">OpenRouter API Key</label>
           <p className="text-xs text-slate-500 mb-2">
             Required for smart mode scans. Get one at{' '}
-            <span className="text-blue-400">openrouter.ai</span>.
+            <a href="https://openrouter.ai" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">openrouter.ai</a>.
             Stored in your browser's localStorage only.
           </p>
           <input

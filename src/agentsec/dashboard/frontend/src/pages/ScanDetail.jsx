@@ -13,6 +13,7 @@ export default function ScanDetail() {
   const navigate = useNavigate();
   const [scan, setScan] = useState(null);
   const [error, setError] = useState(null);
+  const [deleteError, setDeleteError] = useState(null);
   const [filters, setFilters] = useState({ statuses: [], severities: [], categories: [] });
 
   useEffect(() => {
@@ -28,11 +29,12 @@ export default function ScanDetail() {
   }, [id]);
 
   const handleDelete = async () => {
+    setDeleteError(null);
     try {
       await deleteScan(id);
       navigate('/scans');
     } catch (err) {
-      setError(err.message || 'Failed to delete scan');
+      setDeleteError(err.message || 'Failed to delete scan');
     }
   };
 
@@ -97,6 +99,13 @@ export default function ScanDetail() {
           <Link to="/scans" className="text-sm text-blue-400 hover:underline">← All scans</Link>
         </div>
       </div>
+
+      {/* Delete error (shown inline, does not replace scan view) */}
+      {deleteError && (
+        <div className="bg-red-500/10 border border-red-500/20 rounded px-4 py-2 text-sm text-red-300">
+          Failed to delete scan: {deleteError}
+        </div>
+      )}
 
       {/* Stats row */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

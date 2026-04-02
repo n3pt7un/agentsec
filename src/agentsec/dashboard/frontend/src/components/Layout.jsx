@@ -25,7 +25,7 @@ export default function Layout() {
               key={item.to}
               to={item.to}
               className={`px-3 py-1.5 rounded text-sm transition-colors ${
-                location.pathname === item.to
+                (item.to === '/' ? location.pathname === '/' : location.pathname.startsWith(item.to))
                   ? 'bg-slate-700 text-white'
                   : 'text-slate-400 hover:text-white hover:bg-slate-700/50'
               }`}

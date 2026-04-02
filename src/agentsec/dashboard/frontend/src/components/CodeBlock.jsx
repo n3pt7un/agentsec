@@ -19,9 +19,13 @@ export default function CodeBlock({ code, language = 'python', label }) {
   }, [code]);
 
   const handleCopy = async () => {
-    await navigator.clipboard.writeText(code);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1500);
+    try {
+      await navigator.clipboard.writeText(code);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      // clipboard not available or permission denied
+    }
   };
 
   if (!code) return null;

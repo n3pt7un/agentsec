@@ -97,7 +97,7 @@ export default function FindingDetail({ finding }) {
           {remediation.references?.length > 0 && (
             <div style={{ marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
               {remediation.references.map((ref, i) => (
-                <a key={i} href={ref} target="_blank" rel="noopener"
+                <a key={i} href={ref} target="_blank" rel="noopener noreferrer"
                    style={{ fontSize: '11px', color: 'var(--accent)', fontFamily: 'var(--font-mono)' }}>
                   {ref}
                 </a>

@@ -56,7 +56,7 @@ export default function ScanCard({ scan }) {
           </span>
         </div>
         <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontFamily: 'var(--font-sans)' }}>
-          {new Date(scan.started_at).toLocaleString()}
+          {scan.started_at ? new Date(scan.started_at).toLocaleString() : '—'}
         </span>
       </div>
       <div style={{ display: 'flex', gap: '16px', fontSize: '11px', fontFamily: 'var(--font-mono)' }}>

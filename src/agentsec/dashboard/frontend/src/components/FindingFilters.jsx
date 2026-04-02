@@ -44,7 +44,7 @@ export default function FindingFilters({ findings, filters, onFilterChange }) {
       <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexWrap: 'wrap' }}>
         <span style={groupLabel}>Status</span>
         {STATUSES.map(s => (
-          <button key={s} onClick={() => toggle('statuses', s)} style={pillStyle(isActive('statuses', s))}>
+          <button key={s} onClick={() => toggle('statuses', s)} aria-pressed={isActive('statuses', s)} style={pillStyle(isActive('statuses', s))}>
             {s}
           </button>
         ))}
@@ -53,7 +53,7 @@ export default function FindingFilters({ findings, filters, onFilterChange }) {
       <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexWrap: 'wrap' }}>
         <span style={groupLabel}>Severity</span>
         {SEVERITIES.map(s => (
-          <button key={s} onClick={() => toggle('severities', s)} style={pillStyle(isActive('severities', s))}>
+          <button key={s} onClick={() => toggle('severities', s)} aria-pressed={isActive('severities', s)} style={pillStyle(isActive('severities', s))}>
             {s}
           </button>
         ))}
@@ -63,7 +63,7 @@ export default function FindingFilters({ findings, filters, onFilterChange }) {
         <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexWrap: 'wrap' }}>
           <span style={groupLabel}>Category</span>
           {categories.map(c => (
-            <button key={c} onClick={() => toggle('categories', c)} style={pillStyle(isActive('categories', c))}>
+            <button key={c} onClick={() => toggle('categories', c)} aria-pressed={isActive('categories', c)} style={pillStyle(isActive('categories', c))}>
               {c}
             </button>
           ))}

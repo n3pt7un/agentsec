@@ -26,6 +26,7 @@ const labelStyle = {
 
 export default function ScanForm({ onSubmit, loading }) {
   const [targets, setTargets] = useState([]);
+  const [submitHovered, setSubmitHovered] = useState(false);
   const [config, setConfig] = useState({
     target: '',
     adapter: 'langgraph',
@@ -119,15 +120,15 @@ export default function ScanForm({ onSubmit, loading }) {
               padding: '7px 16px',
               fontSize: '13px',
               color: 'var(--accent)',
-              background: 'transparent',
+              background: submitHovered && !loading && config.target ? 'var(--success-bg)' : 'transparent',
               cursor: loading || !config.target ? 'not-allowed' : 'pointer',
               fontFamily: 'var(--font-sans)',
               fontWeight: 500,
               opacity: loading || !config.target ? 0.4 : 1,
               transition: 'background 0.1s',
             }}
-            onMouseEnter={e => { if (!loading && config.target) e.currentTarget.style.background = 'var(--success-bg)'; }}
-            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
+            onMouseEnter={() => setSubmitHovered(true)}
+            onMouseLeave={() => setSubmitHovered(false)}
           >
             {loading ? 'Scanning...' : 'Start Scan'}
           </button>

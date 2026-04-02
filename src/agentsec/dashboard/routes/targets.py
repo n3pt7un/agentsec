@@ -9,10 +9,14 @@ from fastapi import APIRouter, Query
 
 router = APIRouter(prefix="/api/targets", tags=["targets"])
 
+# Project root = src/agentsec/dashboard/routes/../../../../../../  (up 5 levels from this file)
+_project_root = Path(__file__).parents[4]
+_default_targets_dir = str(_project_root / "tests" / "targets")
+
 
 @router.get("")
 async def list_targets(
-    directory: str = Query(default="tests/targets", description="Directory to scan for harnesses"),
+    directory: str = Query(default=_default_targets_dir, description="Directory to scan for harnesses"),  # noqa: E501
 ) -> dict:
     """Discover available target harness files."""
     targets_dir = Path(directory)

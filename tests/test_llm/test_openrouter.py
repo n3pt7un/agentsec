@@ -32,8 +32,8 @@ class TestOpenRouterGenerate:
         mock_response.choices = [MagicMock(message=MagicMock(content="generated text"))]
         provider._client.chat.completions.create = AsyncMock(return_value=mock_response)
 
-        result = await provider.generate("You are a red team assistant.", "Generate a payload")
-        assert result == "generated text"
+        text, _ = await provider.generate("You are a red team assistant.", "Generate a payload")
+        assert text == "generated text"
 
     async def test_generate_passes_correct_params(self):
         provider = OpenRouterProvider(model="test/model", api_key="sk-or-test")
@@ -60,7 +60,7 @@ class TestOpenRouterClassify:
         ))]
         provider._client.chat.completions.create = AsyncMock(return_value=mock_response)
 
-        result = await provider.classify("sys", "check this")
+        result, _ = await provider.classify("sys", "check this")
         assert isinstance(result, ClassificationResult)
         assert result.vulnerable is True
         assert result.confidence == 0.9
@@ -73,7 +73,7 @@ class TestOpenRouterClassify:
         ))]
         provider._client.chat.completions.create = AsyncMock(return_value=mock_response)
 
-        result = await provider.classify("sys", "check this")
+        result, _ = await provider.classify("sys", "check this")
         assert result.vulnerable is False
 
     async def test_classify_handles_malformed_json_fallback(self):
@@ -82,7 +82,7 @@ class TestOpenRouterClassify:
         mock_response.choices = [MagicMock(message=MagicMock(content="yes it is vulnerable"))]
         provider._client.chat.completions.create = AsyncMock(return_value=mock_response)
 
-        result = await provider.classify("sys", "check this")
+        result, _ = await provider.classify("sys", "check this")
         assert isinstance(result, ClassificationResult)
         assert result.vulnerable is True
 
@@ -97,8 +97,8 @@ class TestOpenRouterRetry:
             side_effect=[error_429, mock_response]
         )
         with patch("agentsec.llm.openrouter.asyncio.sleep", new_callable=AsyncMock):
-            result = await provider.generate("sys", "prompt")
-        assert result == "ok"
+            text, _ = await provider.generate("sys", "prompt")
+        assert text == "ok"
 
     async def test_retries_on_server_error(self):
         provider = OpenRouterProvider(model="test/model", api_key="sk-or-test")
@@ -109,8 +109,8 @@ class TestOpenRouterRetry:
             side_effect=[error_500, mock_response]
         )
         with patch("agentsec.llm.openrouter.asyncio.sleep", new_callable=AsyncMock):
-            result = await provider.generate("sys", "prompt")
-        assert result == "ok"
+            text, _ = await provider.generate("sys", "prompt")
+        assert text == "ok"
 
     async def test_raises_after_max_retries(self):
         provider = OpenRouterProvider(model="test/model", api_key="sk-or-test")

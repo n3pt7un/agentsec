@@ -211,6 +211,55 @@ export default function ScanDetail() {
             </div>
           </div>
         )}
+
+        {/* LLM Usage */}
+        {scan.smart && scan.models_used?.length > 0 && (
+          <div style={{
+            background: 'var(--bg-surface)',
+            border: '1px solid var(--border)',
+            borderRadius: 'var(--radius)',
+            padding: '16px 20px',
+            marginTop: '12px',
+          }}>
+            <p style={{
+              fontSize: '10px',
+              fontWeight: 600,
+              color: 'var(--text-muted)',
+              fontFamily: 'var(--font-sans)',
+              textTransform: 'uppercase',
+              letterSpacing: '0.08em',
+              marginBottom: '12px',
+            }}>
+              LLM Usage
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              {[
+                ['Models', scan.models_used.join(', ')],
+                ['Input tokens', (scan.total_input_tokens ?? 0).toLocaleString()],
+                ['Output tokens', (scan.total_output_tokens ?? 0).toLocaleString()],
+                ['Cost', scan.total_cost_usd != null ? `$${scan.total_cost_usd.toFixed(4)}` : '—'],
+              ].map(([label, value]) => (
+                <div key={label} style={{ display: 'flex', gap: '12px', alignItems: 'baseline' }}>
+                  <span style={{
+                    fontSize: '11px',
+                    color: 'var(--text-muted)',
+                    fontFamily: 'var(--font-sans)',
+                    minWidth: '100px',
+                  }}>
+                    {label}
+                  </span>
+                  <span style={{
+                    fontSize: '13px',
+                    color: 'var(--text-primary)',
+                    fontFamily: 'var(--font-mono)',
+                  }}>
+                    {value}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

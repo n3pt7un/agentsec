@@ -4,8 +4,6 @@ from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
 
-import pytest
-
 from agentsec.core.finding import Finding, FindingStatus, OWASPCategory, Remediation, Severity
 from agentsec.core.scanner import ScanResult
 

@@ -18,7 +18,7 @@ export default function Layout() {
           <span className="font-bold text-lg">agentsec</span>
           <span className="text-xs text-slate-500 ml-1">v0.1.0</span>
         </div>
-        <div className="flex gap-1">
+        <div className="flex gap-1 flex-wrap">
           {NAV_ITEMS.map(item => (
             <Link
               key={item.to}

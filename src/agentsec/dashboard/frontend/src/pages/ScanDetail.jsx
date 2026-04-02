@@ -56,7 +56,7 @@ export default function ScanDetail() {
     return (
       <div className="space-y-6">
         <div className="h-10 bg-slate-800 rounded w-1/3 animate-pulse" />
-        <div className="grid grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {Array.from({ length: 4 }).map((_, i) => (
             <div key={i} className="bg-slate-800 rounded-lg border border-slate-700 p-4 animate-pulse h-20" />
           ))}
@@ -99,7 +99,7 @@ export default function ScanDetail() {
       </div>
 
       {/* Stats row */}
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Stat label="Total" value={scan.total_probes} />
         <Stat label="Vulnerable" value={scan.vulnerable_count} color="text-red-400" />
         <Stat label="Resistant" value={scan.resistant_count} color="text-green-400" />

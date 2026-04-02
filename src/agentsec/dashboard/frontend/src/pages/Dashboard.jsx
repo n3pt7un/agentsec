@@ -6,9 +6,11 @@ import { SkeletonCard } from '../components/LoadingSkeleton';
 import ErrorState from '../components/ErrorState';
 import EmptyState from '../components/EmptyState';
 import { startScan, fetchScans } from '../api';
+import { useSettings } from '../hooks/useSettings';
 
 export default function Dashboard() {
   const navigate = useNavigate();
+  const { settings } = useSettings();
   const [loading, setLoading] = useState(false);
   const [scanError, setScanError] = useState(null);
   const [recentScans, setRecentScans] = useState([]);
@@ -32,7 +34,12 @@ export default function Dashboard() {
     setLoading(true);
     setScanError(null);
     try {
-      const data = await startScan(config);
+      const mergedConfig = {
+        ...config,
+        llm_model: settings.llm_model,
+        openrouter_api_key: settings.openrouter_api_key || undefined,
+      };
+      const data = await startScan(mergedConfig);
       navigate(`/scans/${data.scan_id}/progress`);
     } catch (err) {
       setScanError(err.message || 'Failed to start scan');

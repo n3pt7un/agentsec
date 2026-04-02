@@ -4,6 +4,7 @@ import { useTheme } from '../hooks/useTheme';
 const NAV_ITEMS = [
   { to: '/', label: 'Dashboard', icon: '⚡' },
   { to: '/scans', label: 'Scan History', icon: '📋' },
+  { to: '/settings', label: 'Settings', icon: '⚙️' },
 ];
 
 export default function Layout() {

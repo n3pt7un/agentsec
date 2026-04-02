@@ -1,22 +1,15 @@
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap');
 @import "tailwindcss";
+@import "./tokens.css";
 
-/* Force dark mode by default — toggled via .dark class on <html> */
-:root {
-  color-scheme: dark;
-}
-
-.dark {
-  color-scheme: dark;
+body {
+  font-family: var(--font-sans);
+  background: var(--bg-page);
+  color: var(--text-primary);
 }
 
-/* Scrollbar styling for dark mode */
-.dark ::-webkit-scrollbar {
-  width: 8px;
-}
-.dark ::-webkit-scrollbar-track {
-  background: #1e293b;
-}
-.dark ::-webkit-scrollbar-thumb {
-  background: #475569;
-  border-radius: 4px;
-}
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg-surface); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }

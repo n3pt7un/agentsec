@@ -1,32 +1,69 @@
+import {
+  IconAlertTriangle,
+  IconShieldCheck,
+  IconAdjustments,
+  IconX,
+  IconPlayerSkipForward,
+} from '@tabler/icons-react';
+
 const SEVERITY_STYLES = {
-  critical: 'bg-red-500/20 text-red-400 border-red-500/30',
-  high: 'bg-orange-500/20 text-orange-400 border-orange-500/30',
-  medium: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
-  low: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
-  info: 'bg-slate-500/20 text-slate-400 border-slate-500/30',
+  critical: { color: '#f87171', bg: '#3d1515', border: '#7f1d1d' },
+  high:     { color: '#fb923c', bg: '#2d1a0a', border: '#7c2d12' },
+  medium:   { color: '#fbbf24', bg: '#2d2200', border: '#78350f' },
+  low:      { color: '#60a5fa', bg: '#0a1a2d', border: '#1e3a5f' },
+  info:     { color: 'var(--text-secondary)', bg: 'var(--bg-surface-raised)', border: 'var(--border)' },
 };
 
-const STATUS_STYLES = {
-  vulnerable: 'bg-red-500/20 text-red-400 border-red-500/30',
-  resistant: 'bg-green-500/20 text-green-400 border-green-500/30',
-  partial: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
-  error: 'bg-red-800/20 text-red-600 border-red-800/30',
-  skipped: 'bg-slate-500/20 text-slate-500 border-slate-500/30',
+const STATUS_CONFIG = {
+  vulnerable: { color: 'var(--danger)', bg: 'var(--danger-bg)', border: 'var(--border-red)', Icon: IconAlertTriangle },
+  resistant:  { color: 'var(--accent)', bg: 'var(--success-bg)', border: 'var(--border-green)', Icon: IconShieldCheck },
+  partial:    { color: '#fbbf24', bg: '#2d2200', border: '#78350f', Icon: IconAdjustments },
+  error:      { color: 'var(--danger)', bg: 'var(--danger-bg)', border: 'var(--border-red)', Icon: IconX },
+  skipped:    { color: 'var(--text-muted)', bg: 'var(--bg-surface-raised)', border: 'var(--border)', Icon: IconPlayerSkipForward },
 };
 
 export function SeverityBadge({ severity }) {
-  const style = SEVERITY_STYLES[severity] || SEVERITY_STYLES.info;
+  const s = SEVERITY_STYLES[severity] ?? SEVERITY_STYLES.info;
   return (
-    <span className={`px-2 py-0.5 rounded text-xs font-bold uppercase border ${style}`}>
+    <span style={{
+      display: 'inline-flex',
+      alignItems: 'center',
+      padding: '1px 6px',
+      borderRadius: 'var(--radius)',
+      border: `1px solid ${s.border}`,
+      background: s.bg,
+      color: s.color,
+      fontSize: '10px',
+      fontFamily: 'var(--font-mono)',
+      fontWeight: 600,
+      textTransform: 'uppercase',
+      letterSpacing: '0.06em',
+    }}>
       {severity}
     </span>
   );
 }
 
 export function StatusBadge({ status }) {
-  const style = STATUS_STYLES[status] || STATUS_STYLES.skipped;
+  const s = STATUS_CONFIG[status] ?? STATUS_CONFIG.skipped;
+  const { Icon } = s;
   return (
-    <span className={`px-2 py-0.5 rounded text-xs font-bold uppercase border ${style}`}>
+    <span style={{
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: '3px',
+      padding: '1px 6px',
+      borderRadius: 'var(--radius)',
+      border: `1px solid ${s.border}`,
+      background: s.bg,
+      color: s.color,
+      fontSize: '10px',
+      fontFamily: 'var(--font-mono)',
+      fontWeight: 600,
+      textTransform: 'uppercase',
+      letterSpacing: '0.06em',
+    }}>
+      <Icon size={10} stroke={2} />
       {status}
     </span>
   );

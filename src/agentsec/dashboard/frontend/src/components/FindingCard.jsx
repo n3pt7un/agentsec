@@ -1,35 +1,86 @@
 import { useState } from 'react';
+import { IconChevronDown, IconChevronUp } from '@tabler/icons-react';
 import { SeverityBadge, StatusBadge } from './SeverityBadge';
 import FindingDetail from './FindingDetail';
 
+const LEFT_BORDER = {
+  vulnerable: 'var(--danger)',
+  resistant:  'var(--accent-dim)',
+  partial:    '#78350f',
+  error:      'var(--danger)',
+  skipped:    'var(--border)',
+};
+
 export default function FindingCard({ finding }) {
   const [expanded, setExpanded] = useState(false);
+  const [hovered, setHovered] = useState(false);
+  const accentColor = LEFT_BORDER[finding.status] ?? 'var(--border)';
 
   return (
-    <div className="bg-slate-800 border border-slate-700 rounded-lg overflow-hidden">
+    <div style={{
+      background: 'var(--bg-surface)',
+      border: '1px solid var(--border)',
+      borderLeft: `2px solid ${accentColor}`,
+      borderRadius: 'var(--radius)',
+      overflow: 'hidden',
+    }}>
       <button
         onClick={() => setExpanded(!expanded)}
-        className="w-full px-4 py-3 flex items-center justify-between hover:bg-slate-700/30 transition-colors text-left"
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+        style={{
+          width: '100%',
+          padding: '10px 14px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          background: hovered ? 'var(--bg-surface-raised)' : 'none',
+          border: 'none',
+          cursor: 'pointer',
+          textAlign: 'left',
+          transition: 'background 0.1s',
+        }}
       >
-        <div className="flex items-center gap-3">
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <StatusBadge status={finding.status} />
           <SeverityBadge severity={finding.severity} />
           <div>
-            <span className="font-mono text-sm text-blue-400">{finding.probe_id}</span>
-            <span className="text-sm text-slate-400 ml-2">{finding.probe_name}</span>
+            <span style={{
+              fontFamily: 'var(--font-mono)',
+              fontSize: '12px',
+              color: 'var(--accent)',
+            }}>
+              {finding.probe_id}
+            </span>
+            <span style={{
+              fontSize: '12px',
+              color: 'var(--text-secondary)',
+              marginLeft: '8px',
+              fontFamily: 'var(--font-sans)',
+            }}>
+              {finding.probe_name}
+            </span>
           </div>
         </div>
-        <div className="flex items-center gap-3">
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           {finding.duration_ms != null && (
-            <span className="text-xs text-slate-500">{finding.duration_ms}ms</span>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: 'var(--text-muted)' }}>
+              {finding.duration_ms}ms
+            </span>
           )}
-          <span className="text-slate-500 text-sm">{expanded ? '▲' : '▼'}</span>
+          <span style={{ color: 'var(--text-muted)' }}>
+            {expanded
+              ? <IconChevronUp size={14} stroke={1.5} />
+              : <IconChevronDown size={14} stroke={1.5} />}
+          </span>
         </div>
       </button>
 
       {expanded && (
-        <div className="px-4 pb-4">
-          <p className="text-sm text-slate-400 mb-2">{finding.description}</p>
+        <div style={{ padding: '0 14px 14px' }}>
+          <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '8px', fontFamily: 'var(--font-sans)' }}>
+            {finding.description}
+          </p>
           <FindingDetail finding={finding} />
         </div>
       )}

@@ -1,38 +1,48 @@
 import CodeBlock from './CodeBlock';
-import { SeverityBadge, StatusBadge } from './SeverityBadge';
 
 export default function FindingDetail({ finding }) {
   const { evidence, remediation } = finding;
 
   return (
-    <div className="space-y-4 pt-4 border-t border-slate-700">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', paddingTop: '16px', borderTop: '1px solid var(--border)' }}>
       {/* Evidence */}
       {evidence && (
         <div>
-          <h4 className="text-sm font-semibold text-slate-300 mb-2">Evidence</h4>
-          <div className="bg-slate-900 rounded-lg p-4 space-y-3 text-sm border border-slate-700">
+          <h4 style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '8px', fontFamily: 'var(--font-sans)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+            Evidence
+          </h4>
+          <div style={{
+            background: 'var(--bg-page)',
+            border: '1px solid var(--border)',
+            borderRadius: 'var(--radius)',
+            padding: '12px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '8px',
+            fontSize: '12px',
+          }}>
             <div>
-              <span className="text-slate-500">Attack input: </span>
-              <code className="text-red-300 break-all">{evidence.attack_input}</code>
+              <span style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-sans)' }}>Attack input: </span>
+              <code style={{ color: 'var(--danger)', fontFamily: 'var(--font-mono)', wordBreak: 'break-all' }}>{evidence.attack_input}</code>
             </div>
             <div>
-              <span className="text-slate-500">Target agent: </span>
-              <span className="text-blue-300">{evidence.target_agent}</span>
+              <span style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-sans)' }}>Target agent: </span>
+              <span style={{ color: 'var(--accent)', fontFamily: 'var(--font-mono)' }}>{evidence.target_agent}</span>
             </div>
             <div>
-              <span className="text-slate-500">Response: </span>
-              <code className="text-orange-300 break-all">{evidence.agent_response}</code>
+              <span style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-sans)' }}>Response: </span>
+              <code style={{ color: '#fb923c', fontFamily: 'var(--font-mono)', wordBreak: 'break-all' }}>{evidence.agent_response}</code>
             </div>
             {evidence.additional_context && (
               <div>
-                <span className="text-slate-500">Context: </span>
-                <span className="text-slate-300">{evidence.additional_context}</span>
+                <span style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-sans)' }}>Context: </span>
+                <span style={{ color: 'var(--text-secondary)', fontFamily: 'var(--font-sans)' }}>{evidence.additional_context}</span>
               </div>
             )}
             {evidence.detection_method && (
               <div>
-                <span className="text-slate-500">Detection: </span>
-                <span className="text-slate-300">{evidence.detection_method}</span>
+                <span style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-sans)' }}>Detection: </span>
+                <span style={{ color: 'var(--text-secondary)', fontFamily: 'var(--font-sans)' }}>{evidence.detection_method}</span>
               </div>
             )}
           </div>
@@ -41,8 +51,16 @@ export default function FindingDetail({ finding }) {
 
       {/* Blast radius */}
       {finding.blast_radius && (
-        <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3 text-sm text-red-200">
-          <span className="font-semibold">Blast radius: </span>
+        <div style={{
+          background: 'var(--danger-bg)',
+          border: '1px solid var(--border-red)',
+          borderRadius: 'var(--radius)',
+          padding: '10px 12px',
+          fontSize: '12px',
+          color: 'var(--danger)',
+          fontFamily: 'var(--font-sans)',
+        }}>
+          <span style={{ fontWeight: 600 }}>Blast radius: </span>
           {finding.blast_radius}
         </div>
       )}
@@ -50,9 +68,12 @@ export default function FindingDetail({ finding }) {
       {/* Remediation */}
       {remediation && (
         <div>
-          <h4 className="text-sm font-semibold text-slate-300 mb-2">Remediation</h4>
-          <p className="text-sm text-slate-300 mb-3">{remediation.summary}</p>
-
+          <h4 style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '8px', fontFamily: 'var(--font-sans)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+            Remediation
+          </h4>
+          <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '12px', fontFamily: 'var(--font-sans)' }}>
+            {remediation.summary}
+          </p>
           {remediation.code_before && (
             <CodeBlock code={remediation.code_before} label="Before (vulnerable):" />
           )}
@@ -60,15 +81,24 @@ export default function FindingDetail({ finding }) {
             <CodeBlock code={remediation.code_after} label="After (fixed):" />
           )}
           {remediation.architecture_note && (
-            <div className="bg-blue-500/10 border-l-2 border-blue-500 pl-4 py-2 text-sm text-slate-300 mt-3">
+            <div style={{
+              borderLeft: '2px solid var(--accent-dim)',
+              paddingLeft: '12px',
+              paddingTop: '8px',
+              paddingBottom: '8px',
+              fontSize: '12px',
+              color: 'var(--text-secondary)',
+              marginTop: '12px',
+              fontFamily: 'var(--font-sans)',
+            }}>
               {remediation.architecture_note}
             </div>
           )}
           {remediation.references?.length > 0 && (
-            <div className="mt-2 space-y-1">
+            <div style={{ marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
               {remediation.references.map((ref, i) => (
                 <a key={i} href={ref} target="_blank" rel="noopener"
-                   className="text-xs text-blue-400 hover:underline block">
+                   style={{ fontSize: '11px', color: 'var(--accent)', fontFamily: 'var(--font-mono)' }}>
                   {ref}
                 </a>
               ))}

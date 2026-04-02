@@ -4,42 +4,12 @@ import { useScanStream } from '../hooks/useScanStream';
 import ProbeProgress from '../components/ProbeProgress';
 import ErrorState from '../components/ErrorState';
 import ContextPanel from '../components/ContextPanel';
+import StatCard from '../components/StatCard';
 
 const SECTIONS = [
   { id: 'progress', label: 'Progress' },
   { id: 'summary', label: 'Summary' },
 ];
-
-function StatCard({ label, value, color }) {
-  return (
-    <div style={{
-      background: 'var(--bg-surface)',
-      border: '1px solid var(--border)',
-      borderRadius: 'var(--radius)',
-      padding: '14px',
-      textAlign: 'center',
-    }}>
-      <div style={{
-        fontSize: '22px',
-        fontWeight: 600,
-        fontFamily: 'var(--font-mono)',
-        color: color || 'var(--text-primary)',
-        marginBottom: '4px',
-      }}>
-        {value}
-      </div>
-      <div style={{
-        fontSize: '10px',
-        color: 'var(--text-muted)',
-        fontFamily: 'var(--font-sans)',
-        textTransform: 'uppercase',
-        letterSpacing: '0.08em',
-      }}>
-        {label}
-      </div>
-    </div>
-  );
-}
 
 export default function ScanProgress() {
   const { id } = useParams();

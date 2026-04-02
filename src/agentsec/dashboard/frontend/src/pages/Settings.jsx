@@ -82,9 +82,10 @@ export default function Settings() {
         gap: '18px',
       }}>
         <div>
-          <label style={fieldLabel}>LLM Model</label>
+          <label style={fieldLabel} htmlFor="settings-llm-model">LLM Model</label>
           <p style={fieldHint}>Used for smart payload generation. Requires an OpenRouter API key.</p>
           <select
+            id="settings-llm-model"
             value={form.llm_model}
             onChange={e => setForm({ ...form, llm_model: e.target.value })}
             style={{ ...inputBase, fontFamily: 'var(--font-sans)' }}
@@ -96,9 +97,10 @@ export default function Settings() {
         </div>
 
         <div>
-          <label style={fieldLabel}>Target Model</label>
+          <label style={fieldLabel} htmlFor="settings-target-model">Target Model</label>
           <p style={fieldHint}>The LLM running inside your agent under test. Only used when Live LLM is enabled on a scan.</p>
           <select
+            id="settings-target-model"
             value={form.target_model}
             onChange={e => setForm({ ...form, target_model: e.target.value })}
             style={{ ...inputBase, fontFamily: 'var(--font-sans)' }}
@@ -110,7 +112,7 @@ export default function Settings() {
         </div>
 
         <div>
-          <label style={fieldLabel}>OpenRouter API Key</label>
+          <label style={fieldLabel} htmlFor="settings-api-key">OpenRouter API Key</label>
           <p style={fieldHint}>
             Required for smart mode scans. Get one at{' '}
             <a href="https://openrouter.ai" target="_blank" rel="noopener noreferrer"
@@ -120,6 +122,7 @@ export default function Settings() {
             Stored in your browser only.
           </p>
           <input
+            id="settings-api-key"
             type="password"
             value={form.openrouter_api_key}
             onChange={e => setForm({ ...form, openrouter_api_key: e.target.value })}

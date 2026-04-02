@@ -8,6 +8,7 @@ import AgentGraph from '../components/AgentGraph';
 import FindingCard from '../components/FindingCard';
 import FindingFilters from '../components/FindingFilters';
 import ContextPanel from '../components/ContextPanel';
+import StatCard from '../components/StatCard';
 
 const SECTIONS = [
   { id: 'stats', label: 'Stats' },
@@ -16,40 +17,9 @@ const SECTIONS = [
   { id: 'findings', label: 'Findings' },
 ];
 
-function StatCard({ label, value, color }) {
+function SectionHeading({ children }) {
   return (
-    <div style={{
-      background: 'var(--bg-surface)',
-      border: '1px solid var(--border)',
-      borderRadius: 'var(--radius)',
-      padding: '14px',
-      textAlign: 'center',
-    }}>
-      <div style={{
-        fontSize: '22px',
-        fontWeight: 600,
-        fontFamily: 'var(--font-mono)',
-        color: color || 'var(--text-primary)',
-        marginBottom: '4px',
-      }}>
-        {value}
-      </div>
-      <div style={{
-        fontSize: '10px',
-        color: 'var(--text-muted)',
-        fontFamily: 'var(--font-sans)',
-        textTransform: 'uppercase',
-        letterSpacing: '0.08em',
-      }}>
-        {label}
-      </div>
-    </div>
-  );
-}
-
-function SectionHeading({ id, children }) {
-  return (
-    <h2 id={id} style={{
+    <h2 style={{
       fontSize: '11px',
       fontWeight: 600,
       color: 'var(--text-muted)',
@@ -146,7 +116,7 @@ export default function ScanDetail() {
               {scan.target || 'Scan Result'}
             </h1>
             <p style={{ fontSize: '11px', color: 'var(--text-muted)', fontFamily: 'var(--font-sans)' }}>
-              {scan.started_at ? new Date(scan.started_at).toLocaleString() : '—'} · {scan.duration_ms}ms · {scan.total_probes} probes
+              {scan.started_at ? new Date(scan.started_at).toLocaleString() : '—'} · {scan.duration_ms ?? '—'}ms · {scan.total_probes} probes
             </p>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
@@ -199,7 +169,7 @@ export default function ScanDetail() {
         {/* Agent topology */}
         {scan.agents_discovered?.length > 0 && (
           <div id="topology">
-            <SectionHeading id="topology-label">Agent Topology</SectionHeading>
+            <SectionHeading>Agent Topology</SectionHeading>
             <AgentGraph agents={scan.agents_discovered} />
           </div>
         )}
@@ -207,7 +177,7 @@ export default function ScanDetail() {
         {/* Summary table */}
         {findings.length > 0 && (
           <div id="summary">
-            <SectionHeading id="summary-label">Summary</SectionHeading>
+            <SectionHeading>Summary</SectionHeading>
             <SummaryTable findings={findings} />
           </div>
         )}
@@ -216,7 +186,7 @@ export default function ScanDetail() {
         {findings.length > 0 && (
           <div id="findings" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <SectionHeading id="findings-label">Findings</SectionHeading>
+              <SectionHeading>Findings</SectionHeading>
               <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
                 {filtered.length}/{findings.length}
               </span>

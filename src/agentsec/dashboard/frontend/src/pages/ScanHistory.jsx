@@ -9,8 +9,10 @@ export default function ScanHistory() {
   const [scans, setScans] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [deleteError, setDeleteError] = useState(null);
   const [sortBy, setSortBy] = useState('date');
   const [hoveredId, setHoveredId] = useState(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState(null);
 
   const loadScans = useCallback(async () => {
     setLoading(true);
@@ -28,19 +30,20 @@ export default function ScanHistory() {
   useEffect(() => { loadScans(); }, [loadScans]);
 
   const handleDelete = async (scanId) => {
-    if (!confirm('Delete this scan?')) return;
     try {
       await deleteScan(scanId);
       setScans(prev => prev.filter(s => s.scan_id !== scanId));
+      setConfirmDeleteId(null);
     } catch (err) {
-      setError(err.message || 'Failed to delete scan');
+      setDeleteError(err.message || 'Failed to delete scan');
+      setConfirmDeleteId(null);
     }
   };
 
   const sorted = [...scans].sort((a, b) => {
     if (sortBy === 'vulnerabilities') return b.vulnerable_count - a.vulnerable_count;
     if (sortBy === 'probes') return b.total_probes - a.total_probes;
-    return new Date(b.started_at) - new Date(a.started_at);
+    return new Date(b.started_at || 0) - new Date(a.started_at || 0);
   });
 
   if (error) return <ErrorState message={error} onRetry={loadScans} />;
@@ -85,6 +88,20 @@ export default function ScanHistory() {
           actionTo="/"
         />
       ) : (
+        <>
+        {deleteError && (
+          <div style={{
+            background: 'var(--danger-bg)',
+            border: '1px solid var(--border-red)',
+            borderRadius: 'var(--radius)',
+            padding: '10px 14px',
+            fontSize: '12px',
+            color: 'var(--danger)',
+            fontFamily: 'var(--font-sans)',
+          }}>
+            {deleteError}
+          </div>
+        )}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
           {sorted.map(scan => (
             <div
@@ -94,28 +111,47 @@ export default function ScanHistory() {
               onMouseLeave={() => setHoveredId(null)}
             >
               <ScanCard scan={scan} />
-              <button
-                onClick={(e) => { e.preventDefault(); handleDelete(scan.scan_id); }}
-                style={{
-                  position: 'absolute',
-                  top: '12px',
-                  right: '12px',
-                  background: 'none',
-                  border: 'none',
-                  cursor: 'pointer',
-                  fontSize: '11px',
-                  color: 'var(--danger)',
-                  fontFamily: 'var(--font-sans)',
-                  opacity: hoveredId === scan.scan_id ? 1 : 0,
-                  transition: 'opacity 0.1s',
-                  pointerEvents: hoveredId === scan.scan_id ? 'auto' : 'none',
-                }}
-              >
-                Delete
-              </button>
+              {confirmDeleteId === scan.scan_id ? (
+                <span style={{ position: 'absolute', top: '12px', right: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontFamily: 'var(--font-sans)' }}>Delete?</span>
+                  <button
+                    onClick={(e) => { e.preventDefault(); handleDelete(scan.scan_id); }}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '11px', color: 'var(--danger)', fontFamily: 'var(--font-sans)', fontWeight: 600 }}
+                  >
+                    Yes
+                  </button>
+                  <button
+                    onClick={(e) => { e.preventDefault(); setConfirmDeleteId(null); }}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '11px', color: 'var(--text-muted)', fontFamily: 'var(--font-sans)' }}
+                  >
+                    No
+                  </button>
+                </span>
+              ) : (
+                <button
+                  onClick={(e) => { e.preventDefault(); setConfirmDeleteId(scan.scan_id); }}
+                  style={{
+                    position: 'absolute',
+                    top: '12px',
+                    right: '12px',
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    fontSize: '11px',
+                    color: 'var(--danger)',
+                    fontFamily: 'var(--font-sans)',
+                    opacity: hoveredId === scan.scan_id ? 1 : 0,
+                    transition: 'opacity 0.1s',
+                    pointerEvents: hoveredId === scan.scan_id ? 'auto' : 'none',
+                  }}
+                >
+                  Delete
+                </button>
+              )}
             </div>
           ))}
         </div>
+        </>
       )}
 
       {scans.length > 0 && (

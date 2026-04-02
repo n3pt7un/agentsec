@@ -7,6 +7,61 @@ import SummaryTable from '../components/SummaryTable';
 import AgentGraph from '../components/AgentGraph';
 import FindingCard from '../components/FindingCard';
 import FindingFilters from '../components/FindingFilters';
+import ContextPanel from '../components/ContextPanel';
+
+const SECTIONS = [
+  { id: 'stats', label: 'Stats' },
+  { id: 'topology', label: 'Topology' },
+  { id: 'summary', label: 'Summary' },
+  { id: 'findings', label: 'Findings' },
+];
+
+function StatCard({ label, value, color }) {
+  return (
+    <div style={{
+      background: 'var(--bg-surface)',
+      border: '1px solid var(--border)',
+      borderRadius: 'var(--radius)',
+      padding: '14px',
+      textAlign: 'center',
+    }}>
+      <div style={{
+        fontSize: '22px',
+        fontWeight: 600,
+        fontFamily: 'var(--font-mono)',
+        color: color || 'var(--text-primary)',
+        marginBottom: '4px',
+      }}>
+        {value}
+      </div>
+      <div style={{
+        fontSize: '10px',
+        color: 'var(--text-muted)',
+        fontFamily: 'var(--font-sans)',
+        textTransform: 'uppercase',
+        letterSpacing: '0.08em',
+      }}>
+        {label}
+      </div>
+    </div>
+  );
+}
+
+function SectionHeading({ id, children }) {
+  return (
+    <h2 id={id} style={{
+      fontSize: '11px',
+      fontWeight: 600,
+      color: 'var(--text-muted)',
+      fontFamily: 'var(--font-sans)',
+      textTransform: 'uppercase',
+      letterSpacing: '0.08em',
+      marginBottom: '10px',
+    }}>
+      {children}
+    </h2>
+  );
+}
 
 export default function ScanDetail() {
   const { id } = useParams();
@@ -14,6 +69,7 @@ export default function ScanDetail() {
   const [scan, setScan] = useState(null);
   const [error, setError] = useState(null);
   const [deleteError, setDeleteError] = useState(null);
+  const [deleteHovered, setDeleteHovered] = useState(false);
   const [filters, setFilters] = useState({ statuses: [], severities: [], categories: [] });
 
   useEffect(() => {
@@ -40,13 +96,11 @@ export default function ScanDetail() {
 
   if (error) {
     return (
-      <div className="space-y-4">
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
         <ErrorState message={error} />
-        <div className="text-center">
-          <button
-            onClick={() => navigate('/scans')}
-            className="text-sm text-blue-400 hover:underline"
-          >
+        <div style={{ textAlign: 'center' }}>
+          <button onClick={() => navigate('/scans')}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px', color: 'var(--accent)', fontFamily: 'var(--font-sans)' }}>
             ← Back to scans
           </button>
         </div>
@@ -56,11 +110,12 @@ export default function ScanDetail() {
 
   if (!scan) {
     return (
-      <div className="space-y-6">
-        <div className="h-10 bg-slate-800 rounded w-1/3 animate-pulse" />
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        <style>{`@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }`}</style>
+        <div style={{ height: '22px', background: 'var(--bg-surface-raised)', borderRadius: 'var(--radius)', width: '33%', animation: 'pulse 1.5s ease-in-out infinite' }} />
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px' }}>
           {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="bg-slate-800 rounded-lg border border-slate-700 p-4 animate-pulse h-20" />
+            <div key={i} style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', height: '72px', animation: 'pulse 1.5s ease-in-out infinite' }} />
           ))}
         </div>
         <SkeletonGraph />
@@ -80,77 +135,101 @@ export default function ScanDetail() {
   });
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-bold">{scan.target || 'Scan Result'}</h1>
-          <p className="text-sm text-slate-500">
-            {new Date(scan.started_at).toLocaleString()} · {scan.duration_ms}ms · {scan.total_probes} probes
-          </p>
-        </div>
-        <div className="flex items-center gap-4">
-          <button
-            onClick={handleDelete}
-            className="text-xs text-red-400 hover:text-red-300"
-          >
-            Delete scan
-          </button>
-          <Link to="/scans" className="text-sm text-blue-400 hover:underline">← All scans</Link>
-        </div>
-      </div>
+    <div style={{ display: 'flex', gap: '24px' }}>
+      <ContextPanel sections={SECTIONS} />
 
-      {/* Delete error (shown inline, does not replace scan view) */}
-      {deleteError && (
-        <div className="bg-red-500/10 border border-red-500/20 rounded px-4 py-2 text-sm text-red-300">
-          Failed to delete scan: {deleteError}
-        </div>
-      )}
-
-      {/* Stats row */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Stat label="Total" value={scan.total_probes} />
-        <Stat label="Vulnerable" value={scan.vulnerable_count} color="text-red-400" />
-        <Stat label="Resistant" value={scan.resistant_count} color="text-green-400" />
-        <Stat label="Errors" value={scan.error_count} color="text-red-600" />
-      </div>
-
-      {/* Agent graph */}
-      {scan.agents_discovered?.length > 0 && (
-        <AgentGraph agents={scan.agents_discovered} />
-      )}
-
-      {/* Summary table */}
-      {findings.length > 0 && <SummaryTable findings={findings} />}
-
-      {/* Findings */}
-      {findings.length > 0 && (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold">Findings</h2>
-            <span className="text-sm text-slate-500">
-              Showing {filtered.length} of {findings.length}
-            </span>
+      <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '24px' }}>
+        {/* Header */}
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+          <div>
+            <h1 style={{ fontSize: '15px', fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'var(--font-mono)', marginBottom: '4px' }}>
+              {scan.target || 'Scan Result'}
+            </h1>
+            <p style={{ fontSize: '11px', color: 'var(--text-muted)', fontFamily: 'var(--font-sans)' }}>
+              {scan.started_at ? new Date(scan.started_at).toLocaleString() : '—'} · {scan.duration_ms}ms · {scan.total_probes} probes
+            </p>
           </div>
-
-          <FindingFilters findings={findings} filters={filters} onFilterChange={setFilters} />
-
-          <div className="space-y-2">
-            {filtered.map((f, i) => (
-              <FindingCard key={`${f.probe_id}-${i}`} finding={f} />
-            ))}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <button
+              onClick={handleDelete}
+              onMouseEnter={() => setDeleteHovered(true)}
+              onMouseLeave={() => setDeleteHovered(false)}
+              style={{
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                fontSize: '12px',
+                color: 'var(--danger)',
+                fontFamily: 'var(--font-sans)',
+                opacity: deleteHovered ? 1 : 0.7,
+                transition: 'opacity 0.1s',
+              }}
+            >
+              Delete
+            </button>
+            <Link to="/scans" style={{ fontSize: '12px', color: 'var(--accent)', fontFamily: 'var(--font-sans)', textDecoration: 'none' }}>
+              ← All scans
+            </Link>
           </div>
         </div>
-      )}
-    </div>
-  );
-}
 
-function Stat({ label, value, color = 'text-slate-100' }) {
-  return (
-    <div className="bg-slate-800 rounded-lg border border-slate-700 p-4 text-center">
-      <div className={`text-2xl font-bold ${color}`}>{value}</div>
-      <div className="text-xs text-slate-400">{label}</div>
+        {/* Delete error (shown inline, does not replace scan view) */}
+        {deleteError && (
+          <div style={{
+            background: 'var(--danger-bg)',
+            border: '1px solid var(--border-red)',
+            borderRadius: 'var(--radius)',
+            padding: '10px 14px',
+            fontSize: '12px',
+            color: 'var(--danger)',
+            fontFamily: 'var(--font-sans)',
+          }}>
+            Failed to delete scan: {deleteError}
+          </div>
+        )}
+
+        {/* Stats */}
+        <div id="stats" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px' }}>
+          <StatCard label="Total" value={scan.total_probes} />
+          <StatCard label="Vulnerable" value={scan.vulnerable_count} color="var(--danger)" />
+          <StatCard label="Resistant" value={scan.resistant_count} color="var(--accent)" />
+          <StatCard label="Errors" value={scan.error_count} color="var(--danger)" />
+        </div>
+
+        {/* Agent topology */}
+        {scan.agents_discovered?.length > 0 && (
+          <div id="topology">
+            <SectionHeading id="topology-label">Agent Topology</SectionHeading>
+            <AgentGraph agents={scan.agents_discovered} />
+          </div>
+        )}
+
+        {/* Summary table */}
+        {findings.length > 0 && (
+          <div id="summary">
+            <SectionHeading id="summary-label">Summary</SectionHeading>
+            <SummaryTable findings={findings} />
+          </div>
+        )}
+
+        {/* Findings */}
+        {findings.length > 0 && (
+          <div id="findings" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <SectionHeading id="findings-label">Findings</SectionHeading>
+              <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
+                {filtered.length}/{findings.length}
+              </span>
+            </div>
+            <FindingFilters findings={findings} filters={filters} onFilterChange={setFilters} />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              {filtered.map((f, i) => (
+                <FindingCard key={`${f.probe_id}-${i}`} finding={f} />
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

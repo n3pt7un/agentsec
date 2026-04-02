@@ -6,8 +6,8 @@
 #
 # Models:
 #   Target agents: openai/gpt-4.1-nano (override with AGENTSEC_TARGET_MODEL)
-#   Smart probes:  anthropic/claude-sonnet-4 (override with --model)
-#   Detection:     anthropic/claude-haiku-4 (default)
+#   Smart probes:  anthropic/claude-sonnet-4.6 (override with --model)
+#   Detection:     anthropic/claude-haiku-4-5 (default)
 
 set -euo pipefail
 

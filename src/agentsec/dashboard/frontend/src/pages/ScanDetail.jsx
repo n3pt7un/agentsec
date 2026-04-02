@@ -194,7 +194,19 @@ export default function ScanDetail() {
             <FindingFilters findings={findings} filters={filters} onFilterChange={setFilters} />
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
               {filtered.map((f, i) => (
-                <FindingCard key={`${f.probe_id}-${i}`} finding={f} />
+                <FindingCard
+                  key={`${f.probe_id}-${i}`}
+                  finding={f}
+                  scanId={id}
+                  onOverrideChange={(updatedFinding) => {
+                    setScan(prev => ({
+                      ...prev,
+                      findings: prev.findings.map(x =>
+                        x.probe_id === updatedFinding.probe_id ? updatedFinding : x
+                      ),
+                    }));
+                  }}
+                />
               ))}
             </div>
           </div>

@@ -10,6 +10,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 
+from agentsec.dashboard.routes import overrides as overrides_routes
 from agentsec.dashboard.routes import probes, scans, sse, targets
 from agentsec.dashboard.scan_manager import ScanManager
 from agentsec.dashboard.store import ScanStore
@@ -26,6 +27,7 @@ async def lifespan(app: FastAPI):
     # Inject dependencies into route modules
     scans.configure(manager, store)
     sse.configure(manager)
+    overrides_routes.configure(store)
 
     yield
 
@@ -50,6 +52,7 @@ app.include_router(targets.router)
 app.include_router(probes.router)
 app.include_router(scans.router)
 app.include_router(sse.router)
+app.include_router(overrides_routes.router)
 
 # Serve frontend build with SPA fallback
 _frontend_dist = Path(__file__).parent / "frontend" / "dist"

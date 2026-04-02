@@ -4,6 +4,7 @@ import {
   IconAdjustments,
   IconX,
   IconPlayerSkipForward,
+  IconPencil,
 } from '@tabler/icons-react';
 
 const SEVERITY_STYLES = {
@@ -44,9 +45,12 @@ export function SeverityBadge({ severity }) {
   );
 }
 
-export function StatusBadge({ status }) {
+export function StatusBadge({ status, overridden = false }) {
   const s = STATUS_CONFIG[status] ?? STATUS_CONFIG.skipped;
   const { Icon } = s;
+  const color = overridden ? 'var(--warning)' : s.color;
+  const bg = overridden ? 'var(--warning-bg)' : s.bg;
+  const border = overridden ? 'var(--warning-bg)' : s.border;
   return (
     <span style={{
       display: 'inline-flex',
@@ -54,16 +58,16 @@ export function StatusBadge({ status }) {
       gap: '3px',
       padding: '1px 6px',
       borderRadius: 'var(--radius)',
-      border: `1px solid ${s.border}`,
-      background: s.bg,
-      color: s.color,
+      border: `1px solid ${border}`,
+      background: bg,
+      color: color,
       fontSize: '10px',
       fontFamily: 'var(--font-mono)',
       fontWeight: 600,
       textTransform: 'uppercase',
       letterSpacing: '0.06em',
     }}>
-      <Icon size={10} stroke={2} />
+      {overridden ? <IconPencil size={9} stroke={2} /> : <Icon size={10} stroke={2} />}
       {status}
     </span>
   );

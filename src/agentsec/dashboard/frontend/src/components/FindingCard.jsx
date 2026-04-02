@@ -11,10 +11,12 @@ const LEFT_BORDER = {
   skipped:    'var(--border)',
 };
 
-export default function FindingCard({ finding }) {
+export default function FindingCard({ finding, scanId, onOverrideChange }) {
   const [expanded, setExpanded] = useState(false);
   const [hovered, setHovered] = useState(false);
-  const accentColor = LEFT_BORDER[finding.status] ?? 'var(--border)';
+  const effectiveStatus = finding.override?.new_status ?? finding.status;
+  const isOverridden = !!finding.override;
+  const accentColor = LEFT_BORDER[effectiveStatus] ?? 'var(--border)';
 
   return (
     <div style={{
@@ -42,7 +44,7 @@ export default function FindingCard({ finding }) {
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <StatusBadge status={finding.status} />
+          <StatusBadge status={effectiveStatus} overridden={isOverridden} />
           <SeverityBadge severity={finding.severity} />
           <div>
             <span style={{
@@ -81,7 +83,7 @@ export default function FindingCard({ finding }) {
           <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '8px', fontFamily: 'var(--font-sans)' }}>
             {finding.description}
           </p>
-          <FindingDetail finding={finding} />
+          <FindingDetail finding={finding} scanId={scanId} onOverrideChange={onOverrideChange} />
         </div>
       )}
     </div>

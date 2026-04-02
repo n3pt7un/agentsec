@@ -33,3 +33,21 @@ export async function deleteScan(scanId) {
   const res = await fetch(`${BASE}/api/scans/${scanId}`, { method: 'DELETE' });
   return res.json();
 }
+
+export async function applyOverride(scanId, probeId, body) {
+  const res = await fetch(`/api/scans/${scanId}/findings/${encodeURIComponent(probeId)}/override`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}
+
+export async function removeOverride(scanId, probeId) {
+  const res = await fetch(`/api/scans/${scanId}/findings/${encodeURIComponent(probeId)}/override`, {
+    method: 'DELETE',
+  });
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}

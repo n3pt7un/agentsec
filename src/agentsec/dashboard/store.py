@@ -6,6 +6,7 @@ import json
 import logging
 from pathlib import Path
 
+from agentsec.core.finding import FindingOverride
 from agentsec.core.scanner import ScanResult
 from agentsec.reporters.json_report import generate_json
 
@@ -93,6 +94,56 @@ class ScanStore:
                 }
             )
         return summaries
+
+    def apply_override(
+        self,
+        scan_id: str,
+        probe_id: str,
+        override: FindingOverride,
+    ) -> ScanResult | None:
+        """Apply an override to a finding and re-persist the scan.
+
+        Args:
+            scan_id: The scan identifier.
+            probe_id: The probe ID of the finding to override.
+            override: The override to apply.
+
+        Returns:
+            Updated ScanResult if found, None otherwise.
+        """
+        result = self.load(scan_id)
+        if result is None:
+            return None
+        for i, finding in enumerate(result.findings):
+            if finding.probe_id == probe_id:
+                result.findings[i] = finding.model_copy(update={"override": override})
+                self.save(scan_id, result)
+                return result
+        return None
+
+    def remove_override(
+        self,
+        scan_id: str,
+        probe_id: str,
+    ) -> ScanResult | None:
+        """Remove an override from a finding and re-persist the scan.
+
+        Args:
+            scan_id: The scan identifier.
+            probe_id: The probe ID of the finding to clear the override from.
+
+        Returns:
+            Updated ScanResult if found and override removed, None otherwise.
+        """
+        result = self.load(scan_id)
+        if result is None:
+            return None
+        for i, finding in enumerate(result.findings):
+            if finding.probe_id == probe_id and finding.override is not None:
+                result.findings[i] = finding.model_copy(update={"override": None})
+                self.save(scan_id, result)
+                return result
+        return None
 
     def delete(self, scan_id: str) -> bool:
         """Delete a scan result file.

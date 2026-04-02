@@ -9,6 +9,7 @@ const MODELS = [
   { value: 'openai/gpt-4o', label: 'GPT-4o' },
   { value: 'openai/gpt-4o-mini', label: 'GPT-4o Mini' },
   { value: 'google/gemini-2.0-flash-001', label: 'Gemini 2.0 Flash' },
+  { value: 'meta-llama/llama-3.1-70b-instruct', label: 'Llama 3.1 70B' },
 ];
 
 const TARGET_MODELS = [

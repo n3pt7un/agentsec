@@ -67,6 +67,17 @@ class Remediation(BaseModel):
     references: list[str] = Field(default_factory=list, description="Links to OWASP/docs")
 
 
+class FindingOverride(BaseModel):
+    """Analyst-authored override for a single finding's automated status."""
+
+    new_status: FindingStatus
+    original_status: FindingStatus
+    reason: str = Field(min_length=1, description="Required justification for the override")
+    overridden_by: str = Field(default="analyst", description="Actor who applied the override")
+    overridden_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    compliance_flag: Literal[True] = True
+
+
 class Finding(BaseModel):
     """Result of a single probe execution."""
 
@@ -90,3 +101,7 @@ class Finding(BaseModel):
     timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
     duration_ms: int | None = Field(default=None, description="Probe execution time")
     tags: list[str] = Field(default_factory=list)
+    override: FindingOverride | None = Field(
+        default=None,
+        description="Analyst override applied after automated scan. None = no override.",
+    )

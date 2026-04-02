@@ -8,8 +8,10 @@ Usage:
 from __future__ import annotations
 
 import os
+from typing import TYPE_CHECKING
 
-from langchain_openai import ChatOpenAI
+if TYPE_CHECKING:
+    from langchain_openai import ChatOpenAI
 
 
 def get_live_llm(
@@ -29,7 +31,11 @@ def get_live_llm(
     Raises:
         ValueError: If OPENROUTER_API_KEY is not set.
     """
-    api_key = os.environ.get("OPENROUTER_API_KEY")
+    from langchain_openai import ChatOpenAI
+
+    api_key = os.environ.get("OPENROUTER_API_KEY") or os.environ.get(
+        "AGENTSEC_OPENROUTER_API_KEY"
+    )
     if not api_key:
         raise ValueError(
             "OPENROUTER_API_KEY must be set for live mode. "

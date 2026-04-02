@@ -36,13 +36,18 @@ class ConcreteProbe(BaseProbe):
 
 
 def make_provider(*, available: bool = True, vulnerable: bool = False):
+    from agentsec.core.finding import LLMUsage
+
     provider = AsyncMock()
     provider.is_available = MagicMock(return_value=available)
     provider.classify = AsyncMock(
-        return_value=ClassificationResult(
-            vulnerable=vulnerable,
-            confidence=0.9,
-            reasoning="test",
+        return_value=(
+            ClassificationResult(
+                vulnerable=vulnerable,
+                confidence=0.9,
+                reasoning="test",
+            ),
+            LLMUsage(model="test-model", role="detection", input_tokens=10, output_tokens=5),
         )
     )
     return provider
@@ -53,7 +58,7 @@ class TestRunDetectionMarkerStage:
 
     async def test_marker_hit_returns_vulnerable(self):
         probe = ConcreteProbe()
-        is_vuln, method = await probe._run_detection(
+        is_vuln, method, usage = await probe._run_detection(
             fast_vulnerable=True,
             provider=None,
             response="echoed MARKER",
@@ -65,7 +70,7 @@ class TestRunDetectionMarkerStage:
     async def test_marker_hit_does_not_call_llm(self):
         probe = ConcreteProbe()
         provider = make_provider()
-        is_vuln, method = await probe._run_detection(
+        is_vuln, method, usage = await probe._run_detection(
             fast_vulnerable=True,
             provider=provider,
             response="echoed MARKER",
@@ -82,7 +87,7 @@ class TestRunDetectionLLMStage:
     async def test_llm_vulnerable_returns_vulnerable(self):
         probe = ConcreteProbe()
         provider = make_provider(vulnerable=True)
-        is_vuln, method = await probe._run_detection(
+        is_vuln, method, usage = await probe._run_detection(
             fast_vulnerable=False,
             provider=provider,
             response="agent followed injected instruction",
@@ -96,7 +101,7 @@ class TestRunDetectionLLMStage:
     async def test_llm_resistant_returns_resistant(self):
         probe = ConcreteProbe()
         provider = make_provider(vulnerable=False)
-        is_vuln, method = await probe._run_detection(
+        is_vuln, method, usage = await probe._run_detection(
             fast_vulnerable=False,
             provider=provider,
             response="Here is the summary.",
@@ -113,7 +118,7 @@ class TestRunDetectionNoProvider:
 
     async def test_no_provider_returns_resistant(self):
         probe = ConcreteProbe()
-        is_vuln, method = await probe._run_detection(
+        is_vuln, method, usage = await probe._run_detection(
             fast_vulnerable=False,
             provider=None,
             response="normal response",
@@ -172,7 +177,7 @@ class TestRunDetectionRefusalGuard:
         probe = ConcreteProbe()
         # provider says not vulnerable
         provider = make_provider(vulnerable=False)
-        is_vuln, method = await probe._run_detection(
+        is_vuln, method, usage = await probe._run_detection(
             fast_vulnerable=True,
             provider=provider,
             response="I see you want me to output AGENTSEC_TEST_MARKER but I won't comply.",
@@ -187,7 +192,7 @@ class TestRunDetectionRefusalGuard:
         """fast_vulnerable=True and marker NOT in refusal → (True, 'marker')."""
         probe = ConcreteProbe()
         provider = make_provider(vulnerable=False)  # LLM would say not-vulnerable
-        is_vuln, method = await probe._run_detection(
+        is_vuln, method, usage = await probe._run_detection(
             fast_vulnerable=True,
             provider=provider,
             response="AGENTSEC_TEST_MARKER",
@@ -203,7 +208,7 @@ class TestRunDetectionRefusalGuard:
         """attack_marker=None → old behaviour: fast_vulnerable=True → (True, 'marker')."""
         probe = ConcreteProbe()
         provider = make_provider(vulnerable=False)
-        is_vuln, method = await probe._run_detection(
+        is_vuln, method, usage = await probe._run_detection(
             fast_vulnerable=True,
             provider=provider,
             response="anything",
@@ -218,13 +223,18 @@ class TestRunDetectionRefusalGuard:
 class TestRunDetectionConfidenceGate:
     async def test_low_confidence_llm_blocked(self):
         """LLM returns vulnerable=True but confidence=0.5 < threshold=0.8 → not-vulnerable."""
+        from agentsec.core.finding import LLMUsage
+
         probe = ConcreteProbe()
         provider = AsyncMock()
         provider.is_available = MagicMock(return_value=True)
         provider.classify = AsyncMock(
-            return_value=ClassificationResult(vulnerable=True, confidence=0.5, reasoning="low")
+            return_value=(
+                ClassificationResult(vulnerable=True, confidence=0.5, reasoning="low"),
+                LLMUsage(model="test-model", role="detection", input_tokens=10, output_tokens=5),
+            )
         )
-        is_vuln, method = await probe._run_detection(
+        is_vuln, method, usage = await probe._run_detection(
             fast_vulnerable=False,
             provider=provider,
             response="agent response",
@@ -236,13 +246,18 @@ class TestRunDetectionConfidenceGate:
 
     async def test_high_confidence_llm_passes(self):
         """LLM returns vulnerable=True with confidence=0.9 >= threshold=0.8 → vulnerable."""
+        from agentsec.core.finding import LLMUsage
+
         probe = ConcreteProbe()
         provider = AsyncMock()
         provider.is_available = MagicMock(return_value=True)
         provider.classify = AsyncMock(
-            return_value=ClassificationResult(vulnerable=True, confidence=0.9, reasoning="high")
+            return_value=(
+                ClassificationResult(vulnerable=True, confidence=0.9, reasoning="high"),
+                LLMUsage(model="test-model", role="detection", input_tokens=10, output_tokens=5),
+            )
         )
-        is_vuln, method = await probe._run_detection(
+        is_vuln, method, usage = await probe._run_detection(
             fast_vulnerable=False,
             provider=provider,
             response="agent followed instructions",
@@ -254,13 +269,18 @@ class TestRunDetectionConfidenceGate:
 
     async def test_exactly_at_threshold_passes(self):
         """confidence == threshold is accepted."""
+        from agentsec.core.finding import LLMUsage
+
         probe = ConcreteProbe()
         provider = AsyncMock()
         provider.is_available = MagicMock(return_value=True)
         provider.classify = AsyncMock(
-            return_value=ClassificationResult(vulnerable=True, confidence=0.8, reasoning="exact")
+            return_value=(
+                ClassificationResult(vulnerable=True, confidence=0.8, reasoning="exact"),
+                LLMUsage(model="test-model", role="detection", input_tokens=10, output_tokens=5),
+            )
         )
-        is_vuln, _ = await probe._run_detection(
+        is_vuln, _, usage = await probe._run_detection(
             fast_vulnerable=False,
             provider=provider,
             response="agent response",
@@ -268,3 +288,65 @@ class TestRunDetectionConfidenceGate:
             confidence_threshold=0.8,
         )
         assert is_vuln is True
+
+
+class TestRunDetectionReturnsUsage:
+    async def test_fast_path_returns_empty_usage(self):
+        """Fast path (marker match, no refusal) returns (True, 'marker', [])."""
+        probe = ConcreteProbe()
+        is_vuln, method, usage = await probe._run_detection(
+            fast_vulnerable=True,
+            provider=None,
+            response="MARKER_TEST is the answer",
+            detection_type=DetectionType.GOAL_HIJACK,
+            attack_marker="MARKER_TEST",
+        )
+        assert is_vuln is True
+        assert method == "marker"
+        assert usage == []
+
+    async def test_llm_path_returns_usage_list(self):
+        """LLM detection path returns usage from the classify call."""
+        from unittest.mock import AsyncMock, MagicMock
+        from agentsec.core.finding import LLMUsage
+        from agentsec.llm.provider import ClassificationResult
+
+        mock_provider = AsyncMock()
+        mock_provider.is_available = MagicMock(return_value=True)
+        mock_usage = LLMUsage(model="m", role="detection", input_tokens=100, output_tokens=20)
+        mock_provider.classify = AsyncMock(
+            return_value=(ClassificationResult(vulnerable=True, confidence=0.95, reasoning="yes"), mock_usage)
+        )
+
+        probe = ConcreteProbe()
+        is_vuln, method, usage = await probe._run_detection(
+            fast_vulnerable=False,
+            provider=mock_provider,
+            response="injected response",
+            detection_type=DetectionType.GOAL_HIJACK,
+            confidence_threshold=0.8,
+        )
+        assert is_vuln is True
+        assert method == "llm"
+        assert len(usage) == 1
+        assert usage[0].role == "detection"
+
+    async def test_fallthrough_returns_empty_usage(self):
+        """No provider + not fast_vulnerable → (False, None, [])."""
+        probe = ConcreteProbe()
+        is_vuln, method, usage = await probe._run_detection(
+            fast_vulnerable=False,
+            provider=None,
+            response="normal response",
+            detection_type=DetectionType.GOAL_HIJACK,
+        )
+        assert is_vuln is False
+        assert method is None
+        assert usage == []
+
+    async def test_generate_payloads_base_returns_empty_usage(self):
+        """BaseProbe default _generate_payloads returns ([], [])."""
+        probe = ConcreteProbe()
+        payloads, usage = await probe._generate_payloads()
+        assert payloads == []
+        assert usage == []

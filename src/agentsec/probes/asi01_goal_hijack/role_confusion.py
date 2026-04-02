@@ -13,6 +13,7 @@ from agentsec.core.finding import (
     Evidence,
     Finding,
     FindingStatus,
+    LLMUsage,
     OWASPCategory,
     Remediation,
     Severity,
@@ -94,10 +95,10 @@ class RoleConfusionProbe(BaseProbe):
 
     async def _generate_payloads(
         self, provider=None, agents=None, fallback_model: str | None = None
-    ) -> list[str]:
+    ) -> tuple[list[str], list[LLMUsage]]:
         """Generate role confusion payloads, using LLM if available."""
         if not provider:
-            return [_PAYLOAD_TEMPLATE, _PAYLOAD_FALLBACK]
+            return [_PAYLOAD_TEMPLATE, _PAYLOAD_FALLBACK], []
 
         from agentsec.llm.payloads import PayloadGenerator
 
@@ -117,9 +118,10 @@ class RoleConfusionProbe(BaseProbe):
             f"Marker to inject: {_ROLE_MARKER}\n"
         )
         fallback = _PAYLOAD_TEMPLATE.format(role=target_role)
-        return await PayloadGenerator(provider, fallback_model=fallback_model).generate_with_tiers(
-            prompt, marker=_ROLE_MARKER, fallbacks=[fallback, _PAYLOAD_FALLBACK]
-        )
+        payloads, usage = await PayloadGenerator(
+            provider, fallback_model=fallback_model
+        ).generate_with_tiers(prompt, marker=_ROLE_MARKER, fallbacks=[fallback, _PAYLOAD_FALLBACK])
+        return payloads, usage
 
     async def attack(
         self,
@@ -153,12 +155,15 @@ class RoleConfusionProbe(BaseProbe):
                 target_role = agent.role.split()[0].lower()
                 break
 
-        payloads = await self._generate_payloads(provider, agents, fallback_model=fallback_model)
+        payloads, gen_usage = await self._generate_payloads(
+            provider, agents, fallback_model=fallback_model
+        )
 
+        all_det_usage: list[LLMUsage] = []
         for payload in payloads:
             response = await adapter.send_message(target_agent, payload)
             fast = _ROLE_MARKER in response
-            is_vuln, method = await self._run_detection(
+            is_vuln, method, det_usage = await self._run_detection(
                 fast_vulnerable=fast,
                 provider=provider,
                 response=response,
@@ -168,6 +173,7 @@ class RoleConfusionProbe(BaseProbe):
                 injected_role="privileged role",
                 original_role=target_role,
             )
+            all_det_usage.extend(det_usage)
             if is_vuln:
                 duration_ms = int((time.monotonic() - start) * 1000)
                 return Finding(
@@ -195,6 +201,7 @@ class RoleConfusionProbe(BaseProbe):
                     remediation=self.remediation(),
                     duration_ms=duration_ms,
                     tags=self.metadata().tags,
+                    llm_usage=gen_usage + det_usage,
                 )
 
         duration_ms = int((time.monotonic() - start) * 1000)
@@ -219,4 +226,5 @@ class RoleConfusionProbe(BaseProbe):
             remediation=self.remediation(),
             duration_ms=duration_ms,
             tags=self.metadata().tags,
+            llm_usage=gen_usage + all_det_usage,
         )

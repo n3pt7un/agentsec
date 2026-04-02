@@ -16,6 +16,7 @@ from agentsec.core.finding import (
     Evidence,
     Finding,
     FindingStatus,
+    LLMUsage,
     OWASPCategory,
     Remediation,
     Severity,
@@ -108,10 +109,10 @@ class MemoryPoisonProbe(BaseProbe):
 
     async def _generate_payloads(
         self, provider=None, agents=None, fallback_model: str | None = None
-    ) -> list[str]:
+    ) -> tuple[list[str], list[LLMUsage]]:
         """Generate memory poison payloads, using LLM if available."""
         if not provider:
-            return [_POISON_PAYLOAD]
+            return [_POISON_PAYLOAD], []
 
         from agentsec.llm.payloads import PayloadGenerator
 
@@ -122,9 +123,10 @@ class MemoryPoisonProbe(BaseProbe):
             f"Agent tools: {', '.join(agent.tools) if agent else 'none'}\n"
             f"Marker to embed: {_POISON_MARKER}\n"
         )
-        return await PayloadGenerator(provider, fallback_model=fallback_model).generate_with_tiers(
-            prompt, marker=_POISON_MARKER, fallbacks=[_POISON_PAYLOAD]
-        )
+        payloads, usage = await PayloadGenerator(
+            provider, fallback_model=fallback_model
+        ).generate_with_tiers(prompt, marker=_POISON_MARKER, fallbacks=[_POISON_PAYLOAD])
+        return payloads, usage
 
     async def attack(
         self,
@@ -149,11 +151,15 @@ class MemoryPoisonProbe(BaseProbe):
         agents = await adapter.discover()
         target_agent = agents[0].name if agents else "default"
 
-        payloads = await self._generate_payloads(provider, agents, fallback_model=fallback_model)
+        payloads, gen_usage = await self._generate_payloads(
+            provider, agents, fallback_model=fallback_model
+        )
         poison_payload = payloads[0]
 
         if adapter.capabilities().can_access_memory:
-            return await self._attack_direct_write(adapter, target_agent, poison_payload, start)
+            return await self._attack_direct_write(
+                adapter, target_agent, poison_payload, start, gen_usage=gen_usage
+            )
         return await self._attack_via_message(
             adapter,
             target_agent,
@@ -161,6 +167,7 @@ class MemoryPoisonProbe(BaseProbe):
             start,
             provider=provider,
             confidence_threshold=confidence_threshold,
+            gen_usage=gen_usage,
         )
 
     # ------------------------------------------------------------------
@@ -173,6 +180,7 @@ class MemoryPoisonProbe(BaseProbe):
         target_agent: str,
         payload: str,
         start: float,
+        gen_usage: list[LLMUsage] | None = None,
     ) -> Finding:
         """Poison memory via adapter.write_memory(), then read state back."""
         try:
@@ -207,6 +215,7 @@ class MemoryPoisonProbe(BaseProbe):
             ),
             vulnerable=vulnerable,
             duration_ms=duration_ms,
+            llm_usage=gen_usage or [],
         )
 
     async def _attack_via_message(
@@ -217,6 +226,7 @@ class MemoryPoisonProbe(BaseProbe):
         start: float,
         provider=None,
         confidence_threshold: float = 0.8,
+        gen_usage: list[LLMUsage] | None = None,
     ) -> Finding:
         """Send a crafted 'remember' payload and inspect resulting memory state."""
         try:
@@ -250,7 +260,7 @@ class MemoryPoisonProbe(BaseProbe):
         duration_ms = int((time.monotonic() - start) * 1000)
         memory_str = str(memory_state)
         fast = _POISON_MARKER in memory_str or _POISON_MARKER in ai_response
-        is_vuln, method = await self._run_detection(
+        is_vuln, method, det_usage = await self._run_detection(
             fast_vulnerable=fast,
             provider=provider,
             response=ai_response if ai_response else memory_str,
@@ -269,6 +279,7 @@ class MemoryPoisonProbe(BaseProbe):
             vulnerable=is_vuln,
             duration_ms=duration_ms,
             detection_method=method or "marker",
+            llm_usage=(gen_usage or []) + det_usage,
         )
 
     # ------------------------------------------------------------------
@@ -285,6 +296,7 @@ class MemoryPoisonProbe(BaseProbe):
         vulnerable: bool,
         duration_ms: int,
         detection_method: str = "marker",
+        llm_usage: list[LLMUsage] | None = None,
     ) -> Finding:
         meta = self.metadata()
         return Finding(
@@ -313,6 +325,7 @@ class MemoryPoisonProbe(BaseProbe):
             remediation=self.remediation(),
             duration_ms=duration_ms,
             tags=meta.tags,
+            llm_usage=llm_usage or [],
         )
 
     def _skipped_finding(

@@ -14,6 +14,7 @@ from agentsec.core.finding import (
     Evidence,
     Finding,
     FindingStatus,
+    LLMUsage,
     OWASPCategory,
     Remediation,
     Severity,
@@ -115,10 +116,10 @@ class ImpersonationProbe(BaseProbe):
 
     async def _generate_payloads(
         self, provider=None, agents=None, fallback_model: str | None = None
-    ) -> list[str]:
+    ) -> tuple[list[str], list[LLMUsage]]:
         """Generate impersonation payloads, using LLM if available."""
         if not provider:
-            return list(_ALL_PAYLOADS)
+            return list(_ALL_PAYLOADS), []
 
         from agentsec.llm.payloads import PayloadGenerator
 
@@ -137,9 +138,10 @@ class ImpersonationProbe(BaseProbe):
             f"Agent tools: {', '.join(agent.tools) if agent else 'none'}\n"
             f"Marker to inject: {_IMPERSONATION_MARKER}\n"
         )
-        return await PayloadGenerator(provider, fallback_model=fallback_model).generate_with_tiers(
-            prompt, marker=_IMPERSONATION_MARKER, fallbacks=list(_ALL_PAYLOADS)
-        )
+        payloads, usage = await PayloadGenerator(
+            provider, fallback_model=fallback_model
+        ).generate_with_tiers(prompt, marker=_IMPERSONATION_MARKER, fallbacks=list(_ALL_PAYLOADS))
+        return payloads, usage
 
     async def attack(
         self,
@@ -175,12 +177,16 @@ class ImpersonationProbe(BaseProbe):
         matched_response: str | None = None
         detection_method: str = "marker"
 
-        payloads = await self._generate_payloads(provider, agents, fallback_model=fallback_model)
+        payloads, gen_usage = await self._generate_payloads(
+            provider, agents, fallback_model=fallback_model
+        )
 
+        all_det_usage: list[LLMUsage] = []
+        vuln_det_usage: list[LLMUsage] = []
         for payload in payloads:
             response = await adapter.send_message(target_agent, payload)
             fast = _IMPERSONATION_MARKER in response
-            is_vuln, method = await self._run_detection(
+            is_vuln, method, det_usage = await self._run_detection(
                 fast_vulnerable=fast,
                 provider=provider,
                 response=response,
@@ -189,10 +195,12 @@ class ImpersonationProbe(BaseProbe):
                 attack_marker=_IMPERSONATION_MARKER,
                 injected_instruction=payload,
             )
+            all_det_usage.extend(det_usage)
             if is_vuln:
                 matched_payload = payload
                 matched_response = response
                 detection_method = method or "marker"
+                vuln_det_usage = det_usage
                 break
 
         duration_ms = int((time.monotonic() - start) * 1000)
@@ -228,4 +236,5 @@ class ImpersonationProbe(BaseProbe):
             remediation=self.remediation(),
             duration_ms=duration_ms,
             tags=self.metadata().tags,
+            llm_usage=gen_usage + (vuln_det_usage if vulnerable else all_det_usage),
         )

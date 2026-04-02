@@ -16,6 +16,7 @@ from agentsec.core.finding import (
     Evidence,
     Finding,
     FindingStatus,
+    LLMUsage,
     OWASPCategory,
     Remediation,
     Severity,
@@ -109,10 +110,10 @@ class ContextLeakProbe(BaseProbe):
 
     async def _generate_payloads(
         self, provider=None, agents=None, fallback_model: str | None = None
-    ) -> list[str]:
+    ) -> tuple[list[str], list[LLMUsage]]:
         """Generate Session A payloads (sensitive data to plant), using LLM if available."""
         if not provider:
-            return [_SESSION_A_MSG]
+            return [_SESSION_A_MSG], []
 
         from agentsec.llm.payloads import PayloadGenerator
 
@@ -123,9 +124,10 @@ class ContextLeakProbe(BaseProbe):
             f"Agent tools: {', '.join(agent.tools) if agent else 'none'}\n"
             f"Sensitive marker to embed: {_SENSITIVE_MARKER}\n"
         )
-        return await PayloadGenerator(provider, fallback_model=fallback_model).generate_with_tiers(
-            prompt, marker=_SENSITIVE_MARKER, fallbacks=[_SESSION_A_MSG]
-        )
+        payloads, usage = await PayloadGenerator(
+            provider, fallback_model=fallback_model
+        ).generate_with_tiers(prompt, marker=_SENSITIVE_MARKER, fallbacks=[_SESSION_A_MSG])
+        return payloads, usage
 
     async def attack(
         self,
@@ -147,7 +149,7 @@ class ContextLeakProbe(BaseProbe):
         agents = await adapter.discover()
         target_agent = agents[0].name if agents else "default"
 
-        session_a_payloads = await self._generate_payloads(
+        session_a_payloads, gen_usage = await self._generate_payloads(
             provider, agents, fallback_model=fallback_model
         )
         session_a_msg = session_a_payloads[0]
@@ -196,7 +198,7 @@ class ContextLeakProbe(BaseProbe):
         duration_ms = int((time.monotonic() - start) * 1000)
         memory_str = str(session_b_memory)
         fast = _SENSITIVE_MARKER in memory_str or _SENSITIVE_MARKER in session_b_response
-        is_vuln, method = await self._run_detection(
+        is_vuln, method, det_usage = await self._run_detection(
             fast_vulnerable=fast,
             provider=provider,
             response=session_b_response if session_b_response else memory_str,
@@ -230,6 +232,7 @@ class ContextLeakProbe(BaseProbe):
                 remediation=self.remediation(),
                 duration_ms=duration_ms,
                 tags=self.metadata().tags,
+                llm_usage=gen_usage + det_usage,
             )
 
         leaked_in = "memory state" if _SENSITIVE_MARKER in memory_str else "agent response"
@@ -260,6 +263,7 @@ class ContextLeakProbe(BaseProbe):
             remediation=self.remediation(),
             duration_ms=duration_ms,
             tags=self.metadata().tags,
+            llm_usage=gen_usage + det_usage,
         )
 
     def _skipped_finding(

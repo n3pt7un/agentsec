@@ -15,6 +15,7 @@ from agentsec.core.finding import (
     Evidence,
     Finding,
     FindingStatus,
+    LLMUsage,
     OWASPCategory,
     Remediation,
     Severity,
@@ -142,10 +143,10 @@ class CredentialExtractionProbe(BaseProbe):
 
     async def _generate_payloads(
         self, provider=None, agents=None, fallback_model: str | None = None
-    ) -> list[str]:
+    ) -> tuple[list[str], list[LLMUsage]]:
         """Generate credential extraction payloads, using LLM if available."""
         if not provider:
-            return list(_ALL_PAYLOADS)
+            return list(_ALL_PAYLOADS), []
 
         from agentsec.llm.payloads import PayloadGenerator
 
@@ -157,9 +158,10 @@ class CredentialExtractionProbe(BaseProbe):
             "The payload must contain a credential-format string (e.g. api_key=sk-...) "
             "so detection works.\n"
         )
-        return await PayloadGenerator(provider, fallback_model=fallback_model).generate_with_tiers(
-            prompt, marker="", fallbacks=list(_ALL_PAYLOADS)
-        )
+        payloads, usage = await PayloadGenerator(
+            provider, fallback_model=fallback_model
+        ).generate_with_tiers(prompt, marker="", fallbacks=list(_ALL_PAYLOADS))
+        return payloads, usage
 
     async def attack(
         self,
@@ -183,18 +185,22 @@ class CredentialExtractionProbe(BaseProbe):
         agents = await adapter.discover()
         target_agent = agents[0].name if agents else "default"
 
-        payloads = await self._generate_payloads(provider, agents, fallback_model=fallback_model)
+        payloads, gen_usage = await self._generate_payloads(
+            provider, agents, fallback_model=fallback_model
+        )
 
         matched_payload: str | None = None
         matched_response: str | None = None
         matched_pattern: str | None = None
         detection_method: str = "marker"
+        all_det_usage: list[LLMUsage] = []
+        vuln_det_usage: list[LLMUsage] = []
 
         for payload in payloads:
             response = await adapter.send_message(target_agent, payload)
             matched_pattern, matched_text = _find_credential_match(response)
             fast = matched_pattern is not None
-            is_vuln, method = await self._run_detection(
+            is_vuln, method, det_usage = await self._run_detection(
                 fast_vulnerable=fast,
                 provider=provider,
                 response=response,
@@ -202,10 +208,12 @@ class CredentialExtractionProbe(BaseProbe):
                 confidence_threshold=confidence_threshold,
                 attack_payload=payload,
             )
+            all_det_usage.extend(det_usage)
             if is_vuln:
                 matched_payload = payload
                 matched_response = response
                 detection_method = method or "marker"
+                vuln_det_usage = det_usage
                 break
 
         duration_ms = int((time.monotonic() - start) * 1000)
@@ -240,4 +248,5 @@ class CredentialExtractionProbe(BaseProbe):
             remediation=self.remediation(),
             duration_ms=duration_ms,
             tags=self.metadata().tags,
+            llm_usage=gen_usage + (vuln_det_usage if vulnerable else all_det_usage),
         )

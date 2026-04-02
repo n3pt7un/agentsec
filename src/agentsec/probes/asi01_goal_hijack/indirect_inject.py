@@ -13,6 +13,7 @@ from agentsec.core.finding import (
     Evidence,
     Finding,
     FindingStatus,
+    LLMUsage,
     OWASPCategory,
     Remediation,
     Severity,
@@ -82,10 +83,10 @@ class IndirectPromptInjection(BaseProbe):
 
     async def _generate_payloads(
         self, provider=None, agents=None, fallback_model: str | None = None
-    ) -> list[str]:
+    ) -> tuple[list[str], list[LLMUsage]]:
         """Generate attack payloads, using LLM if available."""
         if not provider:
-            return [_PAYLOAD]
+            return [_PAYLOAD], []
 
         from agentsec.llm.payloads import PayloadGenerator
 
@@ -96,9 +97,10 @@ class IndirectPromptInjection(BaseProbe):
             f"Agent tools: {', '.join(agent.tools) if agent else 'none'}\n"
             f"Marker to inject: {_INJECTION_MARKER}\n"
         )
-        return await PayloadGenerator(provider, fallback_model=fallback_model).generate_with_tiers(
-            prompt, marker=_INJECTION_MARKER, fallbacks=[_PAYLOAD]
-        )
+        payloads, usage = await PayloadGenerator(
+            provider, fallback_model=fallback_model
+        ).generate_with_tiers(prompt, marker=_INJECTION_MARKER, fallbacks=[_PAYLOAD])
+        return payloads, usage
 
     async def attack(
         self,
@@ -122,12 +124,15 @@ class IndirectPromptInjection(BaseProbe):
         agents = await adapter.discover()
         target_agent = agents[0].name if agents else "default"
 
-        payloads = await self._generate_payloads(provider, agents, fallback_model=fallback_model)
+        payloads, gen_usage = await self._generate_payloads(
+            provider, agents, fallback_model=fallback_model
+        )
 
+        all_det_usage: list[LLMUsage] = []
         for payload in payloads:
             response = await adapter.send_message(target_agent, payload)
             fast = _INJECTION_MARKER in response
-            is_vuln, method = await self._run_detection(
+            is_vuln, method, det_usage = await self._run_detection(
                 fast_vulnerable=fast,
                 provider=provider,
                 response=response,
@@ -137,6 +142,7 @@ class IndirectPromptInjection(BaseProbe):
                 attack_payload=payload,
                 original_objective="Process the user's request according to the system prompt",
             )
+            all_det_usage.extend(det_usage)
             if is_vuln:
                 duration_ms = int((time.monotonic() - start) * 1000)
                 return Finding(
@@ -159,6 +165,7 @@ class IndirectPromptInjection(BaseProbe):
                     remediation=self.remediation(),
                     duration_ms=duration_ms,
                     tags=self.metadata().tags,
+                    llm_usage=gen_usage + det_usage,
                 )
 
         duration_ms = int((time.monotonic() - start) * 1000)
@@ -182,4 +189,5 @@ class IndirectPromptInjection(BaseProbe):
             remediation=self.remediation(),
             duration_ms=duration_ms,
             tags=self.metadata().tags,
+            llm_usage=gen_usage + all_det_usage,
         )

@@ -272,6 +272,7 @@ def serve(
     port: int = typer.Option(8457, help="Port to serve the dashboard on"),
     host: str = typer.Option("127.0.0.1", help="Host to bind to"),
     reload: bool = typer.Option(False, help="Enable auto-reload for development"),
+    open_browser: bool = typer.Option(True, "--open/--no-open", help="Open browser on start"),
 ) -> None:
     """Start the agentsec web dashboard."""
     try:
@@ -283,7 +284,15 @@ def serve(
         )
         raise typer.Exit(code=1) from exc
 
-    console.print(f"[cyan]Starting agentsec dashboard at http://{host}:{port}[/]")
+    url = f"http://{host}:{port}"
+    console.print(f"[cyan]Starting agentsec dashboard at {url}[/]")
+
+    if open_browser:
+        import threading
+        import webbrowser
+
+        threading.Timer(1.5, webbrowser.open, args=[url]).start()
+
     uvicorn.run(
         "agentsec.dashboard.app:app",
         host=host,

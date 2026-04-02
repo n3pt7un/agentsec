@@ -1,12 +1,51 @@
+import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useScanStream } from '../hooks/useScanStream';
 import ProbeProgress from '../components/ProbeProgress';
 import ErrorState from '../components/ErrorState';
+import ContextPanel from '../components/ContextPanel';
+
+const SECTIONS = [
+  { id: 'progress', label: 'Progress' },
+  { id: 'summary', label: 'Summary' },
+];
+
+function StatCard({ label, value, color }) {
+  return (
+    <div style={{
+      background: 'var(--bg-surface)',
+      border: '1px solid var(--border)',
+      borderRadius: 'var(--radius)',
+      padding: '14px',
+      textAlign: 'center',
+    }}>
+      <div style={{
+        fontSize: '22px',
+        fontWeight: 600,
+        fontFamily: 'var(--font-mono)',
+        color: color || 'var(--text-primary)',
+        marginBottom: '4px',
+      }}>
+        {value}
+      </div>
+      <div style={{
+        fontSize: '10px',
+        color: 'var(--text-muted)',
+        fontFamily: 'var(--font-sans)',
+        textTransform: 'uppercase',
+        letterSpacing: '0.08em',
+      }}>
+        {label}
+      </div>
+    </div>
+  );
+}
 
 export default function ScanProgress() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { events, status } = useScanStream(id);
+  const [viewResultsHovered, setViewResultsHovered] = useState(false);
 
   const completion = events.find(e => e.type === 'scan_complete');
   const scanErrorEvent = events.find(e => e.type === 'error');
@@ -14,12 +53,12 @@ export default function ScanProgress() {
   if (status === 'error') {
     const errorMessage = scanErrorEvent?.message || 'The scan encountered an unexpected error.';
     return (
-      <div className="space-y-4">
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
         <ErrorState message={errorMessage} />
-        <div className="text-center">
+        <div style={{ textAlign: 'center' }}>
           <button
             onClick={() => navigate('/')}
-            className="text-sm text-blue-400 hover:underline"
+            style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px', color: 'var(--accent)', fontFamily: 'var(--font-sans)' }}
           >
             ← Back to Dashboard
           </button>
@@ -29,43 +68,49 @@ export default function ScanProgress() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold">
-          {status === 'complete' ? 'Scan Complete' : 'Scanning...'}
-        </h1>
-        {status === 'complete' && (
-          <button
-            onClick={() => navigate(`/scans/${id}`)}
-            className="bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded text-sm"
-          >
-            View Results →
-          </button>
-        )}
-      </div>
+    <div style={{ display: 'flex', gap: '24px' }}>
+      <ContextPanel sections={completion ? SECTIONS : [SECTIONS[0]]} />
 
-      {completion && (
-        <div className="grid grid-cols-4 gap-4">
-          <div className="bg-slate-800 rounded-lg p-4 text-center">
-            <div className="text-2xl font-bold">{completion.total}</div>
-            <div className="text-xs text-slate-400">Total</div>
-          </div>
-          <div className="bg-slate-800 rounded-lg p-4 text-center">
-            <div className="text-2xl font-bold text-red-400">{completion.vulnerable}</div>
-            <div className="text-xs text-slate-400">Vulnerable</div>
-          </div>
-          <div className="bg-slate-800 rounded-lg p-4 text-center">
-            <div className="text-2xl font-bold text-green-400">{completion.resistant}</div>
-            <div className="text-xs text-slate-400">Resistant</div>
-          </div>
-          <div className="bg-slate-800 rounded-lg p-4 text-center">
-            <div className="text-2xl font-bold text-red-600">{completion.error}</div>
-            <div className="text-xs text-slate-400">Errors</div>
-          </div>
+      <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <h1 style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'var(--font-sans)' }}>
+            {status === 'complete' ? 'Scan Complete' : 'Scanning...'}
+          </h1>
+          {status === 'complete' && (
+            <button
+              onClick={() => navigate(`/scans/${id}`)}
+              onMouseEnter={() => setViewResultsHovered(true)}
+              onMouseLeave={() => setViewResultsHovered(false)}
+              style={{
+                border: '1px solid var(--accent)',
+                borderRadius: 'var(--radius)',
+                padding: '6px 14px',
+                fontSize: '13px',
+                color: 'var(--accent)',
+                background: viewResultsHovered ? 'var(--success-bg)' : 'transparent',
+                cursor: 'pointer',
+                fontFamily: 'var(--font-sans)',
+                transition: 'background 0.1s',
+              }}
+            >
+              View Results →
+            </button>
+          )}
         </div>
-      )}
 
-      <ProbeProgress events={events} />
+        {completion && (
+          <div id="summary" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px' }}>
+            <StatCard label="Total" value={completion.total} />
+            <StatCard label="Vulnerable" value={completion.vulnerable} color="var(--danger)" />
+            <StatCard label="Resistant" value={completion.resistant} color="var(--accent)" />
+            <StatCard label="Errors" value={completion.error} color="var(--danger)" />
+          </div>
+        )}
+
+        <div id="progress">
+          <ProbeProgress events={events} />
+        </div>
+      </div>
     </div>
   );
 }

@@ -1,49 +1,110 @@
 import { Link, Outlet, useLocation } from 'react-router-dom';
 import { useTheme } from '../hooks/useTheme';
+import {
+  IconLayoutDashboard,
+  IconClipboardList,
+  IconSettings,
+  IconSun,
+  IconMoon,
+} from '@tabler/icons-react';
 
 const NAV_ITEMS = [
-  { to: '/', label: 'Dashboard', icon: '⚡' },
-  { to: '/scans', label: 'Scan History', icon: '📋' },
-  { to: '/settings', label: 'Settings', icon: '⚙️' },
+  { to: '/', label: 'Dashboard', icon: IconLayoutDashboard },
+  { to: '/scans', label: 'Scan History', icon: IconClipboardList },
+  { to: '/settings', label: 'Settings', icon: IconSettings },
 ];
 
 export default function Layout() {
   const location = useLocation();
   const { theme, toggle } = useTheme();
 
+  const isActive = (to) =>
+    to === '/' ? location.pathname === '/' : location.pathname.startsWith(to);
+
   return (
-    <div className="min-h-screen bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100">
-      <nav className="bg-slate-100 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-6 py-3 flex items-center gap-8">
-        <div className="flex items-center gap-2">
-          <span className="text-xl">🛡️</span>
-          <span className="font-bold text-lg">agentsec</span>
-          <span className="text-xs text-slate-500 ml-1">v0.1.0</span>
+    <div style={{ minHeight: '100vh', background: 'var(--bg-page)', color: 'var(--text-primary)' }}>
+      {/* Top bar */}
+      <nav style={{
+        height: '40px',
+        background: 'var(--bg-surface)',
+        borderBottom: '1px solid var(--border-green)',
+        display: 'flex',
+        alignItems: 'center',
+        padding: '0 24px',
+        gap: '32px',
+        position: 'sticky',
+        top: 0,
+        zIndex: 50,
+      }}>
+        {/* Wordmark */}
+        <span style={{
+          fontFamily: 'var(--font-mono)',
+          fontSize: '11px',
+          fontWeight: 600,
+          color: 'var(--accent)',
+          letterSpacing: '0.12em',
+          userSelect: 'none',
+        }}>
+          AGENTSEC
+        </span>
+
+        {/* Nav links */}
+        <div style={{ display: 'flex', gap: '4px' }}>
+          {NAV_ITEMS.map(({ to, label, icon: Icon }) => {
+            const active = isActive(to);
+            return (
+              <Link
+                key={to}
+                to={to}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '4px 10px',
+                  fontSize: '13px',
+                  fontFamily: 'var(--font-sans)',
+                  color: active ? 'var(--accent)' : 'var(--text-muted)',
+                  textDecoration: 'none',
+                  borderBottom: active ? '1px solid var(--accent)' : '1px solid transparent',
+                  transition: 'color 0.1s',
+                }}
+                onMouseEnter={e => { if (!active) e.currentTarget.style.color = 'var(--text-secondary)'; }}
+                onMouseLeave={e => { if (!active) e.currentTarget.style.color = 'var(--text-muted)'; }}
+              >
+                <Icon size={14} stroke={1.25} />
+                {label}
+              </Link>
+            );
+          })}
         </div>
-        <div className="flex gap-1 flex-wrap">
-          {NAV_ITEMS.map(item => (
-            <Link
-              key={item.to}
-              to={item.to}
-              className={`px-3 py-1.5 rounded text-sm transition-colors ${
-                (item.to === '/' ? location.pathname === '/' : location.pathname.startsWith(item.to))
-                  ? 'bg-slate-700 text-white'
-                  : 'text-slate-400 hover:text-white hover:bg-slate-700/50'
-              }`}
-            >
-              {item.icon} {item.label}
-            </Link>
-          ))}
-        </div>
+
+        {/* Theme toggle */}
         <button
           onClick={toggle}
-          className="ml-auto text-slate-400 hover:text-white transition-colors text-sm"
           title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+          style={{
+            marginLeft: 'auto',
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            color: 'var(--text-muted)',
+            display: 'flex',
+            alignItems: 'center',
+            padding: '4px',
+            borderRadius: 'var(--radius)',
+            transition: 'color 0.1s',
+          }}
+          onMouseEnter={e => { e.currentTarget.style.color = 'var(--text-primary)'; }}
+          onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-muted)'; }}
         >
-          {theme === 'dark' ? '☀️' : '🌙'}
+          {theme === 'dark'
+            ? <IconSun size={16} stroke={1.25} />
+            : <IconMoon size={16} stroke={1.25} />}
         </button>
       </nav>
 
-      <main className="max-w-7xl mx-auto px-6 py-8">
+      {/* Page content */}
+      <main style={{ maxWidth: '1280px', margin: '0 auto', padding: '32px 24px' }}>
         <Outlet />
       </main>
     </div>

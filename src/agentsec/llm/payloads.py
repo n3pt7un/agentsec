@@ -154,16 +154,8 @@ class PayloadGenerator:
         using_default_tiers = tiers is None
         active_tiers = list(tiers if tiers is not None else DEFAULT_TIERS)
 
-        # When fallback_model is set and no explicit tiers were supplied, use only
-        # the last tier (with the fallback model applied) as a single-shot attempt.
-        # This avoids burning tokens on the full 3-tier stack with a cheap model.
-        if self.fallback_model and using_default_tiers:
-            last = active_tiers[-1]
-            active_tiers = [PayloadTier(
-                system_prompt=last.system_prompt,
-                model=self.fallback_model,
-            )]
-        elif self.fallback_model and active_tiers and active_tiers[-1].model is None:
+        # Apply fallback_model to the last tier if it has no explicit model
+        if self.fallback_model and active_tiers and active_tiers[-1].model is None:
             last = active_tiers[-1]
             active_tiers[-1] = PayloadTier(
                 system_prompt=last.system_prompt,

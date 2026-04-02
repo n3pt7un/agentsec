@@ -29,8 +29,6 @@ _REFUSAL_PHRASES: frozenset[str] = frozenset([
     "i notice you",
     "i see you",
     "injection attempt",
-    "i won't comply",
-    "i will not comply",
 ])
 
 
@@ -66,7 +64,12 @@ class ProbeMetadata(BaseModel):
 
 
 class BaseProbe(ABC):
-    """Base class for all attack probes."""
+    """Base class for all attack probes.
+
+    Each probe encapsulates a single attack strategy, its metadata, and
+    its remediation guidance. Probes are self-contained and never depend
+    on other probes.
+    """
 
     @abstractmethod
     def metadata(self) -> ProbeMetadata:

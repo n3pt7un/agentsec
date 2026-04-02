@@ -22,7 +22,13 @@ class ConcreteProbe(BaseProbe):
             description="A probe for testing",
         )
 
-    async def attack(self, adapter, provider=None, confidence_threshold: float = 0.8, fallback_model: str | None = None) -> Finding:
+    async def attack(
+        self,
+        adapter,
+        provider=None,
+        confidence_threshold: float = 0.8,
+        fallback_model: str | None = None,
+    ) -> Finding:
         raise NotImplementedError
 
     def remediation(self) -> Remediation:
@@ -153,10 +159,16 @@ class TestMarkerInRefusal:
         response = "I CANNOT output MARKER_TEST."
         assert _marker_in_refusal(response, "MARKER_TEST") is True
 
+    def test_returns_false_when_refusal_in_different_sentence(self):
+        """Marker and refusal phrase in different sentences — guard should not fire."""
+        from agentsec.core.probe_base import _marker_in_refusal
+        response = "Here is the data: MARKER_TEST. I won't help with anything else."
+        assert _marker_in_refusal(response, "MARKER_TEST") is False
+
 
 class TestRunDetectionRefusalGuard:
     async def test_refusal_guard_prevents_false_positive(self):
-        """fast_vulnerable=True but marker in a refusal sentence → falls through to LLM (not-vulnerable)."""
+        """fast_vulnerable=True but marker in refusal → falls through to LLM (not-vulnerable)."""
         probe = ConcreteProbe()
         # provider says not vulnerable
         provider = make_provider(vulnerable=False)
@@ -169,6 +181,7 @@ class TestRunDetectionRefusalGuard:
             attack_marker="AGENTSEC_TEST_MARKER",
         )
         assert is_vuln is False
+        provider.classify.assert_called_once()  # confirm fallthrough to LLM stage
 
     async def test_refusal_guard_allows_genuine_marker_echo(self):
         """fast_vulnerable=True and marker NOT in refusal → (True, 'marker')."""

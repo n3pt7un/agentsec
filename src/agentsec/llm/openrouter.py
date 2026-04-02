@@ -9,6 +9,7 @@ import logging
 from openai import APIConnectionError, APIStatusError, AsyncOpenAI
 
 from agentsec.core.exceptions import LLMAuthError, LLMProviderError, LLMTransientError
+from agentsec.core.finding import LLMUsage
 from agentsec.llm.provider import ClassificationResult, LLMProvider
 
 logger = logging.getLogger(__name__)
@@ -65,7 +66,9 @@ class OpenRouterProvider(LLMProvider):
             max_tokens=5,
         )
 
-    async def generate(self, system: str, prompt: str, max_tokens: int = 1024, model: str | None = None) -> str:
+    async def generate(
+        self, system: str, prompt: str, max_tokens: int = 1024, model: str | None = None
+    ) -> tuple[str, LLMUsage | None]:
         """Generate text via OpenRouter.
 
         Args:
@@ -75,7 +78,7 @@ class OpenRouterProvider(LLMProvider):
             model: Optional model override for this call only.
 
         Returns:
-            Generated text content.
+            Tuple of (generated text, LLMUsage record).
         """
         response = await self._call_with_retry(
             model=model or self._model,
@@ -85,9 +88,19 @@ class OpenRouterProvider(LLMProvider):
             ],
             max_tokens=max_tokens,
         )
-        return response.choices[0].message.content or ""
+        text = response.choices[0].message.content or ""
+        usage_obj = response.usage
+        usage = LLMUsage(
+            model=model or self._model,
+            role="payload",
+            input_tokens=usage_obj.prompt_tokens if usage_obj else 0,
+            output_tokens=usage_obj.completion_tokens if usage_obj else 0,
+        )
+        return text, usage
 
-    async def classify(self, system: str, prompt: str) -> ClassificationResult:
+    async def classify(
+        self, system: str, prompt: str
+    ) -> tuple[ClassificationResult, LLMUsage | None]:
         """Classify a response for vulnerability indicators.
 
         Args:
@@ -95,7 +108,7 @@ class OpenRouterProvider(LLMProvider):
             prompt: The content to classify.
 
         Returns:
-            ClassificationResult with vulnerable flag, confidence, and reasoning.
+            Tuple of (ClassificationResult, LLMUsage record).
         """
         response = await self._call_with_retry(
             model=self._model,
@@ -106,7 +119,14 @@ class OpenRouterProvider(LLMProvider):
             max_tokens=256,
         )
         text = response.choices[0].message.content or ""
-        return self._parse_classification(text)
+        usage_obj = response.usage
+        usage = LLMUsage(
+            model=self._model,
+            role="detection",
+            input_tokens=usage_obj.prompt_tokens if usage_obj else 0,
+            output_tokens=usage_obj.completion_tokens if usage_obj else 0,
+        )
+        return self._parse_classification(text), usage
 
     async def _call_with_retry(self, **kwargs):
         """Make an API call with retry logic for transient errors.

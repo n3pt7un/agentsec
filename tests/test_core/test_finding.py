@@ -171,3 +171,70 @@ class TestFinding:
         f = make_finding(category=OWASPCategory.ASI03)
         data = json.loads(f.model_dump_json())
         assert data["category"] == "ASI03"
+
+
+class TestLLMUsage:
+    def test_llm_usage_fields(self):
+        from agentsec.core.finding import LLMUsage
+
+        u = LLMUsage(
+            model="anthropic/claude-sonnet-4-6",
+            role="payload",
+            input_tokens=100,
+            output_tokens=50,
+        )
+        assert u.model == "anthropic/claude-sonnet-4-6"
+        assert u.role == "payload"
+        assert u.input_tokens == 100
+        assert u.output_tokens == 50
+
+    def test_llm_usage_role_detection(self):
+        from agentsec.core.finding import LLMUsage
+
+        u = LLMUsage(model="x", role="detection", input_tokens=0, output_tokens=0)
+        assert u.role == "detection"
+
+    def test_llm_usage_invalid_role(self):
+        import pytest
+        from pydantic import ValidationError
+
+        from agentsec.core.finding import LLMUsage
+
+        with pytest.raises(ValidationError):
+            LLMUsage(model="x", role="invalid", input_tokens=0, output_tokens=0)
+
+    def test_finding_llm_usage_defaults_empty(self):
+        from agentsec.core.finding import (
+            Finding,
+            FindingStatus,
+            OWASPCategory,
+            Remediation,
+            Severity,
+        )
+
+        f = Finding(
+            probe_id="X", probe_name="X", category=OWASPCategory.ASI01,
+            status=FindingStatus.RESISTANT, severity=Severity.HIGH,
+            description="test", remediation=Remediation(summary="fix"),
+        )
+        assert f.llm_usage == []
+
+    def test_finding_llm_usage_populated(self):
+        from agentsec.core.finding import (
+            Finding,
+            FindingStatus,
+            LLMUsage,
+            OWASPCategory,
+            Remediation,
+            Severity,
+        )
+
+        usage = LLMUsage(model="m", role="payload", input_tokens=10, output_tokens=5)
+        f = Finding(
+            probe_id="X", probe_name="X", category=OWASPCategory.ASI01,
+            status=FindingStatus.RESISTANT, severity=Severity.HIGH,
+            description="test", remediation=Remediation(summary="fix"),
+            llm_usage=[usage],
+        )
+        assert len(f.llm_usage) == 1
+        assert f.llm_usage[0].model == "m"

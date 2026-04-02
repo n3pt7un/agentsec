@@ -42,6 +42,17 @@ class OWASPCategory(StrEnum):
     ASI10 = "ASI10"  # Rogue Agent Behavior
 
 
+class LLMUsage(BaseModel):
+    """Token usage record for a single LLM API call."""
+
+    model: str = Field(description="Full model identifier, e.g. 'anthropic/claude-sonnet-4-6'")
+    role: Literal["payload", "detection"] = Field(
+        description="payload = PayloadGenerator call; detection = VulnerabilityDetector call"
+    )
+    input_tokens: int
+    output_tokens: int
+
+
 class Evidence(BaseModel):
     """Concrete proof that a vulnerability exists."""
 
@@ -104,4 +115,8 @@ class Finding(BaseModel):
     override: FindingOverride | None = Field(
         default=None,
         description="Analyst override applied after automated scan. None = no override.",
+    )
+    llm_usage: list[LLMUsage] = Field(
+        default_factory=list,
+        description="Token usage records for all LLM calls made during this probe.",
     )

@@ -7,6 +7,8 @@ from typing import TYPE_CHECKING
 
 from pydantic import BaseModel, Field
 
+from agentsec.core.finding import LLMUsage
+
 if TYPE_CHECKING:
     from agentsec.core.config import ScanConfig
 
@@ -23,7 +25,9 @@ class LLMProvider(ABC):
     """Abstract LLM provider for payload generation and detection."""
 
     @abstractmethod
-    async def generate(self, system: str, prompt: str, max_tokens: int = 1024, model: str | None = None) -> str:
+    async def generate(
+        self, system: str, prompt: str, max_tokens: int = 1024, model: str | None = None
+    ) -> tuple[str, LLMUsage | None]:
         """Generate text. Used for creating attack payloads.
 
         Args:
@@ -35,7 +39,9 @@ class LLMProvider(ABC):
         ...
 
     @abstractmethod
-    async def classify(self, system: str, prompt: str) -> ClassificationResult:
+    async def classify(
+        self, system: str, prompt: str
+    ) -> tuple[ClassificationResult, LLMUsage | None]:
         """Classify a response for vulnerability indicators."""
         ...
 

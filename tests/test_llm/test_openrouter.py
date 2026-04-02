@@ -161,6 +161,96 @@ class TestOpenRouterValidate:
             await provider.validate()
 
 
+class TestOpenRouterUsageExtraction:
+    async def test_generate_returns_usage_tuple(self):
+        from unittest.mock import AsyncMock, MagicMock, patch
+
+        from agentsec.core.finding import LLMUsage
+        from agentsec.llm.openrouter import OpenRouterProvider
+
+        provider = OpenRouterProvider(model="test/model", api_key="sk-test")
+
+        mock_response = MagicMock()
+        mock_response.choices = [MagicMock()]
+        mock_response.choices[0].message.content = "generated payload"
+        mock_response.usage = MagicMock()
+        mock_response.usage.prompt_tokens = 120
+        mock_response.usage.completion_tokens = 45
+
+        with patch.object(provider, "_call_with_retry", new=AsyncMock(return_value=mock_response)):
+            text, usage = await provider.generate("sys", "prompt")
+
+        assert text == "generated payload"
+        assert isinstance(usage, LLMUsage)
+        assert usage.role == "payload"
+        assert usage.model == "test/model"
+        assert usage.input_tokens == 120
+        assert usage.output_tokens == 45
+
+    async def test_generate_model_override_in_usage(self):
+        from unittest.mock import AsyncMock, MagicMock, patch
+
+        from agentsec.llm.openrouter import OpenRouterProvider
+
+        provider = OpenRouterProvider(model="default/model", api_key="sk-test")
+        mock_response = MagicMock()
+        mock_response.choices = [MagicMock()]
+        mock_response.choices[0].message.content = ""
+        mock_response.usage = MagicMock()
+        mock_response.usage.prompt_tokens = 10
+        mock_response.usage.completion_tokens = 5
+
+        with patch.object(provider, "_call_with_retry", new=AsyncMock(return_value=mock_response)):
+            _, usage = await provider.generate("s", "p", model="override/model")
+
+        assert usage.model == "override/model"
+
+    async def test_classify_returns_usage_with_detection_role(self):
+        from unittest.mock import AsyncMock, MagicMock, patch
+
+        from agentsec.core.finding import LLMUsage
+        from agentsec.llm.openrouter import OpenRouterProvider
+
+        provider = OpenRouterProvider(model="test/model", api_key="sk-test")
+        mock_response = MagicMock()
+        mock_response.choices = [MagicMock()]
+        mock_response.choices[0].message.content = (
+            '{"vulnerable": false, "confidence": 0.9, "reasoning": "ok"}'
+        )
+        mock_response.usage = MagicMock()
+        mock_response.usage.prompt_tokens = 200
+        mock_response.usage.completion_tokens = 30
+
+        with patch.object(provider, "_call_with_retry", new=AsyncMock(return_value=mock_response)):
+            result, usage = await provider.classify("sys", "prompt")
+
+        assert result.vulnerable is False
+        assert isinstance(usage, LLMUsage)
+        assert usage.role == "detection"
+        assert usage.input_tokens == 200
+        assert usage.output_tokens == 30
+
+    def test_offline_provider_generate_returns_none_usage(self):
+        import asyncio
+
+        from agentsec.llm.offline import OfflineProvider
+
+        provider = OfflineProvider()
+        text, usage = asyncio.run(provider.generate("s", "p"))
+        assert text == ""
+        assert usage is None
+
+    def test_offline_provider_classify_returns_none_usage(self):
+        import asyncio
+
+        from agentsec.llm.offline import OfflineProvider
+
+        provider = OfflineProvider()
+        result, usage = asyncio.run(provider.classify("s", "p"))
+        assert result.vulnerable is False
+        assert usage is None
+
+
 def _make_openai_error(status_code: int, message: str):
     """Create a mock OpenAI API error."""
     import httpx

@@ -15,11 +15,9 @@ Usage:
 from __future__ import annotations
 
 import asyncio
-import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).parent.parent))
-
+import anyio
 from tests.targets.email_automation_harness import build_email_automation_target
 
 from agentsec.adapters.langgraph import LangGraphAdapter
@@ -29,7 +27,7 @@ from agentsec.reporters.markdown import generate_markdown
 
 
 async def main() -> None:
-    """Run the scan and return the result."""
+    """Run the scan and save the report."""
     graph = build_email_automation_target(vulnerable=True)
     adapter = LangGraphAdapter(graph)
     config = ScanConfig()
@@ -37,15 +35,17 @@ async def main() -> None:
     scanner = Scanner(adapter, config)
     result = await scanner.run(target="email_automation_harness")
 
-    return generate_markdown(result)
+    report = generate_markdown(result)
+
+    async def _save_report() -> None:
+        out = Path("reports/email_automation.md")
+        await anyio.to_thread.run_sync(lambda: out.parent.mkdir(parents=True, exist_ok=True))
+        await anyio.to_thread.run_sync(lambda: out.write_text(report))
+        print(report)
+        print(f"\nReport saved to {out}")
+
+    await _save_report()
 
 
 if __name__ == "__main__":
-    report = asyncio.run(main())
-
-    out = Path("reports/email_automation.md")
-    out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(report)
-
-    print(report)
-    print(f"\nReport saved to {out}")
+    asyncio.run(main())

@@ -2,18 +2,19 @@ import CodeBlock from './CodeBlock';
 
 export default function FindingDetail({ finding }) {
   const { evidence, remediation } = finding;
+  const isResistant = finding.status === 'resistant';
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', paddingTop: '16px', borderTop: '1px solid var(--border)' }}>
-      {/* Evidence */}
+      {/* Evidence / Interaction Log */}
       {evidence && (
         <div>
           <h4 style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '8px', fontFamily: 'var(--font-sans)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-            Evidence
+            {isResistant ? 'Interaction Log' : 'Evidence'}
           </h4>
           <div style={{
             background: 'var(--bg-page)',
-            border: '1px solid var(--border)',
+            border: `1px solid ${isResistant ? 'var(--border-green)' : 'var(--border)'}`,
             borderRadius: 'var(--radius)',
             padding: '12px',
             display: 'flex',
@@ -23,7 +24,7 @@ export default function FindingDetail({ finding }) {
           }}>
             <div>
               <span style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-sans)' }}>Attack input: </span>
-              <code style={{ color: 'var(--danger)', fontFamily: 'var(--font-mono)', wordBreak: 'break-all' }}>{evidence.attack_input}</code>
+              <code style={{ color: isResistant ? 'var(--text-secondary)' : 'var(--danger)', fontFamily: 'var(--font-mono)', wordBreak: 'break-all' }}>{evidence.attack_input}</code>
             </div>
             <div>
               <span style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-sans)' }}>Target agent: </span>
@@ -31,7 +32,7 @@ export default function FindingDetail({ finding }) {
             </div>
             <div>
               <span style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-sans)' }}>Response: </span>
-              <code style={{ color: 'var(--warning)', fontFamily: 'var(--font-mono)', wordBreak: 'break-all' }}>{evidence.agent_response}</code>
+              <code style={{ color: isResistant ? 'var(--accent)' : 'var(--warning)', fontFamily: 'var(--font-mono)', wordBreak: 'break-all' }}>{evidence.agent_response}</code>
             </div>
             {evidence.additional_context && (
               <div>
@@ -49,8 +50,8 @@ export default function FindingDetail({ finding }) {
         </div>
       )}
 
-      {/* Blast radius */}
-      {finding.blast_radius && (
+      {/* Blast radius — only for vulnerable/partial */}
+      {!isResistant && finding.blast_radius && (
         <div style={{
           background: 'var(--danger-bg)',
           border: '1px solid var(--border-red)',
@@ -65,8 +66,8 @@ export default function FindingDetail({ finding }) {
         </div>
       )}
 
-      {/* Remediation */}
-      {remediation && (
+      {/* Remediation — only for vulnerable/partial */}
+      {!isResistant && remediation && (
         <div>
           <h4 style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '8px', fontFamily: 'var(--font-sans)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
             Remediation

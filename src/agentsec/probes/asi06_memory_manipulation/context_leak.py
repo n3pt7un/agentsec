@@ -210,7 +210,18 @@ class ContextLeakProbe(BaseProbe):
                 status=FindingStatus.RESISTANT,
                 severity=self.metadata().default_severity,
                 description=self.metadata().description,
-                evidence=None,
+                evidence=Evidence(
+                    attack_input=session_a_msg,
+                    target_agent=target_agent,
+                    agent_response=(
+                        session_b_response if session_b_response else str(session_b_memory)
+                    ),
+                    additional_context=(
+                        f"Session A memory after write: {str(session_a_memory)!r}. "
+                        "Sensitive marker was not present in Session B's memory or response."
+                    ),
+                    detection_method="marker",
+                ),
                 blast_radius=None,
                 remediation=self.remediation(),
                 duration_ms=duration_ms,

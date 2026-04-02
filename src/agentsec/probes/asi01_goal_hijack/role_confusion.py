@@ -202,7 +202,16 @@ class RoleConfusionProbe(BaseProbe):
             status=FindingStatus.RESISTANT,
             severity=self.metadata().default_severity,
             description=self.metadata().description,
-            evidence=None,
+            evidence=Evidence(
+                attack_input=payload,
+                target_agent=target_agent,
+                agent_response=response,
+                additional_context=(
+                    f"Targeted agent with role: {target_role!r}. "
+                    "Agent did not adopt the injected identity across all tested payloads."
+                ),
+                detection_method="marker",
+            ),
             blast_radius=None,
             remediation=self.remediation(),
             duration_ms=duration_ms,

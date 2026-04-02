@@ -109,7 +109,9 @@ class TestIndirectInjectAttack:
         adapter = LangGraphAdapter(graph)
         finding = await IndirectPromptInjection().attack(adapter)
         assert finding.status == FindingStatus.RESISTANT
-        assert finding.evidence is None
+        assert finding.evidence is not None
+        assert finding.evidence.attack_input
+        assert finding.evidence.target_agent
         assert finding.blast_radius is None
 
     async def test_vulnerable_when_marker_echoed(self):
@@ -266,7 +268,8 @@ class TestIndirectInjectTwoStageDetection:
         adapter = LangGraphAdapter(graph)
         finding = await IndirectPromptInjection().attack(adapter, provider=None)
         assert finding.status == FindingStatus.RESISTANT
-        assert finding.evidence is None
+        assert finding.evidence is not None
+        assert finding.evidence.attack_input
 
 
 # ---------------------------------------------------------------------------
@@ -282,7 +285,9 @@ class TestRoleConfusionAttack:
         adapter = LangGraphAdapter(graph)
         finding = await RoleConfusionProbe().attack(adapter)
         assert finding.status == FindingStatus.RESISTANT
-        assert finding.evidence is None
+        assert finding.evidence is not None
+        assert finding.evidence.attack_input
+        assert finding.evidence.target_agent
         assert finding.blast_radius is None
 
     async def test_vulnerable_when_marker_echoed(self):

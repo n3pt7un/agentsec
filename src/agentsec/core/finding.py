@@ -77,7 +77,11 @@ class Finding(BaseModel):
     severity: Severity
     description: str = Field(description="What the probe tested")
     evidence: Evidence | None = Field(
-        default=None, description="Proof of vulnerability (None if resistant)"
+        default=None,
+        description=(
+            "Interaction log: always populated when the probe ran "
+            "(vulnerable or resistant). None only for skipped/error."
+        ),
     )
     blast_radius: str | None = Field(
         default=None, description="What downstream components are affected"

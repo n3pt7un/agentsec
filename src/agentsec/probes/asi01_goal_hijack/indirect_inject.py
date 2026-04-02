@@ -62,10 +62,12 @@ class IndirectPromptInjection(BaseProbe):
                 "result = graph.invoke({'messages': [HumanMessage(content=user_input)]})"
             ),
             code_after=(
-                "# Fixed: route input through a validation node first\n"
-                "from agentsec.guardrails import InputGuard\n\n"
-                "safe_input = InputGuard().sanitize(user_input)\n"
-                "result = graph.invoke({'messages': [HumanMessage(content=safe_input)]})"
+                "# Fixed: wrap the agent node with InputBoundaryEnforcer\n"
+                "from agentsec.guardrails import InputBoundaryEnforcer\n\n"
+                "enforcer = InputBoundaryEnforcer(mode='tag')\n\n"
+                "@enforcer.protect\n"
+                "def my_agent_node(state):\n"
+                "    return llm.invoke(state['messages'])"
             ),
             architecture_note=(
                 "Add a dedicated input-validation node at the graph entry point that "

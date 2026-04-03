@@ -165,12 +165,11 @@ class BaseProbe(ABC):
         Returns:
             (is_vulnerable, detection_method, usage_list) — method is 'marker' | 'llm' | None.
         """
-        if detection_mode != DetectionMode.LLM_ONLY:
-            if fast_vulnerable:
-                if attack_marker and _marker_in_refusal(response, attack_marker):
-                    fast_vulnerable = False
-                else:
-                    return True, "marker", []
+        if detection_mode != DetectionMode.LLM_ONLY and fast_vulnerable:
+            if attack_marker and _marker_in_refusal(response, attack_marker):
+                fast_vulnerable = False
+            else:
+                return True, "marker", []
 
         if provider is not None:
             from agentsec.llm.detection import VulnerabilityDetector

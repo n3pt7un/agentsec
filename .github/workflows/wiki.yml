@@ -48,7 +48,7 @@ jobs:
             cd -
           fi
 
-          rsync -av --delete wiki/ /tmp/wiki/
+          rsync -av --delete --exclude='.git' wiki/ /tmp/wiki/
 
           cd /tmp/wiki
           git add -A

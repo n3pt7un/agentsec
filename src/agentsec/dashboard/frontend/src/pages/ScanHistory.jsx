@@ -3,7 +3,7 @@ import ScanCard from '../components/ScanCard';
 import EmptyState from '../components/EmptyState';
 import ErrorState from '../components/ErrorState';
 import { SkeletonCard } from '../components/LoadingSkeleton';
-import { fetchScans, deleteScan } from '../api';
+import { fetchScans, deleteScan, exportScans } from '../api';
 
 export default function ScanHistory() {
   const [scans, setScans] = useState([]);
@@ -13,6 +13,23 @@ export default function ScanHistory() {
   const [sortBy, setSortBy] = useState('date');
   const [hoveredId, setHoveredId] = useState(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
+  const [selectedIds, setSelectedIds] = useState(new Set());
+
+  const toggleSelect = (scanId, e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(scanId)) {
+        next.delete(scanId);
+      } else {
+        next.add(scanId);
+      }
+      return next;
+    });
+  };
+
+  const clearSelection = () => setSelectedIds(new Set());
 
   const loadScans = useCallback(async () => {
     setLoading(true);
@@ -111,6 +128,28 @@ export default function ScanHistory() {
               onMouseLeave={() => setHoveredId(null)}
             >
               <ScanCard scan={scan} />
+
+              {/* Checkbox — left side, appears on hover or when selection is active */}
+              <input
+                type="checkbox"
+                checked={selectedIds.has(scan.scan_id)}
+                onChange={(e) => toggleSelect(scan.scan_id, e)}
+                onClick={(e) => e.stopPropagation()}
+                style={{
+                  position: 'absolute',
+                  left: '12px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  cursor: 'pointer',
+                  opacity: hoveredId === scan.scan_id || selectedIds.size > 0 ? 1 : 0,
+                  transition: 'opacity 0.1s',
+                  pointerEvents: hoveredId === scan.scan_id || selectedIds.size > 0 ? 'auto' : 'none',
+                  accentColor: 'var(--accent)',
+                  width: '14px',
+                  height: '14px',
+                }}
+              />
+
               {confirmDeleteId === scan.scan_id ? (
                 <span style={{ position: 'absolute', top: '12px', right: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontFamily: 'var(--font-sans)' }}>Delete?</span>
@@ -157,6 +196,61 @@ export default function ScanHistory() {
       {scans.length > 0 && (
         <div style={{ fontSize: '11px', color: 'var(--text-muted)', textAlign: 'center', paddingTop: '8px', fontFamily: 'var(--font-mono)' }}>
           {scans.length} scan{scans.length !== 1 ? 's' : ''}
+        </div>
+      )}
+
+      {selectedIds.size > 0 && (
+        <div style={{
+          position: 'fixed',
+          bottom: '24px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          background: 'var(--bg-surface-raised)',
+          border: '1px solid var(--border)',
+          borderRadius: 'var(--radius)',
+          boxShadow: '0 4px 16px rgba(0,0,0,0.3)',
+          padding: '10px 16px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '12px',
+          zIndex: 100,
+          whiteSpace: 'nowrap',
+        }}>
+          <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontFamily: 'var(--font-sans)' }}>
+            {selectedIds.size} selected
+          </span>
+          <button
+            onClick={() => exportScans([...selectedIds], 'md')}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '12px', color: 'var(--accent)', fontFamily: 'var(--font-sans)' }}
+          >
+            Export MD
+          </button>
+          <button
+            onClick={() => exportScans([...selectedIds], 'json')}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '12px', color: 'var(--accent)', fontFamily: 'var(--font-sans)' }}
+          >
+            Export JSON
+          </button>
+          <span style={{ width: '1px', height: '16px', background: 'var(--border)' }} />
+          <button
+            onClick={() => exportScans('all', 'md')}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '12px', color: 'var(--text-muted)', fontFamily: 'var(--font-sans)' }}
+          >
+            Export all MD
+          </button>
+          <button
+            onClick={() => exportScans('all', 'json')}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '12px', color: 'var(--text-muted)', fontFamily: 'var(--font-sans)' }}
+          >
+            Export all JSON
+          </button>
+          <button
+            onClick={clearSelection}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px', color: 'var(--text-muted)', fontFamily: 'var(--font-sans)', marginLeft: '4px' }}
+            title="Clear selection"
+          >
+            ✕
+          </button>
         </div>
       )}
     </div>

@@ -123,69 +123,71 @@ export default function ScanHistory() {
           {sorted.map(scan => (
             <div
               key={scan.scan_id}
-              style={{ position: 'relative' }}
+              style={{ display: 'flex', alignItems: 'center' }}
               onMouseEnter={() => setHoveredId(scan.scan_id)}
               onMouseLeave={() => setHoveredId(null)}
             >
-              <ScanCard scan={scan} />
-
-              {/* Checkbox — left side, appears on hover or when selection is active */}
-              <input
-                type="checkbox"
-                checked={selectedIds.has(scan.scan_id)}
-                onChange={(e) => toggleSelect(scan.scan_id, e)}
-                onClick={(e) => e.stopPropagation()}
-                style={{
-                  position: 'absolute',
-                  left: '6px',
-                  top: '6px',
-                  cursor: 'pointer',
-                  opacity: hoveredId === scan.scan_id || selectedIds.size > 0 ? 1 : 0,
-                  transition: 'opacity 0.1s',
-                  pointerEvents: hoveredId === scan.scan_id || selectedIds.size > 0 ? 'auto' : 'none',
-                  accentColor: 'var(--accent)',
-                  width: '14px',
-                  height: '14px',
-                }}
-              />
-
-              {confirmDeleteId === scan.scan_id ? (
-                <span style={{ position: 'absolute', bottom: '10px', right: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontFamily: 'var(--font-sans)' }}>Delete?</span>
-                  <button
-                    onClick={(e) => { e.preventDefault(); handleDelete(scan.scan_id); }}
-                    style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '11px', color: 'var(--danger)', fontFamily: 'var(--font-sans)', fontWeight: 600 }}
-                  >
-                    Yes
-                  </button>
-                  <button
-                    onClick={(e) => { e.preventDefault(); setConfirmDeleteId(null); }}
-                    style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '11px', color: 'var(--text-muted)', fontFamily: 'var(--font-sans)' }}
-                  >
-                    No
-                  </button>
-                </span>
-              ) : (
-                <button
-                  onClick={(e) => { e.preventDefault(); setConfirmDeleteId(scan.scan_id); }}
+              {/* Checkbox column — 28px gutter to the left of the card */}
+              <div style={{ width: '28px', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <input
+                  type="checkbox"
+                  checked={selectedIds.has(scan.scan_id)}
+                  onChange={(e) => toggleSelect(scan.scan_id, e)}
+                  onClick={(e) => e.stopPropagation()}
                   style={{
-                    position: 'absolute',
-                    bottom: '10px',
-                    right: '12px',
-                    background: 'none',
-                    border: 'none',
                     cursor: 'pointer',
-                    fontSize: '11px',
-                    color: 'var(--danger)',
-                    fontFamily: 'var(--font-sans)',
-                    opacity: hoveredId === scan.scan_id ? 1 : 0,
+                    opacity: hoveredId === scan.scan_id || selectedIds.size > 0 ? 1 : 0,
                     transition: 'opacity 0.1s',
-                    pointerEvents: hoveredId === scan.scan_id ? 'auto' : 'none',
+                    pointerEvents: hoveredId === scan.scan_id || selectedIds.size > 0 ? 'auto' : 'none',
+                    accentColor: 'var(--accent)',
+                    width: '14px',
+                    height: '14px',
+                    flexShrink: 0,
                   }}
-                >
-                  Delete
-                </button>
-              )}
+                />
+              </div>
+
+              {/* Card + delete button */}
+              <div style={{ flex: 1, minWidth: 0, position: 'relative' }}>
+                <ScanCard scan={scan} />
+                {confirmDeleteId === scan.scan_id ? (
+                  <span style={{ position: 'absolute', bottom: '10px', right: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontFamily: 'var(--font-sans)' }}>Delete?</span>
+                    <button
+                      onClick={(e) => { e.preventDefault(); handleDelete(scan.scan_id); }}
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '11px', color: 'var(--danger)', fontFamily: 'var(--font-sans)', fontWeight: 600 }}
+                    >
+                      Yes
+                    </button>
+                    <button
+                      onClick={(e) => { e.preventDefault(); setConfirmDeleteId(null); }}
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '11px', color: 'var(--text-muted)', fontFamily: 'var(--font-sans)' }}
+                    >
+                      No
+                    </button>
+                  </span>
+                ) : (
+                  <button
+                    onClick={(e) => { e.preventDefault(); setConfirmDeleteId(scan.scan_id); }}
+                    style={{
+                      position: 'absolute',
+                      bottom: '10px',
+                      right: '12px',
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      fontSize: '11px',
+                      color: 'var(--danger)',
+                      fontFamily: 'var(--font-sans)',
+                      opacity: hoveredId === scan.scan_id ? 1 : 0,
+                      transition: 'opacity 0.1s',
+                      pointerEvents: hoveredId === scan.scan_id ? 'auto' : 'none',
+                    }}
+                  >
+                    Delete
+                  </button>
+                )}
+              </div>
             </div>
           ))}
         </div>

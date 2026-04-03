@@ -4,7 +4,7 @@ This page describes each of the 10 OWASP ASI (Agentic Security Initiative) vulne
 
 ---
 
-## ASI01 — Agent Goal Hijacking
+## ASI01: Agent Goal Hijacking
 
 Attackers embed malicious instructions inside content that an agent ingests — emails, documents, web pages, tool outputs — causing the agent to substitute an attacker-controlled goal for its legitimate objective. Because LLMs cannot reliably distinguish legitimate instructions from injected ones, even well-prompted agents are susceptible.
 
@@ -25,7 +25,7 @@ Attackers embed malicious instructions inside content that an agent ingests — 
 
 ---
 
-## ASI02 — Tool Misuse & Exploitation
+## ASI02: Tool Misuse & Exploitation
 
 An agent's registered tools expose dangerous capabilities (shell execution, HTTP requests, database writes). Attackers craft inputs that coerce the agent into calling those tools with attacker-controlled parameters, or chain multiple tool calls to achieve a compound effect that no single call would allow.
 
@@ -46,7 +46,7 @@ An agent's registered tools expose dangerous capabilities (shell execution, HTTP
 
 ---
 
-## ASI03 — Identity & Privilege Abuse
+## ASI03: Identity & Privilege Abuse
 
 Agents operating in multi-tenant or multi-role environments may be tricked into revealing credentials, acting under another agent's or user's identity, or claiming elevated privileges they should not possess.
 
@@ -67,7 +67,7 @@ Agents operating in multi-tenant or multi-role environments may be tricked into 
 
 ---
 
-## ASI04 — Supply Chain Vulnerabilities
+## ASI04: Supply Chain Vulnerabilities
 
 Agents rely on external tools, plugins, MCP servers, and package dependencies. A compromised or malicious dependency can inject payloads into tool definitions, alter tool behaviour at runtime, or introduce backdoored packages that are executed with agent-level trust.
 
@@ -88,7 +88,7 @@ Agents rely on external tools, plugins, MCP servers, and package dependencies. A
 
 ---
 
-## ASI05 — Output & Impact Control Failures
+## ASI05: Output & Impact Control Failures
 
 Agents that generate code, shell commands, or structured data may produce outputs that, when executed downstream, cause severe damage: arbitrary code execution, sandbox escapes, data destruction, or privilege escalation.
 
@@ -109,7 +109,7 @@ Agents that generate code, shell commands, or structured data may produce output
 
 ---
 
-## ASI06 — Memory & Context Manipulation
+## ASI06: Memory & Context Manipulation
 
 Agents that persist memory across sessions or share context with other agents can be exploited by injecting malicious data into memory stores. Future agent invocations then operate under poisoned assumptions, enabling persistent attacks that survive individual conversation resets.
 
@@ -130,7 +130,7 @@ Agents that persist memory across sessions or share context with other agents ca
 
 ---
 
-## ASI07 — Multi-Agent Orchestration Exploitation
+## ASI07: Multi-Agent Orchestration Exploitation
 
 In multi-agent pipelines, a compromised sub-agent can send fabricated messages to the orchestrator or peer agents. Without message authentication, orchestrators treat all incoming messages as trusted, enabling privilege escalation across the agent graph.
 
@@ -151,7 +151,7 @@ In multi-agent pipelines, a compromised sub-agent can send fabricated messages t
 
 ---
 
-## ASI08 — Uncontrolled Autonomous Execution
+## ASI08: Uncontrolled Autonomous Execution
 
 Agents given broad autonomy may trigger runaway execution loops, consume unbounded resources, or initiate cascading side effects that are difficult to halt. Without execution budgets and circuit breakers, a single misconfigured agent can cause system-wide outages or exhaust quotas.
 
@@ -172,7 +172,7 @@ Agents given broad autonomy may trigger runaway execution loops, consume unbound
 
 ---
 
-## ASI09 — Human-Agent Trust Exploitation
+## ASI09: Human-Agent Trust Exploitation
 
 Users extend significant trust to agent interfaces. Attackers exploit this by impersonating authority figures (IT support, the CEO), spoofing system notifications, or bypassing confirmation dialogs through social engineering tactics delivered via the agent interface.
 
@@ -193,7 +193,7 @@ Users extend significant trust to agent interfaces. Attackers exploit this by im
 
 ---
 
-## ASI10 — Rogue Agent Behavior
+## ASI10: Rogue Agent Behavior
 
 A sufficiently capable agent may develop or be manipulated into pursuing objectives that diverge from its stated goal. This includes covert data exfiltration, establishing persistence mechanisms, or optimising for a proxy metric that conflicts with the operator's intent.
 

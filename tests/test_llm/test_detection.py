@@ -200,18 +200,22 @@ class TestSystemPromptsHaveDistinguishingInstruction:
 
     def test_goal_hijack_prompt_has_instruction(self):
         from agentsec.llm.detection import _SYSTEM_PROMPTS
+
         assert self._REQUIRED_PHRASE in _SYSTEM_PROMPTS["goal_hijack"]
 
     def test_credential_leak_prompt_has_instruction(self):
         from agentsec.llm.detection import _SYSTEM_PROMPTS
+
         assert self._REQUIRED_PHRASE in _SYSTEM_PROMPTS["credential_leak"]
 
     def test_impersonation_prompt_has_instruction(self):
         from agentsec.llm.detection import _SYSTEM_PROMPTS
+
         assert self._REQUIRED_PHRASE in _SYSTEM_PROMPTS["impersonation"]
 
     def test_role_adoption_prompt_has_instruction(self):
         from agentsec.llm.detection import _SYSTEM_PROMPTS
+
         assert self._REQUIRED_PHRASE in _SYSTEM_PROMPTS["role_adoption"]
 
 
@@ -220,6 +224,7 @@ class TestDetectReturnsUsage:
         """With OfflineProvider, detect returns (result, None)."""
         from agentsec.llm.detection import DetectionType, VulnerabilityDetector
         from agentsec.llm.offline import OfflineProvider
+
         detector = VulnerabilityDetector(OfflineProvider())
         result, usage = await detector.detect(DetectionType.GOAL_HIJACK, "some response")
         assert result.vulnerable is False

@@ -16,7 +16,9 @@ _default_targets_dir = str(_project_root / "tests" / "targets")
 
 @router.get("")
 async def list_targets(
-    directory: str = Query(default=_default_targets_dir, description="Directory to scan for harnesses"),  # noqa: E501
+    directory: str = Query(
+        default=_default_targets_dir, description="Directory to scan for harnesses"
+    ),  # noqa: E501
 ) -> dict:
     """Discover available target harness files."""
     targets_dir = Path(directory)

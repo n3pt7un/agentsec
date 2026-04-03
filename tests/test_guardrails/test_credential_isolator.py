@@ -58,17 +58,13 @@ class TestRedact:
         assert isolator.redact("") == ""
 
     def test_extra_patterns_applied(self):
-        isolator = CredentialIsolator(
-            extra_patterns=[(r"MY_SECRET_\w+", "[REDACTED:CUSTOM]")]
-        )
+        isolator = CredentialIsolator(extra_patterns=[(r"MY_SECRET_\w+", "[REDACTED:CUSTOM]")])
         result = isolator.redact("token is MY_SECRET_abc123")
         assert "MY_SECRET_abc123" not in result
         assert "[REDACTED:CUSTOM]" in result
 
     def test_extra_patterns_alongside_defaults(self):
-        isolator = CredentialIsolator(
-            extra_patterns=[(r"MY_SECRET_\w+", "[REDACTED:CUSTOM]")]
-        )
+        isolator = CredentialIsolator(extra_patterns=[(r"MY_SECRET_\w+", "[REDACTED:CUSTOM]")])
         result = isolator.redact("sk-abcdefghijklmnopqr and MY_SECRET_xyz")
         assert "[REDACTED:API_KEY]" in result
         assert "[REDACTED:CUSTOM]" in result

@@ -55,9 +55,13 @@ class TestOpenRouterClassify:
     async def test_classify_parses_json_response(self):
         provider = OpenRouterProvider(model="test/model", api_key="sk-or-test")
         mock_response = MagicMock()
-        mock_response.choices = [MagicMock(message=MagicMock(
-            content='{"vulnerable": true, "confidence": 0.9, "reasoning": "marker found"}'
-        ))]
+        mock_response.choices = [
+            MagicMock(
+                message=MagicMock(
+                    content='{"vulnerable": true, "confidence": 0.9, "reasoning": "marker found"}'
+                )
+            )
+        ]
         provider._client.chat.completions.create = AsyncMock(return_value=mock_response)
 
         result, _ = await provider.classify("sys", "check this")
@@ -68,9 +72,13 @@ class TestOpenRouterClassify:
     async def test_classify_parses_not_vulnerable(self):
         provider = OpenRouterProvider(model="test/model", api_key="sk-or-test")
         mock_response = MagicMock()
-        mock_response.choices = [MagicMock(message=MagicMock(
-            content='{"vulnerable": false, "confidence": 0.1, "reasoning": "looks safe"}'
-        ))]
+        mock_response.choices = [
+            MagicMock(
+                message=MagicMock(
+                    content='{"vulnerable": false, "confidence": 0.1, "reasoning": "looks safe"}'
+                )
+            )
+        ]
         provider._client.chat.completions.create = AsyncMock(return_value=mock_response)
 
         result, _ = await provider.classify("sys", "check this")
@@ -93,9 +101,7 @@ class TestOpenRouterRetry:
         error_429 = _make_openai_error(429, "rate limited")
         mock_response = MagicMock()
         mock_response.choices = [MagicMock(message=MagicMock(content="ok"))]
-        provider._client.chat.completions.create = AsyncMock(
-            side_effect=[error_429, mock_response]
-        )
+        provider._client.chat.completions.create = AsyncMock(side_effect=[error_429, mock_response])
         with patch("agentsec.llm.openrouter.asyncio.sleep", new_callable=AsyncMock):
             text, _ = await provider.generate("sys", "prompt")
         assert text == "ok"
@@ -105,9 +111,7 @@ class TestOpenRouterRetry:
         error_500 = _make_openai_error(500, "server error")
         mock_response = MagicMock()
         mock_response.choices = [MagicMock(message=MagicMock(content="ok"))]
-        provider._client.chat.completions.create = AsyncMock(
-            side_effect=[error_500, mock_response]
-        )
+        provider._client.chat.completions.create = AsyncMock(side_effect=[error_500, mock_response])
         with patch("agentsec.llm.openrouter.asyncio.sleep", new_callable=AsyncMock):
             text, _ = await provider.generate("sys", "prompt")
         assert text == "ok"
@@ -214,9 +218,9 @@ class TestOpenRouterUsageExtraction:
         provider = OpenRouterProvider(model="test/model", api_key="sk-test")
         mock_response = MagicMock()
         mock_response.choices = [MagicMock()]
-        mock_response.choices[0].message.content = (
-            '{"vulnerable": false, "confidence": 0.9, "reasoning": "ok"}'
-        )
+        mock_response.choices[
+            0
+        ].message.content = '{"vulnerable": false, "confidence": 0.9, "reasoning": "ok"}'
         mock_response.usage = MagicMock()
         mock_response.usage.prompt_tokens = 200
         mock_response.usage.completion_tokens = 30

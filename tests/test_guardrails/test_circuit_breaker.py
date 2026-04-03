@@ -146,6 +146,7 @@ class TestProtectDecorator:
             return {"sync": True}
 
         import asyncio
+
         assert not asyncio.iscoroutinefunction(node)
         assert node({}) == {"sync": True}
 
@@ -157,6 +158,7 @@ class TestProtectDecorator:
             return {"async": True}
 
         import asyncio
+
         assert asyncio.iscoroutinefunction(node)
         assert await node({}) == {"async": True}
 

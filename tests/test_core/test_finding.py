@@ -213,9 +213,13 @@ class TestLLMUsage:
         )
 
         f = Finding(
-            probe_id="X", probe_name="X", category=OWASPCategory.ASI01,
-            status=FindingStatus.RESISTANT, severity=Severity.HIGH,
-            description="test", remediation=Remediation(summary="fix"),
+            probe_id="X",
+            probe_name="X",
+            category=OWASPCategory.ASI01,
+            status=FindingStatus.RESISTANT,
+            severity=Severity.HIGH,
+            description="test",
+            remediation=Remediation(summary="fix"),
         )
         assert f.llm_usage == []
 
@@ -231,9 +235,13 @@ class TestLLMUsage:
 
         usage = LLMUsage(model="m", role="payload", input_tokens=10, output_tokens=5)
         f = Finding(
-            probe_id="X", probe_name="X", category=OWASPCategory.ASI01,
-            status=FindingStatus.RESISTANT, severity=Severity.HIGH,
-            description="test", remediation=Remediation(summary="fix"),
+            probe_id="X",
+            probe_name="X",
+            category=OWASPCategory.ASI01,
+            status=FindingStatus.RESISTANT,
+            severity=Severity.HIGH,
+            description="test",
+            remediation=Remediation(summary="fix"),
             llm_usage=[usage],
         )
         assert len(f.llm_usage) == 1

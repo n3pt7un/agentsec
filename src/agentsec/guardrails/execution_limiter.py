@@ -30,9 +30,7 @@ class ExecutionLimitExceededError(AgentSecError):
         self.limit_type = limit_type
         self.value = value
         self.limit = limit
-        super().__init__(
-            f"{agent_name!r} exceeded {limit_type} limit: {value} >= {limit}"
-        )
+        super().__init__(f"{agent_name!r} exceeded {limit_type} limit: {value} >= {limit}")
 
 
 class ExecutionLimiter:
@@ -96,15 +94,11 @@ class ExecutionLimiter:
     def _check_pre(self, entry: dict, agent_name: str) -> None:
         """Check step and time limits before calling the node."""
         if self.max_steps is not None and entry["steps"] >= self.max_steps:
-            raise ExecutionLimitExceededError(
-                agent_name, "steps", entry["steps"], self.max_steps
-            )
+            raise ExecutionLimitExceededError(agent_name, "steps", entry["steps"], self.max_steps)
         if self.max_seconds is not None and entry["started_at"] is not None:
             elapsed = time.monotonic() - entry["started_at"]
             if elapsed >= self.max_seconds:
-                raise ExecutionLimitExceededError(
-                    agent_name, "seconds", elapsed, self.max_seconds
-                )
+                raise ExecutionLimitExceededError(agent_name, "seconds", elapsed, self.max_seconds)
 
     def _check_post(self, entry: dict, result, agent_name: str) -> None:
         """Check token limit after the node returns and accumulate token count."""

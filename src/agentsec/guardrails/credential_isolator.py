@@ -29,9 +29,7 @@ class CredentialIsolator:
         safe_output = isolator.redact(agent_response)
     """
 
-    def __init__(
-        self, extra_patterns: list[tuple[str, str]] | None = None
-    ) -> None:
+    def __init__(self, extra_patterns: list[tuple[str, str]] | None = None) -> None:
         all_patterns = _DEFAULT_PATTERNS + (extra_patterns or [])
         self._patterns: list[tuple[re.Pattern[str], str]] = [
             (re.compile(p), r) for p, r in all_patterns
@@ -92,9 +90,7 @@ class CredentialIsolator:
             new_messages = []
             for msg in messages:
                 if getattr(msg, "type", None) == "ai":
-                    new_messages.append(
-                        msg.__class__(content=self.redact(msg.content))
-                    )
+                    new_messages.append(msg.__class__(content=self.redact(msg.content)))
                 else:
                     new_messages.append(msg)
             return {**result, "messages": new_messages}

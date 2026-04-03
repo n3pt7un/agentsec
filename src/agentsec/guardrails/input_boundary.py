@@ -50,18 +50,12 @@ class InputBoundaryEnforcer:
         safe = enforcer.sanitize(untrusted_tool_output)
     """
 
-    def __init__(
-        self, mode: str = "tag", extra_patterns: list[str] | None = None
-    ) -> None:
+    def __init__(self, mode: str = "tag", extra_patterns: list[str] | None = None) -> None:
         if mode not in ("tag", "strip", "reject"):
-            raise ValueError(
-                f"mode must be 'tag', 'strip', or 'reject'; got {mode!r}"
-            )
+            raise ValueError(f"mode must be 'tag', 'strip', or 'reject'; got {mode!r}")
         self._mode = mode
         all_patterns = _DEFAULT_PATTERNS + (extra_patterns or [])
-        self._patterns: list[re.Pattern[str]] = [
-            re.compile(p) for p in all_patterns
-        ]
+        self._patterns: list[re.Pattern[str]] = [re.compile(p) for p in all_patterns]
 
     @property
     def mode(self) -> str:
@@ -98,10 +92,7 @@ class InputBoundaryEnforcer:
             InjectionDetectedError: In reject mode when injection is detected.
         """
         if self.mode == "tag":
-            return (
-                f"{_TAG_PREPEND}"
-                f"<untrusted_input>{content}</untrusted_input>"
-            )
+            return f"{_TAG_PREPEND}<untrusted_input>{content}</untrusted_input>"
         if self.mode == "strip":
             result = content
             for pattern in self._patterns:

@@ -474,6 +474,7 @@ class TestProbeAttackAcceptsThreshold:
         import inspect
 
         from agentsec.probes.asi01_goal_hijack.indirect_inject import IndirectPromptInjection
+
         sig = inspect.signature(IndirectPromptInjection.attack)
         assert "confidence_threshold" in sig.parameters
         assert "fallback_model" in sig.parameters
@@ -482,6 +483,7 @@ class TestProbeAttackAcceptsThreshold:
         import inspect
 
         from agentsec.probes.asi01_goal_hijack.role_confusion import RoleConfusionProbe
+
         sig = inspect.signature(RoleConfusionProbe.attack)
         assert "confidence_threshold" in sig.parameters
         assert "fallback_model" in sig.parameters

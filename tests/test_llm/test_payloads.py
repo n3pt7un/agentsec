@@ -303,6 +303,7 @@ class TestGenerateWithTiersReturnsUsage:
         """With OfflineProvider, generate_with_tiers returns (fallbacks, [])."""
         from agentsec.llm.offline import OfflineProvider
         from agentsec.llm.payloads import PayloadGenerator
+
         gen = PayloadGenerator(OfflineProvider())
         payloads, usage = await gen.generate_with_tiers(
             "prompt", marker="MARK", fallbacks=["static"]

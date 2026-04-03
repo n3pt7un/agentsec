@@ -24,9 +24,7 @@ class CircuitOpenError(AgentSecError):
     def __init__(self, agent_name: str, failure_count: int) -> None:
         self.agent_name = agent_name
         self.failure_count = failure_count
-        super().__init__(
-            f"Circuit opened for {agent_name!r} after {failure_count} failure(s)"
-        )
+        super().__init__(f"Circuit opened for {agent_name!r} after {failure_count} failure(s)")
 
 
 class _FallbackMsg:

@@ -33,13 +33,10 @@ def get_live_llm(
     """
     from langchain_openai import ChatOpenAI
 
-    api_key = os.environ.get("OPENROUTER_API_KEY") or os.environ.get(
-        "AGENTSEC_OPENROUTER_API_KEY"
-    )
+    api_key = os.environ.get("OPENROUTER_API_KEY") or os.environ.get("AGENTSEC_OPENROUTER_API_KEY")
     if not api_key:
         raise ValueError(
-            "OPENROUTER_API_KEY must be set for live mode. "
-            "Get a key at https://openrouter.ai/keys"
+            "OPENROUTER_API_KEY must be set for live mode. Get a key at https://openrouter.ai/keys"
         )
 
     resolved_model = model or os.environ.get("AGENTSEC_TARGET_MODEL", "openai/gpt-4.1-nano")

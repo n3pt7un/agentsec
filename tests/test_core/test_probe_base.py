@@ -411,3 +411,77 @@ class TestRunDetectionLLMOnlyMode:
         assert is_vuln is True
         assert method == "marker"
         provider.classify.assert_not_called()
+
+
+from agentsec.adapters.base import AgentInfo
+
+
+class TestProbeSelectors:
+    def _make_agents(self):
+        return [
+            AgentInfo(name="classify", is_entry_point=True, tools=[]),
+            AgentInfo(name="retrieve", is_entry_point=False, tools=["vector_search"]),
+            AgentInfo(name="draft", is_entry_point=False, tools=[]),
+            AgentInfo(
+                name="router",
+                is_entry_point=False,
+                tools=[],
+                routing_type="llm",
+                downstream_agents=["worker_a", "worker_b", "worker_c"],
+            ),
+        ]
+
+    def test_select_entry_point_returns_entry_point(self):
+        from agentsec.core.probe_base import BaseProbe
+        agents = self._make_agents()
+        result = BaseProbe._select_entry_point(agents)
+        assert result.name == "classify"
+
+    def test_select_entry_point_falls_back_to_first(self):
+        from agentsec.core.probe_base import BaseProbe
+        agents = [AgentInfo(name="only", is_entry_point=False, tools=[])]
+        result = BaseProbe._select_entry_point(agents)
+        assert result.name == "only"
+
+    def test_select_entry_point_empty_returns_none(self):
+        from agentsec.core.probe_base import BaseProbe
+        assert BaseProbe._select_entry_point([]) is None
+
+    def test_select_tool_agent_returns_agent_with_tools(self):
+        from agentsec.core.probe_base import BaseProbe
+        agents = self._make_agents()
+        result = BaseProbe._select_tool_agent(agents)
+        assert result.name == "retrieve"
+
+    def test_select_tool_agent_returns_none_if_no_tools(self):
+        from agentsec.core.probe_base import BaseProbe
+        agents = [
+            AgentInfo(name="a", tools=[]),
+            AgentInfo(name="b", tools=[]),
+        ]
+        assert BaseProbe._select_tool_agent(agents) is None
+
+    def test_select_orchestrator_prefers_llm_router(self):
+        from agentsec.core.probe_base import BaseProbe
+        agents = self._make_agents()
+        result = BaseProbe._select_orchestrator(agents)
+        assert result.name == "router"
+
+    def test_select_orchestrator_returns_none_when_no_conditional_edges(self):
+        from agentsec.core.probe_base import BaseProbe
+        agents = [
+            AgentInfo(name="a", routing_type="unknown"),
+            AgentInfo(name="b", routing_type="unknown"),
+        ]
+        assert BaseProbe._select_orchestrator(agents) is None
+
+    def test_select_worker_returns_non_entry_agent(self):
+        from agentsec.core.probe_base import BaseProbe
+        agents = self._make_agents()
+        result = BaseProbe._select_worker(agents)
+        assert result.name == "retrieve"
+
+    def test_select_worker_returns_none_if_only_entry_points(self):
+        from agentsec.core.probe_base import BaseProbe
+        agents = [AgentInfo(name="only", is_entry_point=True, tools=[])]
+        assert BaseProbe._select_worker(agents) is None

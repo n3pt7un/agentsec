@@ -185,3 +185,58 @@ class BaseProbe(ABC):
             return False, None, usage_list
 
         return False, None, []
+
+    @staticmethod
+    def _select_entry_point(agents: list) -> "AgentInfo | None":
+        """First agent with is_entry_point=True, or first agent overall if none marked."""
+        ep = [a for a in agents if a.is_entry_point]
+        if ep:
+            return ep[0]
+        return agents[0] if agents else None
+
+    @staticmethod
+    def _select_tool_agent(agents: list) -> "AgentInfo | None":
+        """First agent with at least one tool, or None."""
+        for a in agents:
+            if a.tools:
+                return a
+        return None
+
+    @staticmethod
+    def _select_orchestrator(agents: list) -> "AgentInfo | None":
+        """Best orchestrator candidate based on routing_type and out-degree.
+
+        Priority:
+          1. LLM-router with most downstream agents
+          2. Any node with deterministic conditional edges (most downstreams)
+          3. None — no conditional-edge nodes found
+        """
+        llm_routers = [a for a in agents if a.routing_type == "llm"]
+        if llm_routers:
+            return max(llm_routers, key=lambda a: len(a.downstream_agents))
+        conditional = [a for a in agents if a.routing_type == "deterministic"]
+        if conditional:
+            return max(conditional, key=lambda a: len(a.downstream_agents))
+        return None
+
+    @staticmethod
+    def _select_worker(agents: list) -> "AgentInfo | None":
+        """First non-entry-point agent, or None if every agent is an entry point."""
+        workers = [a for a in agents if not a.is_entry_point]
+        return workers[0] if workers else None
+
+    def _no_target_finding(self, reason: str) -> "Finding":
+        """Return a SKIPPED finding when no suitable agent is available for this probe."""
+        from agentsec.core.finding import Finding, FindingStatus
+
+        meta = self.metadata()
+        return Finding(
+            probe_id=meta.id,
+            probe_name=meta.name,
+            category=meta.category,
+            severity=meta.default_severity,
+            status=FindingStatus.SKIPPED,
+            title=f"{meta.name} — no suitable target",
+            description=reason,
+            remediation=self.remediation(),
+        )

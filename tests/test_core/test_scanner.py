@@ -5,7 +5,7 @@ from __future__ import annotations
 import pytest
 
 from agentsec.adapters.langgraph import LangGraphAdapter
-from agentsec.core.config import ScanConfig
+from agentsec.core.config import DetectionMode, ScanConfig
 from agentsec.core.finding import FindingStatus, OWASPCategory, Severity
 from agentsec.core.probe_base import BaseProbe, ProbeMetadata
 from agentsec.core.scanner import Scanner, ScanResult
@@ -39,7 +39,12 @@ def _make_probe(
             return Remediation(summary="fix it")
 
         async def attack(
-            self, adapter, provider=None, confidence_threshold=0.8, fallback_model=None
+            self,
+            adapter,
+            provider=None,
+            confidence_threshold=0.8,
+            fallback_model=None,
+            detection_mode=DetectionMode.MARKER_THEN_LLM,
         ):
             if raise_exc is not None:
                 raise raise_exc
@@ -309,7 +314,12 @@ class TestScannerPropagatesThreshold:
                 return Remediation(summary="fix")
 
             async def attack(
-                self, adapter, provider=None, confidence_threshold=0.8, fallback_model=None
+                self,
+                adapter,
+                provider=None,
+                confidence_threshold=0.8,
+                fallback_model=None,
+                detection_mode=DetectionMode.MARKER_THEN_LLM,
             ):
                 received["confidence_threshold"] = confidence_threshold
                 received["fallback_model"] = fallback_model
@@ -350,7 +360,7 @@ class TestScannerPropagatesThreshold:
 class TestScanResultUsageAggregation:
     async def test_models_used_collected_from_findings(self):
         """ScanResult.models_used is deduplicated list of models from finding.llm_usage."""
-        from agentsec.core.finding import LLMUsage, Finding, OWASPCategory, Remediation, Severity
+        from agentsec.core.finding import Finding, LLMUsage, OWASPCategory, Remediation, Severity
 
         usage = [
             LLMUsage(model="a/model", role="payload", input_tokens=100, output_tokens=20),
@@ -360,17 +370,33 @@ class TestScanResultUsageAggregation:
         class _UsageProbe(BaseProbe):
             def metadata(self):
                 return ProbeMetadata(
-                    id="USAGE-TEST", name="Usage Test",
-                    category=OWASPCategory.ASI01, default_severity=Severity.HIGH, description="test",
+                    id="USAGE-TEST",
+                    name="Usage Test",
+                    category=OWASPCategory.ASI01,
+                    default_severity=Severity.HIGH,
+                    description="test",
                 )
+
             def remediation(self):
                 return Remediation(summary="fix")
-            async def attack(self, adapter, provider=None, confidence_threshold=0.8, fallback_model=None):
+
+            async def attack(
+                self,
+                adapter,
+                provider=None,
+                confidence_threshold=0.8,
+                fallback_model=None,
+                detection_mode=DetectionMode.MARKER_THEN_LLM,
+            ):
                 return Finding(
-                    probe_id=self.metadata().id, probe_name=self.metadata().name,
-                    category=self.metadata().category, status=FindingStatus.RESISTANT,
-                    severity=self.metadata().default_severity, description=self.metadata().description,
-                    remediation=self.remediation(), llm_usage=usage,
+                    probe_id=self.metadata().id,
+                    probe_name=self.metadata().name,
+                    category=self.metadata().category,
+                    status=FindingStatus.RESISTANT,
+                    severity=self.metadata().default_severity,
+                    description=self.metadata().description,
+                    remediation=self.remediation(),
+                    llm_usage=usage,
                 )
 
         scanner = _scanner_with_probes([_UsageProbe])
@@ -383,34 +409,120 @@ class TestScanResultUsageAggregation:
     async def test_total_cost_none_when_no_pricing(self, tmp_path, monkeypatch):
         """Without a pricing file, total_cost_usd is None."""
         monkeypatch.chdir(tmp_path)
-        ProbeClass = _make_probe("P1", FindingStatus.RESISTANT)
-        scanner = _scanner_with_probes([ProbeClass])
+        probe_class = _make_probe("P1", FindingStatus.RESISTANT)
+        scanner = _scanner_with_probes([probe_class])
         result = await scanner.run()
         assert result.total_cost_usd is None
 
     async def test_total_cost_computed_with_pricing_data(self):
         """With pricing_data in config, total_cost_usd is calculated."""
         import pytest
-        from agentsec.core.finding import LLMUsage, Finding, OWASPCategory, Remediation, Severity
+
+        from agentsec.core.finding import Finding, LLMUsage, OWASPCategory, Remediation, Severity
 
         class _CostProbe(BaseProbe):
             def metadata(self):
                 return ProbeMetadata(
-                    id="COST-TEST", name="Cost Test",
-                    category=OWASPCategory.ASI01, default_severity=Severity.HIGH, description="test",
-                )
-            def remediation(self):
-                return Remediation(summary="fix")
-            async def attack(self, adapter, provider=None, confidence_threshold=0.8, fallback_model=None):
-                return Finding(
-                    probe_id=self.metadata().id, probe_name=self.metadata().name,
-                    category=self.metadata().category, status=FindingStatus.RESISTANT,
-                    severity=self.metadata().default_severity, description=self.metadata().description,
-                    remediation=self.remediation(),
-                    llm_usage=[LLMUsage(model="priced/model", role="payload", input_tokens=1_000_000, output_tokens=0)],
+                    id="COST-TEST",
+                    name="Cost Test",
+                    category=OWASPCategory.ASI01,
+                    default_severity=Severity.HIGH,
+                    description="test",
                 )
 
-        config = ScanConfig(pricing_data={"priced/model": {"input_per_1m": 3.0, "output_per_1m": 15.0}})
+            def remediation(self):
+                return Remediation(summary="fix")
+
+            async def attack(
+                self,
+                adapter,
+                provider=None,
+                confidence_threshold=0.8,
+                fallback_model=None,
+                detection_mode=DetectionMode.MARKER_THEN_LLM,
+            ):
+                return Finding(
+                    probe_id=self.metadata().id,
+                    probe_name=self.metadata().name,
+                    category=self.metadata().category,
+                    status=FindingStatus.RESISTANT,
+                    severity=self.metadata().default_severity,
+                    description=self.metadata().description,
+                    remediation=self.remediation(),
+                    llm_usage=[
+                        LLMUsage(
+                            model="priced/model",
+                            role="payload",
+                            input_tokens=1_000_000,
+                            output_tokens=0,
+                        )
+                    ],
+                )
+
+        config = ScanConfig(
+            pricing_data={"priced/model": {"input_per_1m": 3.0, "output_per_1m": 15.0}}
+        )
         scanner = _scanner_with_probes([_CostProbe], config=config)
         result = await scanner.run()
         assert result.total_cost_usd == pytest.approx(3.0)
+
+
+# ------------------------------------------------------------------
+# Scanner propagates detection_mode to probes
+# ------------------------------------------------------------------
+
+
+class TestScannerPassesDetectionMode:
+    async def test_scanner_passes_detection_mode_to_probe(self):
+        """Scanner calls probe.attack() with detection_mode from config."""
+        received: dict = {}
+
+        from agentsec.core.finding import Finding, OWASPCategory, Remediation, Severity
+
+        class _DetectionModeProbe(BaseProbe):
+            def metadata(self):
+                return ProbeMetadata(
+                    id="ASI01-INDIRECT-INJECT",
+                    name="Detection Mode Probe",
+                    category=OWASPCategory.ASI01,
+                    default_severity=Severity.HIGH,
+                    description="capture detection_mode",
+                )
+
+            def remediation(self):
+                return Remediation(summary="fix")
+
+            async def attack(
+                self,
+                adapter,
+                provider=None,
+                confidence_threshold=0.8,
+                fallback_model=None,
+                detection_mode=DetectionMode.MARKER_THEN_LLM,
+            ):
+                received["detection_mode"] = detection_mode
+                return Finding(
+                    probe_id=self.metadata().id,
+                    probe_name=self.metadata().name,
+                    category=self.metadata().category,
+                    status=FindingStatus.RESISTANT,
+                    severity=self.metadata().default_severity,
+                    description=self.metadata().description,
+                    remediation=self.remediation(),
+                )
+
+        config = ScanConfig(
+            detection_mode=DetectionMode.LLM_ONLY,
+            smart=True,
+            openrouter_api_key="sk-or-test",
+            probes=["ASI01-INDIRECT-INJECT"],
+        )
+        scanner = _scanner_with_probes([_DetectionModeProbe], config=config)
+
+        # Bypass real LLM provider validation (smart=True triggers it)
+        async def _noop_validate():
+            pass
+
+        scanner._provider.validate = _noop_validate  # type: ignore[method-assign]
+        await scanner.run()
+        assert received["detection_mode"] == DetectionMode.LLM_ONLY

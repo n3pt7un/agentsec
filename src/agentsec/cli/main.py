@@ -9,9 +9,10 @@ from collections import Counter
 from pathlib import Path
 
 import typer
+from pydantic import ValidationError as PydanticValidationError
 from rich.console import Console
 
-from agentsec.core.config import ScanConfig
+from agentsec.core.config import DetectionMode, ScanConfig
 from agentsec.core.loader import load_graph, make_adapter
 
 app = typer.Typer(
@@ -57,18 +58,38 @@ def scan(
     target_model: str | None = typer.Option(
         None, help="OpenRouter model ID for target agents (live mode only)"
     ),
+    detection_mode: str = typer.Option(
+        "marker_then_llm",
+        help="Detection strategy: 'marker_then_llm' (default) or 'llm_only'. "
+        "'llm_only' requires --smart.",
+    ),
 ) -> None:
     """Scan a multi-agent system for OWASP Agentic vulnerabilities."""
     cat_list = [c.strip() for c in categories.split(",")] if categories else None
     probe_list = [p.strip() for p in probes.split(",")] if probes else None
 
-    config = ScanConfig(
-        categories=cat_list,
-        probes=probe_list,
-        verbose=verbose,
-        smart=smart,
-        llm_model=model,
-    )
+    try:
+        mode = DetectionMode(detection_mode)
+    except ValueError:
+        console.print(
+            f"[red]Error:[/] Invalid detection mode '{detection_mode}'. "
+            "Choose 'marker_then_llm' or 'llm_only'."
+        )
+        raise typer.Exit(code=1) from None
+
+    try:
+        config = ScanConfig(
+            categories=cat_list,
+            probes=probe_list,
+            verbose=verbose,
+            smart=smart,
+            llm_model=model,
+            detection_mode=mode,
+        )
+    except PydanticValidationError as exc:
+        for error in exc.errors():
+            console.print(f"[red]Error:[/] {error['msg']}")
+        raise typer.Exit(code=1) from exc
 
     try:
         graph = load_graph(target, vulnerable=vulnerable, live=live, target_model=target_model)

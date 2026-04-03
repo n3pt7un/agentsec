@@ -33,12 +33,14 @@ class ScanResult(BaseModel):
     error_count: int = 0
     smart: bool = False
     detection_confidence_threshold: float = 0.8
-    models_used: list[str] = Field(default_factory=list,
-        description="Ordered unique list of model IDs used across all probes")
+    models_used: list[str] = Field(
+        default_factory=list, description="Ordered unique list of model IDs used across all probes"
+    )
     total_input_tokens: int = 0
     total_output_tokens: int = 0
-    total_cost_usd: float | None = Field(default=None,
-        description="None when no pricing source is available")
+    total_cost_usd: float | None = Field(
+        default=None, description="None when no pricing source is available"
+    )
 
     @property
     def duration_ms(self) -> int:
@@ -193,6 +195,7 @@ class Scanner:
                     self._provider,
                     confidence_threshold=self.config.detection_confidence_threshold,
                     fallback_model=self.config.fallback_llm_model,
+                    detection_mode=self.config.detection_mode,
                 ),
                 timeout=self.config.timeout_per_probe,
             )

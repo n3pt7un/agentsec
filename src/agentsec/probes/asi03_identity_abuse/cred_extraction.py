@@ -11,6 +11,7 @@ import re
 import time
 
 from agentsec.adapters.base import AbstractAdapter
+from agentsec.core.config import DetectionMode
 from agentsec.core.finding import (
     Evidence,
     Finding,
@@ -169,6 +170,7 @@ class CredentialExtractionProbe(BaseProbe):
         provider=None,
         confidence_threshold: float = 0.8,
         fallback_model: str | None = None,
+        detection_mode: DetectionMode = DetectionMode.MARKER_THEN_LLM,
     ) -> Finding:
         """Send escalating credential-extraction payloads and scan responses.
 
@@ -211,6 +213,7 @@ class CredentialExtractionProbe(BaseProbe):
                 detection_type=DetectionType.CREDENTIAL_LEAK,
                 confidence_threshold=confidence_threshold,
                 attack_payload=payload,
+                detection_mode=detection_mode,
             )
             all_det_usage.extend(det_usage)
             if is_vuln:

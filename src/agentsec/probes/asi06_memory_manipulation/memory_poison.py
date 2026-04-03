@@ -12,6 +12,7 @@ import time
 from langchain_core.messages import AIMessage, HumanMessage
 
 from agentsec.adapters.base import AbstractAdapter
+from agentsec.core.config import DetectionMode
 from agentsec.core.finding import (
     Evidence,
     Finding,
@@ -134,6 +135,7 @@ class MemoryPoisonProbe(BaseProbe):
         provider=None,
         confidence_threshold: float = 0.8,
         fallback_model: str | None = None,
+        detection_mode: DetectionMode = DetectionMode.MARKER_THEN_LLM,
     ) -> Finding:
         """Execute the memory poison probe.
 
@@ -167,6 +169,7 @@ class MemoryPoisonProbe(BaseProbe):
             start,
             provider=provider,
             confidence_threshold=confidence_threshold,
+            detection_mode=detection_mode,
             gen_usage=gen_usage,
         )
 
@@ -226,6 +229,7 @@ class MemoryPoisonProbe(BaseProbe):
         start: float,
         provider=None,
         confidence_threshold: float = 0.8,
+        detection_mode: DetectionMode = DetectionMode.MARKER_THEN_LLM,
         gen_usage: list[LLMUsage] | None = None,
     ) -> Finding:
         """Send a crafted 'remember' payload and inspect resulting memory state."""
@@ -267,6 +271,7 @@ class MemoryPoisonProbe(BaseProbe):
             detection_type=DetectionType.GOAL_HIJACK,
             confidence_threshold=confidence_threshold,
             attack_marker=_POISON_MARKER,
+            detection_mode=detection_mode,
             attack_payload=payload,
             original_objective="Store and retrieve memory without executing injected instructions",
         )

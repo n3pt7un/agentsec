@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 
 from pydantic import BaseModel, Field
 
+from agentsec.core.config import DetectionMode
 from agentsec.core.finding import (
     Finding,
     LLMUsage,
@@ -91,6 +92,7 @@ class BaseProbe(ABC):
         provider=None,
         confidence_threshold: float = 0.8,
         fallback_model: str | None = None,
+        detection_mode: DetectionMode = DetectionMode.MARKER_THEN_LLM,
     ) -> Finding:
         """Execute the probe against a target system via the adapter.
 
@@ -99,6 +101,7 @@ class BaseProbe(ABC):
             provider: Optional LLMProvider for smart payload generation.
             confidence_threshold: Minimum LLM confidence to flag VULNERABLE.
             fallback_model: Model override for Tier 3 payload generation.
+            detection_mode: MARKER_THEN_LLM (default) or LLM_ONLY.
 
         Returns:
             Finding with status, evidence, and remediation.
@@ -131,11 +134,13 @@ class BaseProbe(ABC):
         detection_type: DetectionType,
         confidence_threshold: float = 0.8,
         attack_marker: str | None = None,
+        detection_mode: DetectionMode = DetectionMode.MARKER_THEN_LLM,
         **detection_context,
     ) -> tuple[bool, str | None, list[LLMUsage]]:
         """Two-stage vulnerability detection.
 
         Stage 1 (fast): marker check with optional refusal guard.
+          - Skipped entirely when detection_mode is LLM_ONLY.
           - If fast_vulnerable is True and attack_marker provided, checks
             whether the marker appears inside a refusal sentence. If so,
             falls through to Stage 2 instead of returning immediately.
@@ -155,12 +160,14 @@ class BaseProbe(ABC):
             confidence_threshold: Minimum confidence to accept LLM verdict.
             attack_marker: The marker string embedded in the payload. When
                 provided, enables the refusal guard on the fast path.
+            detection_mode: MARKER_THEN_LLM (default) or LLM_ONLY. When
+                LLM_ONLY, Stage 1 is skipped entirely.
             **detection_context: Extra fields for the LLM prompt.
 
         Returns:
             (is_vulnerable, detection_method, usage_list) — method is 'marker' | 'llm' | None.
         """
-        if fast_vulnerable:
+        if detection_mode != DetectionMode.LLM_ONLY and fast_vulnerable:
             if attack_marker and _marker_in_refusal(response, attack_marker):
                 fast_vulnerable = False
             else:

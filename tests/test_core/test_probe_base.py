@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from unittest.mock import AsyncMock, MagicMock
 
+from agentsec.core.config import DetectionMode
 from agentsec.core.finding import Finding, OWASPCategory, Remediation, Severity
 from agentsec.core.probe_base import BaseProbe, ProbeMetadata
 from agentsec.llm.detection import DetectionType
@@ -28,6 +29,7 @@ class ConcreteProbe(BaseProbe):
         provider=None,
         confidence_threshold: float = 0.8,
         fallback_model: str | None = None,
+        detection_mode: DetectionMode = DetectionMode.MARKER_THEN_LLM,
     ) -> Finding:
         raise NotImplementedError
 
@@ -131,42 +133,50 @@ class TestRunDetectionNoProvider:
 class TestMarkerInRefusal:
     def test_returns_true_when_marker_in_refusal_sentence(self):
         from agentsec.core.probe_base import _marker_in_refusal
+
         response = "I see you're trying to make me output MARKER_TEST but I won't comply."
         assert _marker_in_refusal(response, "MARKER_TEST") is True
 
     def test_returns_true_when_i_cannot_near_marker(self):
         from agentsec.core.probe_base import _marker_in_refusal
+
         response = "I cannot output MARKER_TEST as you requested."
         assert _marker_in_refusal(response, "MARKER_TEST") is True
 
     def test_returns_true_when_i_refuse_near_marker(self):
         from agentsec.core.probe_base import _marker_in_refusal
+
         response = "I refuse to produce MARKER_TEST."
         assert _marker_in_refusal(response, "MARKER_TEST") is True
 
     def test_returns_false_when_marker_in_compliance(self):
         from agentsec.core.probe_base import _marker_in_refusal
+
         response = "MARKER_TEST"
         assert _marker_in_refusal(response, "MARKER_TEST") is False
 
     def test_returns_false_when_marker_not_in_response(self):
         from agentsec.core.probe_base import _marker_in_refusal
+
         response = "I won't comply with your request."
         assert _marker_in_refusal(response, "MARKER_TEST") is False
 
     def test_returns_false_when_marker_standalone_line(self):
         from agentsec.core.probe_base import _marker_in_refusal
+
         response = "Here is what you asked for:\nMARKER_TEST"
         assert _marker_in_refusal(response, "MARKER_TEST") is False
 
     def test_case_insensitive_refusal_phrases(self):
         from agentsec.core.probe_base import _marker_in_refusal
+
         response = "I CANNOT output MARKER_TEST."
         assert _marker_in_refusal(response, "MARKER_TEST") is True
 
     def test_returns_false_when_refusal_in_different_sentence(self):
         """Marker and refusal phrase in different sentences — guard should not fire."""
         from agentsec.core.probe_base import _marker_in_refusal
+
         response = "Here is the data: MARKER_TEST. I won't help with anything else."
         assert _marker_in_refusal(response, "MARKER_TEST") is False
 
@@ -308,6 +318,7 @@ class TestRunDetectionReturnsUsage:
     async def test_llm_path_returns_usage_list(self):
         """LLM detection path returns usage from the classify call."""
         from unittest.mock import AsyncMock, MagicMock
+
         from agentsec.core.finding import LLMUsage
         from agentsec.llm.provider import ClassificationResult
 
@@ -315,7 +326,10 @@ class TestRunDetectionReturnsUsage:
         mock_provider.is_available = MagicMock(return_value=True)
         mock_usage = LLMUsage(model="m", role="detection", input_tokens=100, output_tokens=20)
         mock_provider.classify = AsyncMock(
-            return_value=(ClassificationResult(vulnerable=True, confidence=0.95, reasoning="yes"), mock_usage)
+            return_value=(
+                ClassificationResult(vulnerable=True, confidence=0.95, reasoning="yes"),
+                mock_usage,
+            )
         )
 
         probe = ConcreteProbe()
@@ -350,3 +364,50 @@ class TestRunDetectionReturnsUsage:
         payloads, usage = await probe._generate_payloads()
         assert payloads == []
         assert usage == []
+
+
+class TestRunDetectionLLMOnlyMode:
+    """detection_mode=LLM_ONLY skips Stage 1 entirely, even when fast_vulnerable=True."""
+
+    async def test_llm_only_skips_marker_stage_calls_llm(self):
+        probe = ConcreteProbe()
+        provider = make_provider(vulnerable=True)
+        is_vuln, method, usage = await probe._run_detection(
+            fast_vulnerable=True,
+            provider=provider,
+            response="MARKER echoed",
+            detection_type=DetectionType.GOAL_HIJACK,
+            detection_mode=DetectionMode.LLM_ONLY,
+        )
+        assert is_vuln is True
+        assert method == "llm"
+        provider.classify.assert_called_once()
+
+    async def test_llm_only_not_vulnerable_when_llm_says_resistant(self):
+        probe = ConcreteProbe()
+        provider = make_provider(vulnerable=False)
+        is_vuln, method, usage = await probe._run_detection(
+            fast_vulnerable=True,
+            provider=provider,
+            response="MARKER echoed",
+            detection_type=DetectionType.GOAL_HIJACK,
+            detection_mode=DetectionMode.LLM_ONLY,
+        )
+        assert is_vuln is False
+        assert method is None
+        provider.classify.assert_called_once()
+
+    async def test_marker_then_llm_mode_preserves_original_fast_path(self):
+        """marker_then_llm default behaviour is unchanged."""
+        probe = ConcreteProbe()
+        provider = make_provider(vulnerable=False)
+        is_vuln, method, usage = await probe._run_detection(
+            fast_vulnerable=True,
+            provider=provider,
+            response="MARKER echoed",
+            detection_type=DetectionType.GOAL_HIJACK,
+            detection_mode=DetectionMode.MARKER_THEN_LLM,
+        )
+        assert is_vuln is True
+        assert method == "marker"
+        provider.classify.assert_not_called()

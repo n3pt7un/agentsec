@@ -3,7 +3,7 @@
 import pytest
 from pydantic import ValidationError
 
-from agentsec.core.config import ScanConfig
+from agentsec.core.config import DetectionMode, ScanConfig
 
 
 class TestScanConfig:
@@ -89,3 +89,33 @@ class TestScanConfigNewFields:
     def test_detection_confidence_threshold_clamped_le(self):
         with pytest.raises(ValidationError):
             ScanConfig(detection_confidence_threshold=1.1)
+
+
+class TestDetectionMode:
+    def test_default_is_marker_then_llm(self, monkeypatch):
+        monkeypatch.delenv("AGENTSEC_DETECTION_MODE", raising=False)
+        config = ScanConfig(_env_file=None)
+        assert config.detection_mode == DetectionMode.MARKER_THEN_LLM
+
+    def test_detection_mode_from_env(self, monkeypatch):
+        monkeypatch.setenv("AGENTSEC_DETECTION_MODE", "llm_only")
+        monkeypatch.setenv("AGENTSEC_SMART", "true")
+        config = ScanConfig()
+        assert config.detection_mode == DetectionMode.LLM_ONLY
+
+    def test_llm_only_with_smart_true_is_valid(self):
+        config = ScanConfig(
+            detection_mode=DetectionMode.LLM_ONLY,
+            smart=True,
+            openrouter_api_key="sk-or-key",
+        )
+        assert config.detection_mode == DetectionMode.LLM_ONLY
+
+    def test_llm_only_without_smart_raises_validation_error(self):
+        with pytest.raises(ValidationError):
+            ScanConfig(detection_mode=DetectionMode.LLM_ONLY, smart=False)
+
+    def test_marker_then_llm_without_smart_is_valid(self):
+        config = ScanConfig(_env_file=None)
+        assert config.detection_mode == DetectionMode.MARKER_THEN_LLM
+        assert config.smart is False

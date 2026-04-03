@@ -9,6 +9,7 @@ from __future__ import annotations
 import time
 
 from agentsec.adapters.base import AbstractAdapter
+from agentsec.core.config import DetectionMode
 from agentsec.core.finding import (
     Evidence,
     Finding,
@@ -129,6 +130,7 @@ class RoleConfusionProbe(BaseProbe):
         provider=None,
         confidence_threshold: float = 0.8,
         fallback_model: str | None = None,
+        detection_mode: DetectionMode = DetectionMode.MARKER_THEN_LLM,
     ) -> Finding:
         """Send a role-override payload and check whether the agent echoes the marker.
 
@@ -170,6 +172,7 @@ class RoleConfusionProbe(BaseProbe):
                 detection_type=DetectionType.ROLE_ADOPTION,
                 confidence_threshold=confidence_threshold,
                 attack_marker=_ROLE_MARKER,
+                detection_mode=detection_mode,
                 injected_role="privileged role",
                 original_role=target_role,
             )

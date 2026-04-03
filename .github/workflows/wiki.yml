@@ -32,9 +32,6 @@ jobs:
 
       - name: Push wiki to GitHub wiki
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-
           WIKI_URL="https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.wiki.git"
 
           if git clone "$WIKI_URL" /tmp/wiki 2>/dev/null; then
@@ -51,6 +48,8 @@ jobs:
           rsync -av --delete --exclude='.git' wiki/ /tmp/wiki/
 
           cd /tmp/wiki
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
           git add -A
           if git diff --staged --quiet; then
             echo "No wiki changes to push."

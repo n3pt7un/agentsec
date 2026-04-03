@@ -3,10 +3,10 @@ const CATEGORY_NAMES = {
   ASI02: 'Tool Misuse & Exploitation',
   ASI03: 'Identity & Privilege Abuse',
   ASI04: 'Supply Chain Vulnerabilities',
-  ASI05: 'Output & Impact Control Failures',
+  ASI05: 'Unexpected Code Execution',
   ASI06: 'Memory & Context Manipulation',
-  ASI07: 'Multi-Agent Orchestration',
-  ASI08: 'Uncontrolled Autonomous Execution',
+  ASI07: 'Multi-Agent Orchestration Exploitation',
+  ASI08: 'Cascading Failures',
   ASI09: 'Human-Agent Trust Exploitation',
   ASI10: 'Rogue Agent Behavior',
 };

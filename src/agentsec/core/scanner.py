@@ -193,6 +193,7 @@ class Scanner:
                     self._provider,
                     confidence_threshold=self.config.detection_confidence_threshold,
                     fallback_model=self.config.fallback_llm_model,
+                    detection_mode=self.config.detection_mode,
                 ),
                 timeout=self.config.timeout_per_probe,
             )

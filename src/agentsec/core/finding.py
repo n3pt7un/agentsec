@@ -34,10 +34,10 @@ class OWASPCategory(StrEnum):
     ASI02 = "ASI02"  # Tool Misuse & Exploitation
     ASI03 = "ASI03"  # Identity & Privilege Abuse
     ASI04 = "ASI04"  # Supply Chain Vulnerabilities
-    ASI05 = "ASI05"  # Output & Impact Control Failures
+    ASI05 = "ASI05"  # Unexpected Code Execution
     ASI06 = "ASI06"  # Memory & Context Manipulation
     ASI07 = "ASI07"  # Multi-Agent Orchestration Exploitation
-    ASI08 = "ASI08"  # Uncontrolled Autonomous Execution
+    ASI08 = "ASI08"  # Cascading Failures
     ASI09 = "ASI09"  # Human-Agent Trust Exploitation
     ASI10 = "ASI10"  # Rogue Agent Behavior
 

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from unittest.mock import AsyncMock, MagicMock
 
+from agentsec.core.config import DetectionMode
 from agentsec.core.finding import Finding, OWASPCategory, Remediation, Severity
 from agentsec.core.probe_base import BaseProbe, ProbeMetadata
 from agentsec.llm.detection import DetectionType
@@ -350,3 +351,50 @@ class TestRunDetectionReturnsUsage:
         payloads, usage = await probe._generate_payloads()
         assert payloads == []
         assert usage == []
+
+
+class TestRunDetectionLLMOnlyMode:
+    """detection_mode=LLM_ONLY skips Stage 1 entirely, even when fast_vulnerable=True."""
+
+    async def test_llm_only_skips_marker_stage_calls_llm(self):
+        probe = ConcreteProbe()
+        provider = make_provider(vulnerable=True)
+        is_vuln, method, usage = await probe._run_detection(
+            fast_vulnerable=True,
+            provider=provider,
+            response="MARKER echoed",
+            detection_type=DetectionType.GOAL_HIJACK,
+            detection_mode=DetectionMode.LLM_ONLY,
+        )
+        assert is_vuln is True
+        assert method == "llm"
+        provider.classify.assert_called_once()
+
+    async def test_llm_only_not_vulnerable_when_llm_says_resistant(self):
+        probe = ConcreteProbe()
+        provider = make_provider(vulnerable=False)
+        is_vuln, method, usage = await probe._run_detection(
+            fast_vulnerable=True,
+            provider=provider,
+            response="MARKER echoed",
+            detection_type=DetectionType.GOAL_HIJACK,
+            detection_mode=DetectionMode.LLM_ONLY,
+        )
+        assert is_vuln is False
+        assert method is None
+        provider.classify.assert_called_once()
+
+    async def test_marker_then_llm_mode_preserves_original_fast_path(self):
+        """marker_then_llm default behaviour is unchanged."""
+        probe = ConcreteProbe()
+        provider = make_provider(vulnerable=False)
+        is_vuln, method, usage = await probe._run_detection(
+            fast_vulnerable=True,
+            provider=provider,
+            response="MARKER echoed",
+            detection_type=DetectionType.GOAL_HIJACK,
+            detection_mode=DetectionMode.MARKER_THEN_LLM,
+        )
+        assert is_vuln is True
+        assert method == "marker"
+        provider.classify.assert_not_called()

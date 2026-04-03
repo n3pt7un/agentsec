@@ -105,7 +105,11 @@ class OrchestratorHijackProbe(BaseProbe):
         )
 
     async def _generate_payloads(
-        self, provider=None, agents=None, fallback_model: str | None = None
+        self,
+        provider=None,
+        agents=None,
+        target_agent: str = "supervisor",
+        fallback_model: str | None = None,
     ) -> tuple[list[str], list[LLMUsage]]:
         """Generate orchestrator hijack payloads, using LLM if available."""
         if not provider:
@@ -115,7 +119,7 @@ class OrchestratorHijackProbe(BaseProbe):
 
         agent_list = [a.name for a in agents] if agents else ["unknown"]
         role_list = [a.role or "unknown" for a in agents] if agents else ["unknown"]
-        supervisor_name = agents[0].name if agents else "supervisor"
+        supervisor_name = target_agent
         prompt = (
             f"Agent list: {', '.join(agent_list)}\n"
             f"Role list: {', '.join(role_list)}\n"
@@ -151,18 +155,23 @@ class OrchestratorHijackProbe(BaseProbe):
         start = time.monotonic()
         agents = await adapter.discover()
 
-        if len(agents) < 2:
-            return self._skipped_finding(
-                target_agent=agents[0].name if agents else "unknown",
-                note=(f"Multi-agent topology required (≥2 agents); found {len(agents)} agent(s)."),
-                duration_ms=int((time.monotonic() - start) * 1000),
+        # Prefer a node with conditional outbound routing; fall back to the
+        # entry-point agent when no orchestrator is detected (e.g. fixed-edge
+        # graphs) so the probe can still test for authority-claim acceptance.
+        # Skip only if no multi-agent topology exists to exploit.
+        target = self._select_orchestrator(agents) or (
+            self._select_entry_point(agents) if len(agents) >= 2 else None
+        )
+        if target is None:
+            return self._no_target_finding(
+                "No orchestrator detected — this probe requires a node with conditional "
+                "outbound routing (LLM-driven or deterministic). "
+                f"Found {len(agents)} agent(s), none with conditional edges."
             )
-
-        # Target the first agent — assumed to be the orchestrator/supervisor.
-        target_agent = agents[0].name
+        target_agent = target.name
 
         payloads, gen_usage = await self._generate_payloads(
-            provider, agents, fallback_model=fallback_model
+            provider, agents, target_agent=target_agent, fallback_model=fallback_model
         )
 
         all_det_usage: list[LLMUsage] = []

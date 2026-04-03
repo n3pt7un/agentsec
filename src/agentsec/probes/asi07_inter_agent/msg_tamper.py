@@ -115,7 +115,7 @@ class MessageTamperProbe(BaseProbe):
 
         agent_list = [a.name for a in agents] if agents else ["unknown"]
         role_list = [a.role or "unknown" for a in agents] if agents else ["unknown"]
-        supervisor_name = agents[0].name if agents else "supervisor"
+        supervisor_name = self._select_entry_point(agents).name if agents else "supervisor"
         prompt = (
             f"Agent list: {', '.join(agent_list)}\n"
             f"Role list: {', '.join(role_list)}\n"
@@ -151,16 +151,13 @@ class MessageTamperProbe(BaseProbe):
         start = time.monotonic()
         agents = await adapter.discover()
 
-        if len(agents) < 2:
-            return self._skipped_finding(
-                target_agent=agents[0].name if agents else "unknown",
-                note=(f"Multi-agent topology required (≥2 agents); found {len(agents)} agent(s)."),
-                duration_ms=int((time.monotonic() - start) * 1000),
+        target = self._select_worker(agents)
+        if target is None:
+            return self._no_target_finding(
+                "Message tampering requires at least two agents (one entry point and one worker). "
+                f"Found {len(agents)} agent(s), all are entry points or none available."
             )
-
-        # Target the second agent — simulates a message received by a downstream
-        # worker that was supposed to come from the supervisor.
-        target_agent = agents[1].name
+        target_agent = target.name
 
         payloads, gen_usage = await self._generate_payloads(
             provider, agents, fallback_model=fallback_model

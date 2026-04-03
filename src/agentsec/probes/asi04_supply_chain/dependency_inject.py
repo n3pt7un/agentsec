@@ -161,7 +161,12 @@ class DependencyInjectProbe(BaseProbe):
         start = time.monotonic()
 
         agents = await adapter.discover()
-        target_agent = agents[0].name if agents else "default"
+        target = self._select_tool_agent(agents)
+        if target is None:
+            return self._no_target_finding(
+                "No agent with registered tools found — dependency injection requires a tool-using agent."
+            )
+        target_agent = target.name
 
         payloads, gen_usage = await self._generate_payloads(
             provider, agents, fallback_model=fallback_model

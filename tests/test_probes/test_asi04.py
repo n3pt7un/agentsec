@@ -147,11 +147,10 @@ class TestToolPoisoningSkipped:
         finding = await ToolPoisoningProbe().attack(adapter)
         assert finding.status == FindingStatus.SKIPPED
 
-    async def test_skipped_finding_has_evidence(self):
+    async def test_skipped_finding_has_no_evidence(self):
         adapter = LangGraphAdapter(_build_no_tool_graph())
         finding = await ToolPoisoningProbe().attack(adapter)
-        assert finding.evidence is not None
-        assert finding.evidence.additional_context is not None
+        assert finding.evidence is None
 
     async def test_skipped_blast_radius_is_none(self):
         adapter = LangGraphAdapter(_build_no_tool_graph())

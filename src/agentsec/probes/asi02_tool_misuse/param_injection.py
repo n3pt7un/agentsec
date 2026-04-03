@@ -132,25 +132,12 @@ class ParamInjectionProbe(BaseProbe):
         meta = self.metadata()
 
         agents = await adapter.discover()
-        target_agent = agents[0].name if agents else "default"
-
-        # Skip when no tools are present — the attack vector does not exist.
-        all_tools = [t for a in agents for t in a.tools]
-        if not all_tools:
-            duration_ms = int((time.monotonic() - start) * 1000)
-            return Finding(
-                probe_id=meta.id,
-                probe_name=meta.name,
-                category=meta.category,
-                status=FindingStatus.SKIPPED,
-                severity=meta.default_severity,
-                description=f"{meta.description} Skipped: no tools discovered in target system.",
-                evidence=None,
-                blast_radius=None,
-                remediation=self.remediation(),
-                duration_ms=duration_ms,
-                tags=meta.tags,
+        target = self._select_tool_agent(agents)
+        if target is None:
+            return self._no_target_finding(
+                "No agent with registered tools found — parameter injection requires a tool-using agent."
             )
+        target_agent = target.name
 
         payloads, gen_usage = await self._generate_payloads(
             provider, agents, fallback_model=fallback_model

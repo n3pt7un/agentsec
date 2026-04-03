@@ -157,40 +157,12 @@ class ToolPoisoningProbe(BaseProbe):
         start = time.monotonic()
 
         agents = await adapter.discover()
-        target_agent = agents[0].name if agents else "default"
-
-        # Prefer agents that have tools — they are the natural attack surface.
-        tools_found = False
-        for info in agents:
-            if info.tools:
-                target_agent = info.name
-                tools_found = True
-                break
-
-        if not tools_found:
-            duration_ms = int((time.monotonic() - start) * 1000)
-            return Finding(
-                probe_id=self.metadata().id,
-                probe_name=self.metadata().name,
-                category=self.metadata().category,
-                status=FindingStatus.SKIPPED,
-                severity=self.metadata().default_severity,
-                description=self.metadata().description,
-                evidence=Evidence(
-                    attack_input="",
-                    target_agent=target_agent,
-                    agent_response="",
-                    additional_context=(
-                        "No tools found in the target system.  "
-                        "ASI04-TOOL-POISONING requires a tool-using agent to test."
-                    ),
-                ),
-                blast_radius=None,
-                remediation=self.remediation(),
-                duration_ms=duration_ms,
-                tags=self.metadata().tags,
-                llm_usage=[],
+        target = self._select_tool_agent(agents)
+        if target is None:
+            return self._no_target_finding(
+                "No agent with registered tools found — supply chain poisoning requires a tool-using agent."
             )
+        target_agent = target.name
 
         payloads, gen_usage = await self._generate_payloads(
             provider, agents, fallback_model=fallback_model

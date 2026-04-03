@@ -35,7 +35,18 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          git clone "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.wiki.git" /tmp/wiki
+          WIKI_URL="https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.wiki.git"
+
+          if git clone "$WIKI_URL" /tmp/wiki 2>/dev/null; then
+            echo "Cloned existing wiki."
+          else
+            echo "Wiki repo not found — initializing a new one."
+            mkdir /tmp/wiki
+            cd /tmp/wiki
+            git init
+            git remote add origin "$WIKI_URL"
+            cd -
+          fi
 
           rsync -av --delete wiki/ /tmp/wiki/
 
@@ -45,5 +56,5 @@ jobs:
             echo "No wiki changes to push."
           else
             git commit -m "chore: sync wiki from ${{ github.sha }}"
-            git push
+            git push --set-upstream origin HEAD:master
           fi

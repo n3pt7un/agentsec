@@ -1,7 +1,16 @@
 """Configuration models for agentsec scan runs."""
 
-from pydantic import Field
+from enum import StrEnum
+
+from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings
+
+
+class DetectionMode(StrEnum):
+    """Strategy used by probes to decide whether a response is vulnerable."""
+
+    MARKER_THEN_LLM = "marker_then_llm"
+    LLM_ONLY = "llm_only"
 
 
 class ScanConfig(BaseSettings):
@@ -50,3 +59,20 @@ class ScanConfig(BaseSettings):
             "Keys are model IDs."
         ),
     )
+    detection_mode: DetectionMode = Field(
+        default=DetectionMode.MARKER_THEN_LLM,
+        description=(
+            "Detection strategy: 'marker_then_llm' (default) runs a fast marker check "
+            "first and falls back to LLM; 'llm_only' skips the marker check entirely. "
+            "'llm_only' requires smart=True."
+        ),
+    )
+
+    @model_validator(mode="after")
+    def _validate_detection_mode(self) -> "ScanConfig":
+        if self.detection_mode == DetectionMode.LLM_ONLY and not self.smart:
+            raise ValueError(
+                "detection_mode='llm_only' requires smart=True "
+                "(an LLM provider must be configured)"
+            )
+        return self

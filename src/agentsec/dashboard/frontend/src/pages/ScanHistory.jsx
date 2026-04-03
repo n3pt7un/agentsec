@@ -137,9 +137,8 @@ export default function ScanHistory() {
                 onClick={(e) => e.stopPropagation()}
                 style={{
                   position: 'absolute',
-                  left: '12px',
-                  top: '50%',
-                  transform: 'translateY(-50%)',
+                  left: '6px',
+                  top: '6px',
                   cursor: 'pointer',
                   opacity: hoveredId === scan.scan_id || selectedIds.size > 0 ? 1 : 0,
                   transition: 'opacity 0.1s',
@@ -151,7 +150,7 @@ export default function ScanHistory() {
               />
 
               {confirmDeleteId === scan.scan_id ? (
-                <span style={{ position: 'absolute', top: '12px', right: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span style={{ position: 'absolute', bottom: '10px', right: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontFamily: 'var(--font-sans)' }}>Delete?</span>
                   <button
                     onClick={(e) => { e.preventDefault(); handleDelete(scan.scan_id); }}
@@ -171,7 +170,7 @@ export default function ScanHistory() {
                   onClick={(e) => { e.preventDefault(); setConfirmDeleteId(scan.scan_id); }}
                   style={{
                     position: 'absolute',
-                    top: '12px',
+                    bottom: '10px',
                     right: '12px',
                     background: 'none',
                     border: 'none',

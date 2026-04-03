@@ -9,6 +9,7 @@ from collections import Counter
 from pathlib import Path
 
 import typer
+from pydantic import ValidationError as PydanticValidationError
 from rich.console import Console
 
 from agentsec.core.config import DetectionMode, ScanConfig
@@ -75,8 +76,6 @@ def scan(
             "Choose 'marker_then_llm' or 'llm_only'."
         )
         raise typer.Exit(code=1) from None
-
-    from pydantic import ValidationError as PydanticValidationError
 
     try:
         config = ScanConfig(

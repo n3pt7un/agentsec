@@ -5,12 +5,80 @@ from __future__ import annotations
 import json
 import tempfile
 from pathlib import Path
+from unittest.mock import patch
 
 from typer.testing import CliRunner
 
 from agentsec.cli.main import app
 
 runner = CliRunner()
+
+
+# ------------------------------------------------------------------
+# scan: --detection-mode option
+# ------------------------------------------------------------------
+
+
+class TestDetectionModeOption:
+    """Tests for the --detection-mode CLI option."""
+
+    def test_invalid_detection_mode_value(self):
+        """An unrecognised detection mode should exit 1 with an error message."""
+        result = runner.invoke(
+            app,
+            [
+                "scan",
+                "--target",
+                "tests/fixtures/simple_chain.py",
+                "--detection-mode",
+                "bad_value",
+            ],
+        )
+        assert result.exit_code == 1
+        assert "bad_value" in result.output
+
+    def test_llm_only_without_smart_fails(self):
+        """--detection-mode llm_only without --smart should fail at ScanConfig validation."""
+        result = runner.invoke(
+            app,
+            [
+                "scan",
+                "--target",
+                "tests/fixtures/simple_chain.py",
+                "--detection-mode",
+                "llm_only",
+            ],
+        )
+        assert result.exit_code == 1
+        # The PydanticValidationError path prints at least one Error line
+        assert "Error" in result.output or "error" in result.output.lower()
+
+    def test_llm_only_with_smart_passes_config_validation(self):
+        """--detection-mode llm_only --smart should pass ScanConfig construction.
+
+        The scan may still fail for unrelated reasons (missing API key, graph
+        loading issues, etc.).  We only care that it does NOT fail at the
+        ScanConfig construction stage with a PydanticValidationError about
+        detection_mode requiring smart=True.
+        """
+        with patch("agentsec.cli.main.load_graph") as mock_load:
+            mock_load.side_effect = ValueError("graph loading mocked out")
+            result = runner.invoke(
+                app,
+                [
+                    "scan",
+                    "--target",
+                    "tests/fixtures/simple_chain.py",
+                    "--smart",
+                    "--detection-mode",
+                    "llm_only",
+                ],
+            )
+        # The process should have got past ScanConfig construction; the first
+        # error it hits is the mocked graph-loading ValueError (exit 1 is
+        # fine), but it must NOT contain the validation-error message about
+        # detection_mode requiring smart=True.
+        assert "detection_mode='llm_only' requires smart=True" not in result.output
 
 
 # ------------------------------------------------------------------

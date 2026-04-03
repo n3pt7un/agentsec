@@ -29,6 +29,7 @@ class ConcreteProbe(BaseProbe):
         provider=None,
         confidence_threshold: float = 0.8,
         fallback_model: str | None = None,
+        detection_mode: DetectionMode = DetectionMode.MARKER_THEN_LLM,
     ) -> Finding:
         raise NotImplementedError
 
@@ -309,6 +310,7 @@ class TestRunDetectionReturnsUsage:
     async def test_llm_path_returns_usage_list(self):
         """LLM detection path returns usage from the classify call."""
         from unittest.mock import AsyncMock, MagicMock
+
         from agentsec.core.finding import LLMUsage
         from agentsec.llm.provider import ClassificationResult
 
@@ -316,7 +318,10 @@ class TestRunDetectionReturnsUsage:
         mock_provider.is_available = MagicMock(return_value=True)
         mock_usage = LLMUsage(model="m", role="detection", input_tokens=100, output_tokens=20)
         mock_provider.classify = AsyncMock(
-            return_value=(ClassificationResult(vulnerable=True, confidence=0.95, reasoning="yes"), mock_usage)
+            return_value=(
+                ClassificationResult(vulnerable=True, confidence=0.95, reasoning="yes"),
+                mock_usage,
+            )
         )
 
         probe = ConcreteProbe()

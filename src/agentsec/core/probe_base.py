@@ -92,6 +92,7 @@ class BaseProbe(ABC):
         provider=None,
         confidence_threshold: float = 0.8,
         fallback_model: str | None = None,
+        detection_mode: DetectionMode = DetectionMode.MARKER_THEN_LLM,
     ) -> Finding:
         """Execute the probe against a target system via the adapter.
 
@@ -100,6 +101,7 @@ class BaseProbe(ABC):
             provider: Optional LLMProvider for smart payload generation.
             confidence_threshold: Minimum LLM confidence to flag VULNERABLE.
             fallback_model: Model override for Tier 3 payload generation.
+            detection_mode: MARKER_THEN_LLM (default) or LLM_ONLY.
 
         Returns:
             Finding with status, evidence, and remediation.

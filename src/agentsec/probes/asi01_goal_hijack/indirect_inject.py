@@ -9,6 +9,7 @@ from __future__ import annotations
 import time
 
 from agentsec.adapters.base import AbstractAdapter
+from agentsec.core.config import DetectionMode
 from agentsec.core.finding import (
     Evidence,
     Finding,
@@ -108,6 +109,7 @@ class IndirectPromptInjection(BaseProbe):
         provider=None,
         confidence_threshold: float = 0.8,
         fallback_model: str | None = None,
+        detection_mode: DetectionMode = DetectionMode.MARKER_THEN_LLM,
     ) -> Finding:
         """Send injection payloads and check whether the agent echoes the marker.
 
@@ -139,6 +141,7 @@ class IndirectPromptInjection(BaseProbe):
                 detection_type=DetectionType.GOAL_HIJACK,
                 confidence_threshold=confidence_threshold,
                 attack_marker=_INJECTION_MARKER,
+                detection_mode=detection_mode,
                 attack_payload=payload,
                 original_objective="Process the user's request according to the system prompt",
             )

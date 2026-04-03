@@ -12,6 +12,7 @@ import time
 from langchain_core.messages import AIMessage, HumanMessage
 
 from agentsec.adapters.base import AbstractAdapter
+from agentsec.core.config import DetectionMode
 from agentsec.core.finding import (
     Evidence,
     Finding,
@@ -135,6 +136,7 @@ class ContextLeakProbe(BaseProbe):
         provider=None,
         confidence_threshold: float = 0.8,
         fallback_model: str | None = None,
+        detection_mode: DetectionMode = DetectionMode.MARKER_THEN_LLM,
     ) -> Finding:
         """Execute the cross-session context leak probe.
 
@@ -205,6 +207,7 @@ class ContextLeakProbe(BaseProbe):
             detection_type=DetectionType.CREDENTIAL_LEAK,
             confidence_threshold=confidence_threshold,
             attack_marker=_SENSITIVE_MARKER,
+            detection_mode=detection_mode,
             attack_payload=session_a_msg,
         )
 

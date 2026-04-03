@@ -10,6 +10,7 @@ from __future__ import annotations
 import time
 
 from agentsec.adapters.base import AbstractAdapter
+from agentsec.core.config import DetectionMode
 from agentsec.core.finding import (
     Evidence,
     Finding,
@@ -149,6 +150,7 @@ class ImpersonationProbe(BaseProbe):
         provider=None,
         confidence_threshold: float = 0.8,
         fallback_model: str | None = None,
+        detection_mode: DetectionMode = DetectionMode.MARKER_THEN_LLM,
     ) -> Finding:
         """Send forged supervisor messages and check for marker compliance.
 
@@ -197,6 +199,7 @@ class ImpersonationProbe(BaseProbe):
                 detection_type=DetectionType.IMPERSONATION,
                 confidence_threshold=confidence_threshold,
                 attack_marker=_IMPERSONATION_MARKER,
+                detection_mode=detection_mode,
                 injected_instruction=payload,
             )
             all_det_usage.extend(det_usage)

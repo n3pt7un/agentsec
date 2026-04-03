@@ -49,7 +49,7 @@ def scan(
     categories: str | None = typer.Option(None, help="Comma-separated OWASP categories"),
     probes: str | None = typer.Option(None, help="Comma-separated probe IDs"),
     output: str | None = typer.Option(None, help="Write report to this file"),
-    format: str = typer.Option("markdown", help="Report format: markdown, json"),
+    format: str = typer.Option("markdown", help="Report format: markdown, json, sarif"),
     verbose: bool = typer.Option(False, help="Verbose output — print each finding as it completes"),
     vulnerable: bool = typer.Option(True, help="Pass vulnerable flag to fixture builders"),
     smart: bool = typer.Option(False, help="Use LLM-powered smart payloads via OpenRouter"),
@@ -134,6 +134,10 @@ def scan(
         from agentsec.reporters.json_report import generate_json
 
         report = generate_json(result)
+    elif format == "sarif":
+        from agentsec.reporters.sarif import generate_sarif
+
+        report = generate_sarif(result)
     else:
         from agentsec.reporters.markdown import generate_markdown
 
@@ -270,7 +274,7 @@ def probes_list(
 @app.command()
 def report(
     input: str = typer.Option(..., help="Path to findings JSON file"),
-    format: str = typer.Option("markdown", help="Report format: markdown, json"),
+    format: str = typer.Option("markdown", help="Report format: markdown, json, sarif"),
     output: str | None = typer.Option(None, help="Write report to this file"),
 ) -> None:
     """Generate report from a previously saved findings JSON file."""
@@ -297,6 +301,10 @@ def report(
         from agentsec.reporters.json_report import generate_json
 
         content = generate_json(result)
+    elif format == "sarif":
+        from agentsec.reporters.sarif import generate_sarif
+
+        content = generate_sarif(result)
     else:
         from agentsec.reporters.markdown import generate_markdown
 

@@ -14,6 +14,8 @@ const MODELS = [
 
 const TARGET_MODELS = [
   { value: 'openai/gpt-4.1-nano', label: 'GPT-4.1 Nano (fast, cheap — good default)' },
+  { value: 'openai/gpt-5.4-nano', label: 'GPT-5.4 Nano' },
+  { value: 'openai/gpt-5.4-mini', label: 'GPT-5.4 Mini' },
   { value: 'openai/gpt-4o-mini', label: 'GPT-4o Mini' },
   { value: 'openai/gpt-4o', label: 'GPT-4o' },
   { value: 'anthropic/claude-haiku-4-5', label: 'Claude Haiku 4.5' },

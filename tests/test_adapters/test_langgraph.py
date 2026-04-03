@@ -109,6 +109,29 @@ class TestDiscover:
         agents2 = await simple_chain_adapter.discover()
         assert agents1 is agents2
 
+    async def test_entry_point_detected_simple_chain(self, simple_chain_adapter):
+        agents = await simple_chain_adapter.discover()
+        entry_points = [a for a in agents if a.is_entry_point]
+        assert len(entry_points) == 1
+        assert entry_points[0].name == "agent_a"
+
+    async def test_non_entry_points_not_marked(self, simple_chain_adapter):
+        agents = await simple_chain_adapter.discover()
+        non_entry = [a for a in agents if not a.is_entry_point]
+        assert {a.name for a in non_entry} == {"agent_b", "agent_c"}
+
+    async def test_entry_point_detected_supervisor(self, supervisor_adapter):
+        agents = await supervisor_adapter.discover()
+        entry_points = [a for a in agents if a.is_entry_point]
+        assert len(entry_points) == 1
+        assert entry_points[0].name == "supervisor"
+
+    async def test_routing_type_default_unknown_for_linear_graph(self, simple_chain_adapter):
+        agents = await simple_chain_adapter.discover()
+        # Linear graph has no conditional edges — all routing_type should be "unknown"
+        for agent in agents:
+            assert agent.routing_type == "unknown"
+
 
 # ------------------------------------------------------------------
 # send_message tests

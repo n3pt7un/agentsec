@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import ast
+import inspect
 import logging
 from typing import Any
 
@@ -18,6 +20,42 @@ logger = logging.getLogger(__name__)
 
 # Sentinel nodes injected by LangGraph that are not real agents.
 _INTERNAL_NODES = frozenset({"__start__", "__end__"})
+
+_LLM_ATTR_NAMES: frozenset[str] = frozenset({"llm", "model", "chain", "agent"})
+
+
+def _detect_routing_type(fn) -> str:
+    """Detect whether a conditional-edge routing function makes LLM calls.
+
+    Uses AST inspection of the function body to find Call nodes where the
+    callee is an attribute access on an object whose name contains 'llm',
+    'model', 'chain', or 'agent'. Keyword search on raw source text is
+    intentionally avoided — comments and docstrings produce false positives.
+
+    Returns:
+        "llm"           if LLM call expressions are found in the AST
+        "deterministic" if source is available but no LLM calls found
+        "unknown"       if source cannot be retrieved (compiled, lambda, etc.)
+    """
+    try:
+        source = inspect.getsource(fn)
+        tree = ast.parse(source)
+    except (OSError, TypeError, IndentationError):
+        return "unknown"
+
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Call):
+            func = node.func
+            if isinstance(func, ast.Attribute):
+                obj = func.value
+                while isinstance(obj, ast.Attribute):
+                    if obj.attr.lower() in _LLM_ATTR_NAMES:
+                        return "llm"
+                    obj = obj.value
+                if isinstance(obj, ast.Name) and obj.id.lower() in _LLM_ATTR_NAMES:
+                    return "llm"
+
+    return "deterministic"
 
 
 class LangGraphAdapter(AbstractAdapter):
@@ -61,6 +99,13 @@ class LangGraphAdapter(AbstractAdapter):
 
         graph_view = self.graph.get_graph()
 
+        # Collect nodes directly reachable from __start__
+        entry_point_names: set[str] = {
+            e.target
+            for e in graph_view.edges
+            if e.source == "__start__" and e.target not in _INTERNAL_NODES
+        }
+
         # Build edge map: source -> list[target]
         edge_map: dict[str, list[str]] = {}
         for edge in graph_view.edges:
@@ -99,10 +144,23 @@ class LangGraphAdapter(AbstractAdapter):
                     role=role,
                     tools=tools,
                     downstream_agents=edge_map.get(node_id, []),
+                    is_entry_point=node_id in entry_point_names,
                 )
             )
 
         self._agents = agents
+
+        # Populate routing_type for nodes that have conditional edges
+        if hasattr(self.graph, "builder") and hasattr(self.graph.builder, "branches"):
+            for node_name, branch_dict in self.graph.builder.branches.items():
+                for branch_spec in branch_dict.values():
+                    fn = getattr(branch_spec.path, "func", branch_spec.path)
+                    rtype = _detect_routing_type(fn)
+                    for agent in self._agents:
+                        if agent.name == node_name:
+                            agent.routing_type = rtype
+                            break
+
         return agents
 
     # ------------------------------------------------------------------

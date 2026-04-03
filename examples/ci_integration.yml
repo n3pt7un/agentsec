@@ -1,0 +1,43 @@
+# Example: Run agentsec in CI and upload SARIF findings to GitHub Security tab
+#
+# Prerequisites:
+#   1. pip install agentsec-framework (or add to your requirements)
+#   2. Your agent target file must be importable from the repo root
+#
+# The GitHub Security tab will display agentsec findings alongside
+# CodeQL and other SAST results after the upload-sarif step.
+
+name: Agent Security Scan
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  agentsec:
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write   # required for upload-sarif
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v4
+
+      - name: Install agentsec
+        run: uv pip install agentsec-framework
+
+      - name: Run security scan
+        run: |
+          agentsec scan \
+            --adapter langgraph \
+            --target ./src/agent.py \
+            --format sarif \
+            --output results.sarif
+
+      - name: Upload SARIF to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: results.sarif

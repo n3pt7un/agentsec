@@ -46,6 +46,7 @@ class ScanManager:
         target: str,
         adapter: str = "langgraph",
         categories: list[str] | None = None,
+        probes: list[str] | None = None,
         vulnerable: bool = True,
         smart: bool = False,
         live: bool = False,
@@ -82,6 +83,7 @@ class ScanManager:
 
         config = ScanConfig(
             categories=categories,
+            probes=probes,
             smart=smart,
             llm_model=llm_model,
             openrouter_api_key=openrouter_api_key,

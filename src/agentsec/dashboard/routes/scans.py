@@ -34,6 +34,7 @@ class ScanRequest(BaseModel):
     target: str
     adapter: str = "langgraph"
     categories: list[str] | None = None
+    probes: list[str] | None = None
     vulnerable: bool = True
     smart: bool = False
     live: bool = False
@@ -60,6 +61,7 @@ async def create_scan(request: ScanRequest) -> dict:
         target=request.target,
         adapter=request.adapter,
         categories=request.categories,
+        probes=request.probes,
         vulnerable=request.vulnerable,
         smart=request.smart,
         live=request.live,

@@ -99,6 +99,32 @@ class TestScansEndpoint:
         assert data["status"] == "running"
         assert "stream_url" in data
 
+    def test_create_scan_accepts_probes_list(self, client):
+        resp = client.post(
+            "/api/scans",
+            json={
+                "target": "tests/targets/email_automation_harness.py",
+                "adapter": "langgraph",
+                "vulnerable": True,
+                "probes": ["ASI01-INDIRECT-INJECT", "ASI01-ROLE-CONFUSION"],
+            },
+        )
+        assert resp.status_code == 200
+        assert "scan_id" in resp.json()
+
+    def test_create_scan_accepts_null_probes(self, client):
+        resp = client.post(
+            "/api/scans",
+            json={
+                "target": "tests/targets/email_automation_harness.py",
+                "adapter": "langgraph",
+                "vulnerable": True,
+                "probes": None,
+            },
+        )
+        assert resp.status_code == 200
+        assert "scan_id" in resp.json()
+
 
 class TestExportEndpoints:
     def test_export_individual_not_found(self, client):

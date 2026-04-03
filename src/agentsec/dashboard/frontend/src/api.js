@@ -51,3 +51,32 @@ export async function removeOverride(scanId, probeId) {
   if (!res.ok) throw new Error(await res.text());
   return res.json();
 }
+
+export async function exportScan(scanId, format) {
+  const res = await fetch(`/api/scans/${scanId}/export?format=${format}`);
+  if (!res.ok) throw new Error(await res.text());
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `scan-${scanId}.${format}`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+export async function exportScans(scanIds, format) {
+  const res = await fetch('/api/scans/export', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ scan_ids: scanIds, format }),
+  });
+  if (!res.ok) throw new Error(await res.text());
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  const date = new Date().toISOString().slice(0, 10);
+  a.download = `agentsec-export-${date}.zip`;
+  a.click();
+  URL.revokeObjectURL(url);
+}

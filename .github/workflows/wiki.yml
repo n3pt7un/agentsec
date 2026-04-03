@@ -1,0 +1,49 @@
+name: Push wiki
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  wiki:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v3
+
+      - name: Install agentsec
+        run: uv sync
+
+      - name: Generate Probe-Index.md
+        run: uv run python scripts/wiki/generate_probe_index.py
+
+      - name: Generate API reference pages
+        run: uv run python scripts/wiki/generate_api_reference.py
+
+      - name: Generate CLI-Commands.md
+        run: uv run python scripts/wiki/generate_cli_reference.py
+
+      - name: Push wiki to GitHub wiki
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git clone "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.wiki.git" /tmp/wiki
+
+          rsync -av --delete wiki/ /tmp/wiki/
+
+          cd /tmp/wiki
+          git add -A
+          if git diff --staged --quiet; then
+            echo "No wiki changes to push."
+          else
+            git commit -m "chore: sync wiki from ${{ github.sha }}"
+            git push
+          fi

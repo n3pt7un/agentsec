@@ -2,8 +2,17 @@
 
 from __future__ import annotations
 
+import io
+import zipfile
+from datetime import UTC, datetime
+from typing import Literal
+
 from fastapi import APIRouter, HTTPException
+from fastapi.responses import Response, StreamingResponse
 from pydantic import BaseModel
+
+from agentsec.reporters.json_report import generate_json
+from agentsec.reporters.markdown import generate_markdown
 
 router = APIRouter(prefix="/api/scans", tags=["scans"])
 
@@ -37,6 +46,13 @@ class ScanRequest(BaseModel):
     pricing: dict[str, dict[str, float]] = {}
 
 
+class ExportRequest(BaseModel):
+    """Request body for batch scan export."""
+
+    scan_ids: list[str] | Literal["all"]
+    format: Literal["md", "json"]
+
+
 @router.post("")
 async def create_scan(request: ScanRequest) -> dict:
     """Trigger a new scan in the background."""
@@ -62,11 +78,73 @@ async def create_scan(request: ScanRequest) -> dict:
     }
 
 
+@router.post("/export")
+async def batch_export_scans(request: ExportRequest) -> StreamingResponse:
+    """Export multiple scans as a ZIP archive."""
+    if request.scan_ids == "all":
+        summaries = _store.list_scans(limit=10_000)
+        scan_ids = [s["scan_id"] for s in summaries]
+    else:
+        scan_ids = request.scan_ids
+
+    if request.format == "md":
+        generate = generate_markdown
+        ext = "md"
+    else:
+        generate = generate_json
+        ext = "json"
+
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
+        for scan_id in scan_ids:
+            result = _store.load(scan_id)
+            if result is None:
+                continue
+            zf.writestr(f"scan-{scan_id}.{ext}", generate(result))
+
+    buf.seek(0)
+    date_str = datetime.now(UTC).strftime("%Y-%m-%d")
+    filename = f"agentsec-export-{date_str}.zip"
+
+    return StreamingResponse(
+        buf,
+        media_type="application/zip",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
 @router.get("")
 async def list_scans(limit: int = 50, offset: int = 0) -> dict:
     """List completed scans."""
     scans = _store.list_scans(limit=limit, offset=offset)
     return {"scans": scans, "total": len(scans)}
+
+
+@router.get("/{scan_id}/export")
+async def export_scan(scan_id: str, format: str = "md") -> Response:
+    """Export a single scan result as a downloadable file."""
+    if format not in ("md", "json"):
+        raise HTTPException(status_code=400, detail="format must be 'md' or 'json'")
+
+    job = _scan_manager.get_job(scan_id)
+    result = job.result if job and job.result else _store.load(scan_id)
+    if result is None:
+        raise HTTPException(status_code=404, detail=f"Scan {scan_id} not found")
+
+    if format == "md":
+        content = generate_markdown(result)
+        media_type = "text/markdown"
+        filename = f"scan-{scan_id}.md"
+    else:
+        content = generate_json(result)
+        media_type = "application/json"
+        filename = f"scan-{scan_id}.json"
+
+    return Response(
+        content=content,
+        media_type=media_type,
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
 
 
 @router.get("/{scan_id}")

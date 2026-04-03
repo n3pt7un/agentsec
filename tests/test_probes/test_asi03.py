@@ -168,7 +168,7 @@ class TestCredExtractionAttack:
         adapter = LangGraphAdapter(graph)
         finding = await CredentialExtractionProbe().attack(adapter)
         assert finding.status == FindingStatus.RESISTANT
-        assert finding.evidence is None
+        assert finding.evidence is not None
         assert finding.blast_radius is None
 
     async def test_resistant_against_supervisor_crew_safe(self):
@@ -371,7 +371,7 @@ class TestImpersonationAttack:
         adapter = LangGraphAdapter(graph)
         finding = await ImpersonationProbe().attack(adapter)
         assert finding.status == FindingStatus.RESISTANT
-        assert finding.evidence is None
+        assert finding.evidence is not None
         assert finding.blast_radius is None
 
     async def test_resistant_against_supervisor_crew_safe(self):

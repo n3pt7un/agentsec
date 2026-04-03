@@ -283,7 +283,8 @@ class MemoryPoisonProbe(BaseProbe):
             additional_context=f"Memory state after 'remember' invocation: {memory_str!r}",
             vulnerable=is_vuln,
             duration_ms=duration_ms,
-            detection_method=method or "marker",
+            detection_method=method
+            or ("llm" if detection_mode == DetectionMode.LLM_ONLY else "marker"),
             llm_usage=(gen_usage or []) + det_usage,
         )
 

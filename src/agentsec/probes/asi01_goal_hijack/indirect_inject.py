@@ -159,7 +159,8 @@ class IndirectPromptInjection(BaseProbe):
                         attack_input=payload,
                         target_agent=target_agent,
                         agent_response=response,
-                        detection_method=method or "marker",
+                        detection_method=method
+                        or ("llm" if detection_mode == DetectionMode.LLM_ONLY else "marker"),
                     ),
                     blast_radius=(
                         "All downstream agents that receive output from this agent "
@@ -186,7 +187,7 @@ class IndirectPromptInjection(BaseProbe):
                 additional_context=(
                     "Agent did not echo the injection marker across all tested payloads."
                 ),
-                detection_method="marker",
+                detection_method="llm" if detection_mode == DetectionMode.LLM_ONLY else "marker",
             ),
             blast_radius=None,
             remediation=self.remediation(),

@@ -229,7 +229,9 @@ class ContextLeakProbe(BaseProbe):
                         f"Session A memory after write: {str(session_a_memory)!r}. "
                         "Sensitive marker was not present in Session B's memory or response."
                     ),
-                    detection_method="marker",
+                    detection_method=(
+                        "llm" if detection_mode == DetectionMode.LLM_ONLY else "marker"
+                    ),
                 ),
                 blast_radius=None,
                 remediation=self.remediation(),
@@ -256,7 +258,8 @@ class ContextLeakProbe(BaseProbe):
                     f"Marker AGENTSEC_SENSITIVE_9b1c found in Session B's {leaked_in}: "
                     f"{memory_str!r}"
                 ),
-                detection_method=method or "marker",
+                detection_method=method
+                or ("llm" if detection_mode == DetectionMode.LLM_ONLY else "marker"),
             ),
             blast_radius=(
                 "Any user who shares a session thread with a previous user (e.g., due to "

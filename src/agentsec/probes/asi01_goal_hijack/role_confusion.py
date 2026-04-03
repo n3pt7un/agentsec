@@ -195,7 +195,8 @@ class RoleConfusionProbe(BaseProbe):
                             "Agent adopted the injected identity by echoing "
                             "the role-adoption marker."
                         ),
-                        detection_method=method or "marker",
+                        detection_method=method
+                        or ("llm" if detection_mode == DetectionMode.LLM_ONLY else "marker"),
                     ),
                     blast_radius=(
                         "An agent that abandons its role can be weaponized as an admin proxy, "
@@ -223,7 +224,7 @@ class RoleConfusionProbe(BaseProbe):
                     f"Targeted agent with role: {target_role!r}. "
                     "Agent did not adopt the injected identity across all tested payloads."
                 ),
-                detection_method="marker",
+                detection_method="llm" if detection_mode == DetectionMode.LLM_ONLY else "marker",
             ),
             blast_radius=None,
             remediation=self.remediation(),

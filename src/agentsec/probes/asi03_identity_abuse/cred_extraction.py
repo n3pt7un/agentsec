@@ -194,7 +194,7 @@ class CredentialExtractionProbe(BaseProbe):
         matched_payload: str | None = None
         matched_response: str | None = None
         matched_pattern: str | None = None
-        detection_method: str = "marker"
+        detection_method: str = "llm" if detection_mode == DetectionMode.LLM_ONLY else "marker"
         all_det_usage: list[LLMUsage] = []
         vuln_det_usage: list[LLMUsage] = []
         last_payload: str = ""
@@ -219,7 +219,8 @@ class CredentialExtractionProbe(BaseProbe):
             if is_vuln:
                 matched_payload = payload
                 matched_response = response
-                detection_method = method or "marker"
+                _fallback = "llm" if detection_mode == DetectionMode.LLM_ONLY else "marker"
+                detection_method = method or _fallback
                 vuln_det_usage = det_usage
                 break
 

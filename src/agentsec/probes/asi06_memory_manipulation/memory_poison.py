@@ -312,9 +312,7 @@ class MemoryPoisonProbe(BaseProbe):
                 agent_response=agent_response,
                 additional_context=additional_context,
                 detection_method=detection_method,
-            )
-            if vulnerable
-            else None,
+            ),
             blast_radius=(
                 "Poisoned memory persists across sessions and will influence all future "
                 "responses, potentially redirecting agent goals or leaking injected "

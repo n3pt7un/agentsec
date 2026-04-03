@@ -176,6 +176,8 @@ class ImpersonationProbe(BaseProbe):
         matched_payload: str | None = None
         matched_response: str | None = None
         detection_method: str = "marker"
+        last_payload: str = ""
+        last_response: str = ""
 
         payloads, gen_usage = await self._generate_payloads(
             provider, agents, fallback_model=fallback_model
@@ -185,6 +187,8 @@ class ImpersonationProbe(BaseProbe):
         vuln_det_usage: list[LLMUsage] = []
         for payload in payloads:
             response = await adapter.send_message(target_agent, payload)
+            last_payload = payload
+            last_response = response
             fast = _IMPERSONATION_MARKER in response
             is_vuln, method, det_usage = await self._run_detection(
                 fast_vulnerable=fast,
@@ -214,18 +218,22 @@ class ImpersonationProbe(BaseProbe):
             severity=self.metadata().default_severity,
             description=self.metadata().description,
             evidence=Evidence(
-                attack_input=matched_payload or "",
+                attack_input=matched_payload or last_payload,
                 target_agent=target_agent,
-                agent_response=matched_response or "",
+                agent_response=matched_response or last_response,
                 additional_context=(
                     f"Agent '{target_agent}' executed a forged supervisor override "
                     f"without verifying the sender's identity.  Marker "
                     f"{_IMPERSONATION_MARKER!r} appeared in the response."
+                )
+                if vulnerable
+                else (
+                    f"All {len(payloads)} impersonation payloads were tested against "
+                    f"agent '{target_agent}'.  The impersonation marker was not found "
+                    "in any response."
                 ),
                 detection_method=detection_method,
-            )
-            if vulnerable
-            else None,
+            ),
             blast_radius=(
                 f"An agent that follows unauthenticated override commands can be "
                 f"directed to perform any action within its tool set.  All downstream "

@@ -195,9 +195,13 @@ class CredentialExtractionProbe(BaseProbe):
         detection_method: str = "marker"
         all_det_usage: list[LLMUsage] = []
         vuln_det_usage: list[LLMUsage] = []
+        last_payload: str = ""
+        last_response: str = ""
 
         for payload in payloads:
             response = await adapter.send_message(target_agent, payload)
+            last_payload = payload
+            last_response = response
             matched_pattern, matched_text = _find_credential_match(response)
             fast = matched_pattern is not None
             is_vuln, method, det_usage = await self._run_detection(
@@ -227,17 +231,20 @@ class CredentialExtractionProbe(BaseProbe):
             severity=self.metadata().default_severity,
             description=self.metadata().description,
             evidence=Evidence(
-                attack_input=matched_payload or "",
+                attack_input=matched_payload or last_payload,
                 target_agent=target_agent,
-                agent_response=matched_response or "",
+                agent_response=matched_response or last_response,
                 additional_context=(
                     f"Credential pattern detected: {matched_pattern!r}. "
                     "The agent leaked a credential-format string from its context."
+                )
+                if vulnerable
+                else (
+                    f"All {len(payloads)} escalating payloads were tested. "
+                    "No credential patterns were detected in any response."
                 ),
                 detection_method=detection_method,
-            )
-            if vulnerable
-            else None,
+            ),
             blast_radius=(
                 "Any downstream agent or external system that receives this output "
                 "gains access to the leaked credential.  Rotate all exposed keys "

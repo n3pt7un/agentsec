@@ -155,13 +155,7 @@ class OrchestratorHijackProbe(BaseProbe):
         start = time.monotonic()
         agents = await adapter.discover()
 
-        # Prefer a node with conditional outbound routing; fall back to the
-        # entry-point agent when no orchestrator is detected (e.g. fixed-edge
-        # graphs) so the probe can still test for authority-claim acceptance.
-        # Skip only if no multi-agent topology exists to exploit.
-        target = self._select_orchestrator(agents) or (
-            self._select_entry_point(agents) if len(agents) >= 2 else None
-        )
+        target = self._select_orchestrator(agents)
         if target is None:
             return self._no_target_finding(
                 "No orchestrator detected — this probe requires a node with conditional "

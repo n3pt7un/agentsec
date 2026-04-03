@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { fetchScan, deleteScan } from '../api';
+import { fetchScan, deleteScan, exportScan } from '../api';
 import { SkeletonTable, SkeletonGraph } from '../components/LoadingSkeleton';
 import ErrorState from '../components/ErrorState';
 import SummaryTable from '../components/SummaryTable';
@@ -120,6 +120,32 @@ export default function ScanDetail() {
             </p>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <button
+              onClick={() => exportScan(id, 'md')}
+              style={{
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                fontSize: '12px',
+                color: 'var(--accent)',
+                fontFamily: 'var(--font-sans)',
+              }}
+            >
+              Export MD
+            </button>
+            <button
+              onClick={() => exportScan(id, 'json')}
+              style={{
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                fontSize: '12px',
+                color: 'var(--accent)',
+                fontFamily: 'var(--font-sans)',
+              }}
+            >
+              Export JSON
+            </button>
             <button
               onClick={handleDelete}
               onMouseEnter={() => setDeleteHovered(true)}

@@ -54,6 +54,7 @@ class ScanManager:
         openrouter_api_key: str | None = None,
         fallback_llm_model: str | None = None,
         detection_confidence_threshold: float = 0.8,
+        detection_mode: str = "marker_then_llm",
         pricing: dict | None = None,
     ) -> ScanJob:
         """Launch a scan in the background.
@@ -68,10 +69,13 @@ class ScanManager:
             target_model: Model ID for live target agents.
             llm_model: Model for smart probes.
             openrouter_api_key: API key for smart/live mode.
+            detection_mode: 'marker_then_llm' or 'llm_only'.
 
         Returns:
             The ScanJob with scan_id and queue for SSE streaming.
         """
+        from agentsec.core.config import DetectionMode
+
         scan_id = uuid4().hex[:12]
         job = ScanJob(scan_id=scan_id, target=target)
         self._jobs[scan_id] = job
@@ -83,6 +87,7 @@ class ScanManager:
             openrouter_api_key=openrouter_api_key,
             fallback_llm_model=fallback_llm_model,
             detection_confidence_threshold=detection_confidence_threshold,
+            detection_mode=DetectionMode(detection_mode),
             pricing_data=pricing or {},
         )
 
@@ -110,16 +115,12 @@ class ScanManager:
             if config.openrouter_api_key:
                 os.environ["OPENROUTER_API_KEY"] = config.openrouter_api_key
 
-            graph = load_graph(
-                target, vulnerable=vulnerable, live=live, target_model=target_model
-            )
+            graph = load_graph(target, vulnerable=vulnerable, live=live, target_model=target_model)
             adapter = make_adapter(adapter_name, graph)
 
             scanner = Scanner(adapter, config)
 
-            def progress_callback(
-                probe_id: str, status: str, finding: Finding | None
-            ) -> None:
+            def progress_callback(probe_id: str, status: str, finding: Finding | None) -> None:
                 event: dict = {"probe_id": probe_id}
                 if status == "started":
                     event["event"] = "probe_started"

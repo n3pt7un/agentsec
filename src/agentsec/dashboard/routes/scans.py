@@ -33,6 +33,7 @@ class ScanRequest(BaseModel):
     openrouter_api_key: str | None = None
     fallback_llm_model: str | None = None
     detection_confidence_threshold: float = 0.8
+    detection_mode: str = "marker_then_llm"
     pricing: dict[str, dict[str, float]] = {}
 
 
@@ -51,6 +52,7 @@ async def create_scan(request: ScanRequest) -> dict:
         openrouter_api_key=request.openrouter_api_key,
         fallback_llm_model=request.fallback_llm_model,
         detection_confidence_threshold=request.detection_confidence_threshold,
+        detection_mode=request.detection_mode,
         pricing=request.pricing,
     )
     return {

@@ -33,6 +33,7 @@ export default function ScanForm({ onSubmit, loading }) {
     vulnerable: true,
     smart: false,
     live: false,
+    detection_mode: 'marker_then_llm',
   });
 
   useEffect(() => {
@@ -84,7 +85,7 @@ export default function ScanForm({ onSubmit, loading }) {
           </select>
         </div>
 
-        <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap', alignItems: 'center' }}>
           {[
             { key: 'vulnerable', label: 'Vulnerable mode' },
             { key: 'smart', label: 'Smart payloads' },
@@ -108,6 +109,29 @@ export default function ScanForm({ onSubmit, loading }) {
               {label}
             </label>
           ))}
+
+          {config.smart && (
+            <label style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              fontSize: '13px',
+              color: 'var(--text-secondary)',
+              cursor: 'pointer',
+              fontFamily: 'var(--font-sans)',
+            }}>
+              <input
+                type="checkbox"
+                checked={config.detection_mode === 'llm_only'}
+                onChange={e => setConfig({
+                  ...config,
+                  detection_mode: e.target.checked ? 'llm_only' : 'marker_then_llm',
+                })}
+                style={{ accentColor: 'var(--accent)', cursor: 'pointer' }}
+              />
+              LLM-only detection
+            </label>
+          )}
         </div>
 
         <div>

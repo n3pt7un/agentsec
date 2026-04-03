@@ -14,8 +14,8 @@ Discovered agent in the target system.
 |-------|------|---------|-------------|
 | `name` | `str` | *(required)* |  |
 | `role` | `str | None` | `None` |  |
-| `tools` | `list` | *(required)* |  |
-| `downstream_agents` | `list` | *(required)* |  |
+| `tools` | `list` | *(default factory)* |  |
+| `downstream_agents` | `list` | *(default factory)* |  |
 | `is_entry_point` | `bool` | `False` |  |
 | `routing_type` | `Literal` | `'unknown'` |  |
 

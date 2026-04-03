@@ -299,7 +299,7 @@ Actionable fix for a vulnerability.
 | `code_before` | `str | None` | `None` | Vulnerable code pattern |
 | `code_after` | `str | None` | `None` | Fixed code pattern |
 | `architecture_note` | `str | None` | `None` | Architectural recommendation |
-| `references` | `list` | *(required)* | Links to OWASP/docs |
+| `references` | `list` | *(default factory)* | Links to OWASP/docs |
 
 ### Methods
 
@@ -432,7 +432,7 @@ Analyst-authored override for a single finding's automated status.
 | `original_status` | `FindingStatus` | *(required)* |  |
 | `reason` | `str` | *(required)* | Required justification for the override |
 | `overridden_by` | `str` | `'analyst'` | Actor who applied the override |
-| `overridden_at` | `datetime` | *(required)* |  |
+| `overridden_at` | `datetime` | *(default factory)* |  |
 | `compliance_flag` | `Literal` | `True` |  |
 
 ### Methods
@@ -571,11 +571,11 @@ Result of a single probe execution.
 | `evidence` | `agentsec.core.finding.Evidence | None` | `None` | Interaction log: always populated when the probe ran (vulnerable or resistant). None only for skipped/error. |
 | `blast_radius` | `str | None` | `None` | What downstream components are affected |
 | `remediation` | `Remediation` | *(required)* |  |
-| `timestamp` | `datetime` | *(required)* |  |
+| `timestamp` | `datetime` | *(default factory)* |  |
 | `duration_ms` | `int | None` | `None` | Probe execution time |
-| `tags` | `list` | *(required)* |  |
+| `tags` | `list` | *(default factory)* |  |
 | `override` | `agentsec.core.finding.FindingOverride | None` | `None` | Analyst override applied after automated scan. None = no override. |
-| `llm_usage` | `list` | *(required)* | Token usage records for all LLM calls made during this probe. |
+| `llm_usage` | `list` | *(default factory)* | Token usage records for all LLM calls made during this probe. |
 
 ### Methods
 

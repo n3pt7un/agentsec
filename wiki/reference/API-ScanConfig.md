@@ -34,7 +34,7 @@ Example: AGENTSEC_VERBOSE=true
 | `output_format` | `str` | `'markdown'` | Report format: markdown, html, json, sarif |
 | `detection_confidence_threshold` | `float` | `0.8` | Minimum LLM confidence to classify a response as vulnerable (smart mode only) |
 | `fallback_llm_model` | `str | None` | `None` | Model used for Tier 3 payload generation if primary model refuses |
-| `pricing_data` | `dict` | *(required)* | Inline model pricing (input_per_1m / output_per_1m). Takes precedence over agentsec-pricing.yaml. Keys are model IDs. |
+| `pricing_data` | `dict` | *(default factory)* | Inline model pricing (input_per_1m / output_per_1m). Takes precedence over agentsec-pricing.yaml. Keys are model IDs. |
 | `detection_mode` | `DetectionMode` | `<DetectionMode.MARKER_THEN_LLM: 'marker_then_llm'>` | Detection strategy: 'marker_then_llm' (default) runs a fast marker check first and falls back to LLM; 'llm_only' skips the marker check entirely. 'llm_only' requires smart=True. |
 
 ### Methods

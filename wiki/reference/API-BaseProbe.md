@@ -17,7 +17,7 @@ Static metadata about a probe.
 | `category` | `OWASPCategory` | *(required)* |  |
 | `default_severity` | `Severity` | *(required)* |  |
 | `description` | `str` | *(required)* |  |
-| `tags` | `list` | *(required)* |  |
+| `tags` | `list` | *(default factory)* |  |
 
 ### Methods
 

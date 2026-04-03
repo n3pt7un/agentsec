@@ -34,7 +34,9 @@ def _class_section(cls) -> str:
             type_str = getattr(annotation, "__name__", str(annotation))
             default = field_info.default
             default_repr = repr(default)
-            if "PydanticUndefined" in default_repr or default is inspect.Parameter.empty:
+            if field_info.default_factory is not None:
+                default_str = "*(default factory)*"
+            elif "PydanticUndefined" in default_repr or default is inspect.Parameter.empty:
                 default_str = "*(required)*"
             else:
                 default_str = f"`{default_repr}`"
@@ -142,9 +144,16 @@ def generate_guardrails(wiki_ref: Path) -> None:
 
 
 def generate_reporters(wiki_ref: Path) -> None:
-    from agentsec.reporters.json_report import generate_json
-    from agentsec.reporters.markdown import generate_markdown
-    from agentsec.reporters.sarif import generate_sarif
+    try:
+        from agentsec.reporters.json_report import generate_json
+        from agentsec.reporters.markdown import generate_markdown
+        from agentsec.reporters.sarif import generate_sarif
+    except ImportError as exc:
+        content = _header("API: Reporters")
+        content += f"\n> **Note:** Reporter documentation could not be generated because a required dependency is not installed: `{exc}`.\n"
+        content += "> Install it with `uv add pyyaml` or check the project dependencies.\n"
+        write_page(wiki_ref / "API-Reporters.md", content)
+        return
     content = _header("API: Reporters")
     content += "\nOutput format generators. Source: `src/agentsec/reporters/`\n\n"
     content += "Each reporter is a top-level function that accepts a `ScanResult` and returns a `str`.\n\n"
@@ -157,13 +166,20 @@ def generate_reporters(wiki_ref: Path) -> None:
 
 def main() -> None:
     wiki_ref = Path(__file__).parent.parent.parent / "wiki" / "reference"
-    generate_base_probe(wiki_ref)
-    generate_base_adapter(wiki_ref)
-    generate_finding(wiki_ref)
-    generate_scan_config(wiki_ref)
-    generate_llm_provider(wiki_ref)
-    generate_guardrails(wiki_ref)
-    generate_reporters(wiki_ref)
+    generators = [
+        generate_base_probe,
+        generate_base_adapter,
+        generate_finding,
+        generate_scan_config,
+        generate_llm_provider,
+        generate_guardrails,
+        generate_reporters,
+    ]
+    for gen in generators:
+        try:
+            gen(wiki_ref)
+        except Exception as exc:
+            print(f"WARNING: {gen.__name__} failed: {exc}", file=sys.stderr)
     print("API reference pages generated.")
 
 

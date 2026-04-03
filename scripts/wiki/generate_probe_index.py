@@ -45,8 +45,10 @@ def main() -> None:
     for meta in all_meta:
         cat = meta.category.value
         cat_name = CATEGORY_NAMES.get(cat, cat)
+        anchor = cat.lower() + "--" + cat_name.lower().replace(" ", "-").replace("&", "").replace("--", "-")
+        cat_cell = f"[{cat}: {cat_name}](OWASP-Categories#{anchor})"
         lines.append(
-            f"| `{meta.id}` | {cat}: {cat_name} | {meta.default_severity.value.upper()} "
+            f"| `{meta.id}` | {cat_cell} | {meta.default_severity.value.upper()} "
             f"| {meta.name} | {meta.description} |"
         )
 

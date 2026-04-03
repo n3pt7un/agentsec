@@ -148,7 +148,9 @@ class RoleConfusionProbe(BaseProbe):
 
         # Prefer an agent that has an explicit role string so the payload can
         # reference it by name, making the attack more convincing.
-        target_agent = agents[0].name if agents else "default"
+        # Fall back to the entry point agent.
+        ep = self._select_entry_point(agents)
+        target_agent = ep.name if ep else "default"
         target_role = "agent"
 
         for agent in agents:

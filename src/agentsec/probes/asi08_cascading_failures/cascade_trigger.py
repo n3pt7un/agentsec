@@ -163,7 +163,7 @@ class CascadeTriggerProbe(BaseProbe):
 
         # Send to the entry agent; the full pipeline runs and the final output
         # is checked for the marker (indicating no circuit breaker caught it).
-        target_agent = agents[0].name
+        target_agent = self._select_entry_point(agents).name
 
         payloads, gen_usage = await self._generate_payloads(
             provider, agents, fallback_model=fallback_model

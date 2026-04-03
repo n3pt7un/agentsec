@@ -170,8 +170,9 @@ class ImpersonationProbe(BaseProbe):
         agents = await adapter.discover()
 
         # Prefer worker agents (non-entry nodes) so we simulate a realistic
-        # inter-agent attack path; fall back to whatever is available.
-        target_agent = agents[0].name if agents else "default"
+        # inter-agent attack path; fall back to the entry point agent.
+        ep = self._select_entry_point(agents)
+        target_agent = ep.name if ep else "default"
         if len(agents) > 1:
             target_agent = agents[1].name
 

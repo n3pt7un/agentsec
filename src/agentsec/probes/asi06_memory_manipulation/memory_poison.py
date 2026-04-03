@@ -151,7 +151,8 @@ class MemoryPoisonProbe(BaseProbe):
         """
         start = time.monotonic()
         agents = await adapter.discover()
-        target_agent = agents[0].name if agents else "default"
+        agent = self._select_entry_point(agents)
+        target_agent = agent.name if agent else "default"
 
         payloads, gen_usage = await self._generate_payloads(
             provider, agents, fallback_model=fallback_model

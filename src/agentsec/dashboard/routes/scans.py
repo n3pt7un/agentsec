@@ -13,6 +13,7 @@ from pydantic import BaseModel
 
 from agentsec.reporters.json_report import generate_json
 from agentsec.reporters.markdown import generate_markdown
+from agentsec.reporters.sarif import generate_sarif
 
 router = APIRouter(prefix="/api/scans", tags=["scans"])
 
@@ -51,7 +52,7 @@ class ExportRequest(BaseModel):
     """Request body for batch scan export."""
 
     scan_ids: list[str] | Literal["all"]
-    format: Literal["md", "json"]
+    format: Literal["md", "json", "sarif"]
 
 
 @router.post("")
@@ -92,6 +93,9 @@ async def batch_export_scans(request: ExportRequest) -> StreamingResponse:
     if request.format == "md":
         generate = generate_markdown
         ext = "md"
+    elif request.format == "sarif":
+        generate = generate_sarif
+        ext = "sarif"
     else:
         generate = generate_json
         ext = "json"
@@ -125,8 +129,8 @@ async def list_scans(limit: int = 50, offset: int = 0) -> dict:
 @router.get("/{scan_id}/export")
 async def export_scan(scan_id: str, format: str = "md") -> Response:
     """Export a single scan result as a downloadable file."""
-    if format not in ("md", "json"):
-        raise HTTPException(status_code=400, detail="format must be 'md' or 'json'")
+    if format not in ("md", "json", "sarif"):
+        raise HTTPException(status_code=400, detail="format must be 'md', 'json', or 'sarif'")
 
     job = _scan_manager.get_job(scan_id)
     result = job.result if job and job.result else _store.load(scan_id)
@@ -137,6 +141,10 @@ async def export_scan(scan_id: str, format: str = "md") -> Response:
         content = generate_markdown(result)
         media_type = "text/markdown"
         filename = f"scan-{scan_id}.md"
+    elif format == "sarif":
+        content = generate_sarif(result)
+        media_type = "application/sarif+json"
+        filename = f"scan-{scan_id}.sarif"
     else:
         content = generate_json(result)
         media_type = "application/json"

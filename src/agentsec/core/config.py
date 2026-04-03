@@ -72,7 +72,6 @@ class ScanConfig(BaseSettings):
     def _validate_detection_mode(self) -> "ScanConfig":
         if self.detection_mode == DetectionMode.LLM_ONLY and not self.smart:
             raise ValueError(
-                "detection_mode='llm_only' requires smart=True "
-                "(an LLM provider must be configured)"
+                "detection_mode='llm_only' requires smart=True (an LLM provider must be configured)"
             )
         return self

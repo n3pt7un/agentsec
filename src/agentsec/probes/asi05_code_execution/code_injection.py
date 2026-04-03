@@ -166,7 +166,10 @@ class CodeInjectionProbe(BaseProbe):
         meta = self.metadata()
 
         agents = await adapter.discover()
-        target_agent = agents[0].name if agents else "default"
+        agent = self._select_tool_agent(agents) or self._select_entry_point(agents)
+        if agent is None:
+            return self._no_target_finding("No agents discovered.")
+        target_agent = agent.name
 
         payloads, gen_usage = await self._generate_payloads(
             provider, agents, fallback_model=fallback_model

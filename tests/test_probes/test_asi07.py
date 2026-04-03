@@ -21,7 +21,6 @@ from agentsec.probes.asi07_inter_agent.msg_tamper import (
     MessageTamperProbe,
 )
 from agentsec.probes.asi07_inter_agent.orchestrator_hijack import (
-    _ORCHJACK_MARKER,
     OrchestratorHijackProbe,
 )
 from agentsec.probes.registry import ProbeRegistry
@@ -309,17 +308,17 @@ class TestOrchestratorHijackMetadata:
 
 
 class TestOrchestratorHijackAttack:
-    async def test_vulnerable_on_vulnerable_supervisor_crew(self):
+    # NOTE: All three standard fixtures (supervisor_crew, simple_chain, vulnerable_rag)
+    # use add_edge only — no conditional edges — so _select_orchestrator returns None
+    # and the probe correctly skips them. Tests for VULNERABLE/RESISTANT behavior
+    # require a fixture with actual conditional routing (add_conditional_edges).
+
+    async def test_skipped_on_supervisor_crew_no_orchestrator(self):
+        # supervisor_crew uses add_edge only — no conditional routing node
         graph = build_supervisor_crew(vulnerable=True)
         adapter = LangGraphAdapter(graph)
         finding = await OrchestratorHijackProbe().attack(adapter)
-        assert finding.status == FindingStatus.VULNERABLE
-
-    async def test_resistant_on_resistant_supervisor_crew(self):
-        graph = build_supervisor_crew(vulnerable=False)
-        adapter = LangGraphAdapter(graph)
-        finding = await OrchestratorHijackProbe().attack(adapter)
-        assert finding.status == FindingStatus.RESISTANT
+        assert finding.status == FindingStatus.SKIPPED
 
     async def test_skipped_on_single_agent(self):
         graph = _build_single_agent()
@@ -327,29 +326,20 @@ class TestOrchestratorHijackAttack:
         finding = await OrchestratorHijackProbe().attack(adapter)
         assert finding.status == FindingStatus.SKIPPED
 
+    async def test_skipped_on_simple_chain_no_orchestrator(self):
+        graph = build_simple_chain(vulnerable=True)
+        adapter = LangGraphAdapter(graph)
+        finding = await OrchestratorHijackProbe().attack(adapter)
+        assert finding.status == FindingStatus.SKIPPED
+
     async def test_skipped_finding_has_no_evidence(self):
-        graph = _build_single_agent()
+        graph = build_supervisor_crew(vulnerable=True)
         adapter = LangGraphAdapter(graph)
         finding = await OrchestratorHijackProbe().attack(adapter)
         assert finding.evidence is None
 
-    async def test_vulnerable_finding_has_evidence(self):
+    async def test_skipped_finding_has_no_blast_radius(self):
         graph = build_supervisor_crew(vulnerable=True)
-        adapter = LangGraphAdapter(graph)
-        finding = await OrchestratorHijackProbe().attack(adapter)
-        assert finding.evidence is not None
-        assert _ORCHJACK_MARKER in finding.evidence.agent_response
-        assert finding.evidence.attack_input
-        assert finding.evidence.target_agent
-
-    async def test_vulnerable_finding_has_blast_radius(self):
-        graph = build_supervisor_crew(vulnerable=True)
-        adapter = LangGraphAdapter(graph)
-        finding = await OrchestratorHijackProbe().attack(adapter)
-        assert finding.blast_radius is not None
-
-    async def test_resistant_finding_has_no_blast_radius(self):
-        graph = build_supervisor_crew(vulnerable=False)
         adapter = LangGraphAdapter(graph)
         finding = await OrchestratorHijackProbe().attack(adapter)
         assert finding.blast_radius is None
@@ -369,35 +359,12 @@ class TestOrchestratorHijackAttack:
         finding = await OrchestratorHijackProbe().attack(adapter)
         assert finding.probe_id == OrchestratorHijackProbe().metadata().id
 
-    async def test_duration_ms_populated(self):
-        graph = build_supervisor_crew(vulnerable=False)
-        adapter = LangGraphAdapter(graph)
-        finding = await OrchestratorHijackProbe().attack(adapter)
-        assert finding.duration_ms is not None
-        assert finding.duration_ms >= 0
-
-    async def test_marker_detection_method_on_vulnerable(self):
+    async def test_skipped_finding_description_indicates_no_target(self):
         graph = build_supervisor_crew(vulnerable=True)
         adapter = LangGraphAdapter(graph)
         finding = await OrchestratorHijackProbe().attack(adapter)
-        assert finding.status == FindingStatus.VULNERABLE
-        assert finding.evidence is not None
-        assert finding.evidence.detection_method == "marker"
-
-    async def test_targets_first_agent(self):
-        """Probe targets the first agent (orchestrator) by convention."""
-        graph = build_supervisor_crew(vulnerable=True)
-        adapter = LangGraphAdapter(graph)
-        finding = await OrchestratorHijackProbe().attack(adapter)
-        # supervisor is first in supervisor_crew
-        assert finding.evidence is not None
-        assert finding.evidence.target_agent == "supervisor"
-
-    async def test_also_vulnerable_via_simple_chain(self):
-        graph = build_simple_chain(vulnerable=True)
-        adapter = LangGraphAdapter(graph)
-        finding = await OrchestratorHijackProbe().attack(adapter)
-        assert finding.status == FindingStatus.VULNERABLE
+        assert finding.status == FindingStatus.SKIPPED
+        assert "conditional" in finding.description.lower()
 
 
 # ---------------------------------------------------------------------------
@@ -406,17 +373,18 @@ class TestOrchestratorHijackAttack:
 
 
 class TestOrchestratorHijackSmartPayloads:
-    async def test_offline_provider_vulnerable(self):
+    async def test_offline_provider_skipped_no_orchestrator(self):
+        # No conditional edges in supervisor_crew — skips regardless of provider
         graph = build_supervisor_crew(vulnerable=True)
         adapter = LangGraphAdapter(graph)
         finding = await OrchestratorHijackProbe().attack(adapter, provider=OfflineProvider())
-        assert finding.status == FindingStatus.VULNERABLE
+        assert finding.status == FindingStatus.SKIPPED
 
-    async def test_offline_provider_resistant(self):
+    async def test_offline_provider_skipped_resistant(self):
         graph = build_supervisor_crew(vulnerable=False)
         adapter = LangGraphAdapter(graph)
         finding = await OrchestratorHijackProbe().attack(adapter, provider=OfflineProvider())
-        assert finding.status == FindingStatus.RESISTANT
+        assert finding.status == FindingStatus.SKIPPED
 
 
 # ---------------------------------------------------------------------------

@@ -160,7 +160,7 @@ class ToolPoisoningProbe(BaseProbe):
         target = self._select_tool_agent(agents)
         if target is None:
             return self._no_target_finding(
-                "No agent with registered tools found — supply chain poisoning requires a tool-using agent."
+                "No tool-using agent found — supply chain poisoning requires a tool-equipped agent."
             )
         target_agent = target.name
 

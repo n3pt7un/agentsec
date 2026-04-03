@@ -18,6 +18,7 @@ from agentsec.core.finding import (
 )
 
 if TYPE_CHECKING:
+    from agentsec.adapters.base import AgentInfo
     from agentsec.llm.detection import DetectionType
     from agentsec.llm.provider import LLMProvider
 
@@ -187,7 +188,7 @@ class BaseProbe(ABC):
         return False, None, []
 
     @staticmethod
-    def _select_entry_point(agents: list) -> "AgentInfo | None":
+    def _select_entry_point(agents: list) -> AgentInfo | None:
         """First agent with is_entry_point=True, or first agent overall if none marked."""
         ep = [a for a in agents if a.is_entry_point]
         if ep:
@@ -195,7 +196,7 @@ class BaseProbe(ABC):
         return agents[0] if agents else None
 
     @staticmethod
-    def _select_tool_agent(agents: list) -> "AgentInfo | None":
+    def _select_tool_agent(agents: list) -> AgentInfo | None:
         """First agent with at least one tool, or None."""
         for a in agents:
             if a.tools:
@@ -203,7 +204,7 @@ class BaseProbe(ABC):
         return None
 
     @staticmethod
-    def _select_orchestrator(agents: list) -> "AgentInfo | None":
+    def _select_orchestrator(agents: list) -> AgentInfo | None:
         """Best orchestrator candidate based on routing_type and out-degree.
 
         Priority:
@@ -220,12 +221,12 @@ class BaseProbe(ABC):
         return None
 
     @staticmethod
-    def _select_worker(agents: list) -> "AgentInfo | None":
+    def _select_worker(agents: list) -> AgentInfo | None:
         """First non-entry-point agent, or None if every agent is an entry point."""
         workers = [a for a in agents if not a.is_entry_point]
         return workers[0] if workers else None
 
-    def _no_target_finding(self, reason: str) -> "Finding":
+    def _no_target_finding(self, reason: str) -> Finding:
         """Return a SKIPPED finding when no suitable agent is available for this probe."""
         from agentsec.core.finding import Finding, FindingStatus
 

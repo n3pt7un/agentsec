@@ -144,7 +144,7 @@ class ToolChainAbuseProbe(BaseProbe):
         target = self._select_tool_agent(agents)
         if target is None:
             return self._no_target_finding(
-                "No agent with registered tools found — tool chain abuse requires at least one tool-using agent."
+                "No tool-using agent found — tool chain abuse requires a tool-equipped agent."
             )
         target_agent = target.name
 

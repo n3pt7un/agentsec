@@ -1,6 +1,7 @@
 """Abstract adapter interface between agentsec probes and target agent systems."""
 
 from abc import ABC, abstractmethod
+from typing import Literal
 
 from pydantic import BaseModel, Field
 
@@ -9,9 +10,11 @@ class AgentInfo(BaseModel):
     """Discovered agent in the target system."""
 
     name: str
-    role: str | None = None  # supervisor, worker, etc.
+    role: str | None = None
     tools: list[str] = Field(default_factory=list)
     downstream_agents: list[str] = Field(default_factory=list)
+    is_entry_point: bool = False
+    routing_type: Literal["llm", "deterministic", "unknown"] = "unknown"
 
 
 class AdapterCapabilities(BaseModel):

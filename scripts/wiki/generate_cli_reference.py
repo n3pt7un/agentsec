@@ -191,7 +191,7 @@ def main() -> None:
         "",
         "Full flag reference for all agentsec commands.",
         "",
-        "> For narrative usage examples, see [CLI Reference](../using/CLI-Reference).",
+        "> For narrative usage examples, see [CLI Reference](CLI-Reference).",
         "",
     ]
 
@@ -200,7 +200,7 @@ def main() -> None:
         content_lines.append(format_command(display_name, help_text))
         content_lines.append("---\n")
 
-    out_path = Path(__file__).parent.parent.parent / "wiki" / "reference" / "CLI-Commands.md"
+    out_path = Path(__file__).parent.parent.parent / "wiki" / "CLI-Commands.md"
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text("\n".join(content_lines) + "\n")
     print(f"Written {out_path}")

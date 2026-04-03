@@ -59,7 +59,7 @@ def main() -> None:
         "See [OWASP Categories](OWASP-Categories) for descriptions of each category.",
     ]
 
-    out_path = Path(__file__).parent.parent.parent / "wiki" / "reference" / "Probe-Index.md"
+    out_path = Path(__file__).parent.parent.parent / "wiki" / "Probe-Index.md"
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text("\n".join(lines) + "\n")
     print(f"Written {out_path} ({len(all_meta)} probes)")

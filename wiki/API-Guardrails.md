@@ -2,7 +2,7 @@
 
 # API: Guardrails
 
-Defensive guardrail components. See [Guardrails usage guide](../using/Guardrails).
+Defensive guardrail components. See [Guardrails usage guide](Guardrails).
 
 ## `InputBoundaryEnforcer`
 

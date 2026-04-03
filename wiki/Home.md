@@ -16,15 +16,15 @@ flowchart TD
     B -->|Run agentsec against my agents| C[Using agentsec]
     B -->|Write probes or adapters| D[Developing agentsec]
     B -->|Look up a class or command| E[Reference]
-    C --> C1["[Installation](using/Installation)"]
-    C --> C2["[Quick Start](using/Quick-Start)"]
-    C --> C3["[Guardrails](using/Guardrails)"]
-    D --> D1["[Architecture](developing/Architecture)"]
-    D --> D2["[Probe Authoring](developing/Probe-Authoring)"]
-    D --> D3["[Contributing](developing/Contributing)"]
-    E --> E1["[Probe Index](reference/Probe-Index)"]
-    E --> E2["[CLI Commands](reference/CLI-Commands)"]
-    E --> E3["[OWASP Categories](reference/OWASP-Categories)"]
+    C --> C1["[Installation](Installation)"]
+    C --> C2["[Quick Start](Quick-Start)"]
+    C --> C3["[Guardrails](Guardrails)"]
+    D --> D1["[Architecture](Architecture)"]
+    D --> D2["[Probe Authoring](Probe-Authoring)"]
+    D --> D3["[Contributing](Contributing)"]
+    E --> E1["[Probe Index](Probe-Index)"]
+    E --> E2["[CLI Commands](CLI-Commands)"]
+    E --> E3["[OWASP Categories](OWASP-Categories)"]
 ```
 
 ---
@@ -35,16 +35,16 @@ For security engineers and DevSecOps teams running agentsec against their own sy
 
 | | |
 |--|--|
-| **[Installation](using/Installation)** | pip, uv, extras, env vars |
-| **[Quick Start](using/Quick-Start)** | First scan in three commands |
-| **[Scan Modes](using/Scan-Modes)** | Offline vs Smart mode |
-| **[Probe Selector](using/Probe-Selector)** | Filter by probe ID, category, or severity |
-| **[CLI Reference](using/CLI-Reference)** | All commands and flags |
-| **[Output Formats](using/Output-Formats)** | Markdown, JSON, SARIF |
-| **[CI Integration](using/CI-Integration)** | GitHub Actions, GitLab CI |
-| **[Guardrails](using/Guardrails)** | Drop-in defensive components |
-| **[Web Dashboard](using/Web-Dashboard)** | `agentsec serve` UI walkthrough |
-| **[Real-World Targets](using/Real-World-Targets)** | 6 bundled harnesses |
+| **[Installation](Installation)** | pip, uv, extras, env vars |
+| **[Quick Start](Quick-Start)** | First scan in three commands |
+| **[Scan Modes](Scan-Modes)** | Offline vs Smart mode |
+| **[Probe Selector](Probe-Selector)** | Filter by probe ID, category, or severity |
+| **[CLI Reference](CLI-Reference)** | All commands and flags |
+| **[Output Formats](Output-Formats)** | Markdown, JSON, SARIF |
+| **[CI Integration](CI-Integration)** | GitHub Actions, GitLab CI |
+| **[Guardrails](Guardrails)** | Drop-in defensive components |
+| **[Web Dashboard](Web-Dashboard)** | `agentsec serve` UI walkthrough |
+| **[Real-World Targets](Real-World-Targets)** | 6 bundled harnesses |
 
 ---
 
@@ -54,14 +54,14 @@ For contributors writing new probes, adapters, or framework components.
 
 | | |
 |--|--|
-| **[Architecture](developing/Architecture)** | System overview and data flow |
-| **[Probe Authoring](developing/Probe-Authoring)** | Write a new probe end-to-end |
-| **[Adapter Authoring](developing/Adapter-Authoring)** | Write a new framework adapter |
-| **[LLM Integration](developing/LLM-Integration)** | LLMProvider, OpenRouter, offline fallback |
-| **[Detection Pipeline](developing/Detection-Pipeline)** | Marker vs semantic detection |
-| **[Dashboard Internals](developing/Dashboard-Internals)** | FastAPI, SSE, ScanManager |
-| **[Testing Guide](developing/Testing-Guide)** | pytest-asyncio, fixtures, mocking |
-| **[Contributing](developing/Contributing)** | Dev setup, commit style, PR workflow |
+| **[Architecture](Architecture)** | System overview and data flow |
+| **[Probe Authoring](Probe-Authoring)** | Write a new probe end-to-end |
+| **[Adapter Authoring](Adapter-Authoring)** | Write a new framework adapter |
+| **[LLM Integration](LLM-Integration)** | LLMProvider, OpenRouter, offline fallback |
+| **[Detection Pipeline](Detection-Pipeline)** | Marker vs semantic detection |
+| **[Dashboard Internals](Dashboard-Internals)** | FastAPI, SSE, ScanManager |
+| **[Testing Guide](Testing-Guide)** | pytest-asyncio, fixtures, mocking |
+| **[Contributing](Contributing)** | Dev setup, commit style, PR workflow |
 
 ---
 
@@ -69,13 +69,13 @@ For contributors writing new probes, adapters, or framework components.
 
 | | |
 |--|--|
-| **[Probe Index](reference/Probe-Index)** | All 20 probes — ID, category, severity |
-| **[OWASP Categories](reference/OWASP-Categories)** | All 10 ASI categories |
-| **[API: BaseProbe](reference/API-BaseProbe)** | Probe base class and ProbeMetadata |
-| **[API: BaseAdapter](reference/API-BaseAdapter)** | Adapter interface |
-| **[API: Finding](reference/API-Finding)** | Finding, Evidence, Remediation models |
-| **[API: ScanConfig](reference/API-ScanConfig)** | Scan configuration |
-| **[API: LLMProvider](reference/API-LLMProvider)** | LLM provider interface |
-| **[API: Guardrails](reference/API-Guardrails)** | All four guardrail classes |
-| **[API: Reporters](reference/API-Reporters)** | Markdown, JSON, SARIF reporters |
-| **[CLI Commands](reference/CLI-Commands)** | Full flag reference |
+| **[Probe Index](Probe-Index)** | All 20 probes — ID, category, severity |
+| **[OWASP Categories](OWASP-Categories)** | All 10 ASI categories |
+| **[API: BaseProbe](API-BaseProbe)** | Probe base class and ProbeMetadata |
+| **[API: BaseAdapter](API-BaseAdapter)** | Adapter interface |
+| **[API: Finding](API-Finding)** | Finding, Evidence, Remediation models |
+| **[API: ScanConfig](API-ScanConfig)** | Scan configuration |
+| **[API: LLMProvider](API-LLMProvider)** | LLM provider interface |
+| **[API: Guardrails](API-Guardrails)** | All four guardrail classes |
+| **[API: Reporters](API-Reporters)** | Markdown, JSON, SARIF reporters |
+| **[CLI Commands](CLI-Commands)** | Full flag reference |

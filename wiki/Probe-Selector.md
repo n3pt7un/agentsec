@@ -60,4 +60,4 @@ All probe IDs follow the pattern `ASI<NN>-<SLUG>`:
 
 Examples: `ASI01-INDIRECT-INJECT`, `ASI07-ORCHESTRATOR-HIJACK`, `ASI10-COVERT-EXFIL`
 
-See the full list: **[Probe Index](../reference/Probe-Index)**
+See the full list: **[Probe Index](Probe-Index)**

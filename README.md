@@ -5,6 +5,7 @@
 [![PyPI](https://img.shields.io/pypi/v/agentsec-framework)](https://pypi.org/project/agentsec-framework/)
 [![Tests](https://img.shields.io/github/actions/workflow/status/n3pt7un/agentsec/ci.yml?label=tests)](https://github.com/n3pt7un/agentsec/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Wiki](https://img.shields.io/badge/docs-wiki-blue)](https://github.com/n3pt7un/agentsec/wiki)
 
 agentsec probes your multi-agent LLM system for vulnerabilities, scores findings against the [OWASP Top 10 for Agentic Applications (2026)](https://genai.owasp.org/resource/owasp-top-10-for-agentic-applications-for-2026/), and generates actionable remediation reports with copy-pasteable fixes.
 
@@ -244,6 +245,16 @@ agentsec probes list --category ASI01                         # Filter by catego
 agentsec report --input findings.json --format sarif          # Re-generate report
 agentsec serve                                                 # Launch web dashboard
 ```
+
+---
+
+## Documentation
+
+Full documentation is available on the [GitHub wiki](https://github.com/n3pt7un/agentsec/wiki):
+
+- **[Using agentsec](https://github.com/n3pt7un/agentsec/wiki/Installation)** — installation, scan modes, CLI reference, CI integration, guardrails, web dashboard
+- **[Developing agentsec](https://github.com/n3pt7un/agentsec/wiki/Architecture)** — architecture, probe authoring, adapter authoring, testing guide
+- **[Reference](https://github.com/n3pt7un/agentsec/wiki/Probe-Index)** — probe index, API reference, OWASP categories, CLI commands
 
 ---
 

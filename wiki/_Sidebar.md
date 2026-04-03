@@ -6,41 +6,41 @@
 
 ### Using agentsec
 
-- [Installation](using/Installation)
-- [Quick Start](using/Quick-Start)
-- [Scan Modes](using/Scan-Modes)
-- [Probe Selector](using/Probe-Selector)
-- [CLI Reference](using/CLI-Reference)
-- [Output Formats](using/Output-Formats)
-- [CI Integration](using/CI-Integration)
-- [Guardrails](using/Guardrails)
-- [Web Dashboard](using/Web-Dashboard)
-- [Real-World Targets](using/Real-World-Targets)
+- [Installation](Installation)
+- [Quick Start](Quick-Start)
+- [Scan Modes](Scan-Modes)
+- [Probe Selector](Probe-Selector)
+- [CLI Reference](CLI-Reference)
+- [Output Formats](Output-Formats)
+- [CI Integration](CI-Integration)
+- [Guardrails](Guardrails)
+- [Web Dashboard](Web-Dashboard)
+- [Real-World Targets](Real-World-Targets)
 
 ---
 
 ### Developing agentsec
 
-- [Architecture](developing/Architecture)
-- [Probe Authoring](developing/Probe-Authoring)
-- [Adapter Authoring](developing/Adapter-Authoring)
-- [LLM Integration](developing/LLM-Integration)
-- [Detection Pipeline](developing/Detection-Pipeline)
-- [Dashboard Internals](developing/Dashboard-Internals)
-- [Testing Guide](developing/Testing-Guide)
-- [Contributing](developing/Contributing)
+- [Architecture](Architecture)
+- [Probe Authoring](Probe-Authoring)
+- [Adapter Authoring](Adapter-Authoring)
+- [LLM Integration](LLM-Integration)
+- [Detection Pipeline](Detection-Pipeline)
+- [Dashboard Internals](Dashboard-Internals)
+- [Testing Guide](Testing-Guide)
+- [Contributing](Contributing)
 
 ---
 
 ### Reference
 
-- [Probe Index](reference/Probe-Index)
-- [OWASP Categories](reference/OWASP-Categories)
-- [API: BaseProbe](reference/API-BaseProbe)
-- [API: BaseAdapter](reference/API-BaseAdapter)
-- [API: Finding](reference/API-Finding)
-- [API: ScanConfig](reference/API-ScanConfig)
-- [API: LLMProvider](reference/API-LLMProvider)
-- [API: Guardrails](reference/API-Guardrails)
-- [API: Reporters](reference/API-Reporters)
-- [CLI Commands](reference/CLI-Commands)
+- [Probe Index](Probe-Index)
+- [OWASP Categories](OWASP-Categories)
+- [API: BaseProbe](API-BaseProbe)
+- [API: BaseAdapter](API-BaseAdapter)
+- [API: Finding](API-Finding)
+- [API: ScanConfig](API-ScanConfig)
+- [API: LLMProvider](API-LLMProvider)
+- [API: Guardrails](API-Guardrails)
+- [API: Reporters](API-Reporters)
+- [CLI Commands](CLI-Commands)

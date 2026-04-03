@@ -4,7 +4,7 @@
 
 Full flag reference for all agentsec commands.
 
-> For narrative usage examples, see [CLI Reference](../using/CLI-Reference).
+> For narrative usage examples, see [CLI Reference](CLI-Reference).
 
 ## `agentsec scan`
 

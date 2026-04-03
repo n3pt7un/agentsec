@@ -137,7 +137,7 @@ def generate_guardrails(wiki_ref: Path) -> None:
     from agentsec.guardrails.execution_limiter import ExecutionLimiter
     from agentsec.guardrails.input_boundary import InputBoundaryEnforcer
     content = _header("API: Guardrails")
-    content += "\nDefensive guardrail components. See [Guardrails usage guide](../using/Guardrails).\n\n"
+    content += "\nDefensive guardrail components. See [Guardrails usage guide](Guardrails).\n\n"
     for cls in (InputBoundaryEnforcer, CredentialIsolator, CircuitBreaker, ExecutionLimiter):
         content += _class_section(cls) + "\n---\n\n"
     write_page(wiki_ref / "API-Guardrails.md", content)
@@ -165,7 +165,7 @@ def generate_reporters(wiki_ref: Path) -> None:
 
 
 def main() -> None:
-    wiki_ref = Path(__file__).parent.parent.parent / "wiki" / "reference"
+    wiki_ref = Path(__file__).parent.parent.parent / "wiki"
     generators = [
         generate_base_probe,
         generate_base_adapter,
